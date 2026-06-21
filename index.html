@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>iOS Analytics File Parser</title>
+    <link rel="stylesheet" href="./styles/main.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="intro">
+        <p class="privacy-badge">Parsed locally - not uploaded</p>
+        <h1>iOS Analytics File Parser</h1>
+        <p>
+          Open a standard app crash <code>.ips</code> or legacy <code>.crash</code>
+          file and read the core crash details in structured sections.
+        </p>
+      </section>
+
+      <section class="input-panel" aria-labelledby="input-title">
+        <h2 id="input-title">Load a report</h2>
+        <label class="file-picker">
+          <span>Choose file</span>
+          <input id="file-input" type="file" accept=".ips,.crash,.panic-full,.log,.txt,text/plain,application/json">
+        </label>
+
+        <label class="paste-field">
+          <span>Or paste report text</span>
+          <textarea id="paste-input" rows="9" placeholder="Paste .ips JSON or .crash text here"></textarea>
+        </label>
+      </section>
+
+      <section class="results" aria-live="polite">
+        <div id="status" class="status">No report loaded yet.</div>
+        <div id="sections" class="sections"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

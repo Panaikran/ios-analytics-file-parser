@@ -1,0 +1,55 @@
+{
+  "bug_type": "309",
+  "incident": "FAKE-INCIDENT-0001",
+  "timestamp": "2026-06-21 14:22:07.000 +0700",
+  "app_name": "DemoApp",
+  "bundleID": "com.example.demoapp",
+  "app_version": "2.1.4",
+  "slice_uuid": "11111111-2222-3333-4444-555555555555",
+  "build_version": "318",
+  "platform": 2,
+  "os_version": "iPhone OS 17.4.1 (21E236)",
+  "device_model": "iPhone15,3",
+  "exception": {
+    "type": "EXC_BAD_ACCESS",
+    "signal": "SIGSEGV",
+    "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000",
+    "codes": "0x0000000000000001, 0x0000000000000000"
+  },
+  "termination": {
+    "namespace": "SIGNAL",
+    "code": 11,
+    "indicator": "Segmentation fault: 11"
+  },
+  "faultingThread": 0,
+  "threads": [
+    {
+      "triggered": true,
+      "id": 259,
+      "frames": [
+        {
+          "imageIndex": 0,
+          "imageOffset": 15500,
+          "symbol": "doThing",
+          "symbolLocation": 18
+        },
+        {
+          "imageIndex": 0,
+          "imageOffset": 8464,
+          "symbol": "viewDidLoad",
+          "symbolLocation": 44
+        }
+      ]
+    }
+  ],
+  "usedImages": [
+    {
+      "name": "DemoApp",
+      "uuid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+      "base": 4372566016,
+      "arch": "arm64"
+    }
+  ],
+  "deviceIdentifierForVendor": "99999999-9999-9999-9999-999999999999",
+  "userEmail": "tester@example.com"
+}

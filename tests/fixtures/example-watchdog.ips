@@ -1,0 +1,55 @@
+{"name":"WatchdogApp","timestamp":"2026-06-21 10:56:49.00 +0700","os_version":"iPhone OS 27.0 (24A5355q)","incident_id":"FAKE-WATCHDOG-INCIDENT","bug_type":"509","app_name":"WatchdogApp","bundleID":"com.example.watchdog"}
+{
+  "variant": "stackshot",
+  "incident": "FAKE-WATCHDOG-INCIDENT",
+  "modelCode": "iPhone18,1",
+  "cpuType": "ARM-64",
+  "osVersion": {
+    "train": "iPhone OS 27.0",
+    "build": "24A5355q",
+    "releaseType": "Beta"
+  },
+  "captureTime": "2026-06-21 10:56:49.4455 +0700",
+  "pid": 73147,
+  "bug_type": "509",
+  "procName": "WatchdogApp",
+  "bundleInfo": {
+    "CFBundleIdentifier": "com.example.watchdog"
+  },
+  "termination": {
+    "flags": 0,
+    "code": 2343432205,
+    "namespace": "SPRINGBOARD",
+    "details": [
+      "scene-update watchdog transgression: osservice<com.example.watchdog>:73147 exhausted real time allowance of 10.00 seconds",
+      "ProcessVisibility: Foreground",
+      "ProcessState: Running"
+    ]
+  },
+  "stackshot": {
+    "processByPid": {
+      "73147": {
+        "pid": 73147,
+        "procname": "WatchdogApp",
+        "threadById": {
+          "111": {
+            "id": 111,
+            "dispatch_queue_label": "com.apple.main-thread",
+            "state": ["TH_RUN"],
+            "snapshotFlags": ["kThreadMain"],
+            "userFrames": [[0, 128], [1, 456]]
+          },
+          "222": {
+            "id": 222,
+            "state": ["TH_WAIT"],
+            "userFrames": [[1, 789]]
+          }
+        }
+      }
+    }
+  },
+  "binaryImages": [
+    ["AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", 4294967296, "WatchdogApp"],
+    ["BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF", 8589934592, "UIKitCore"]
+  ]
+}
