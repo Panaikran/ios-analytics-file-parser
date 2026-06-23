@@ -1,141 +1,176 @@
-# iOS Analytics File Parser — Roadmap
+# iOS Analytics File Parser Roadmap
 
-**v1.0 build plan · 4 phases · 4 weeks**
-`🔒 local · no backend · privacy first`
+Status: updated for `v0.3.1-alpha`
 
----
+The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
-## Overall Progress
+## Current Release State
 
-Current release status:
+| Milestone | Status | Release | Summary |
+| --- | --- | --- | --- |
+| Phase 1: Core Parser | Complete | `v0.1.0-alpha` | Core static app, `.ips` and `.crash` parsing, sanitizer foundation, Node/assert tests |
+| Phase 2: Full Section Rendering | Complete | `v0.2.0-alpha` | All Threads, Binary Images, JetsamEvent, panic-full, analytics fallback, memory chart |
+| Phase 3: UI Polish | Complete | `v0.3.0-alpha` | Examples, input UX, section navigation, search/filter, copy actions, dense tables, privacy toggle |
+| CoreAnalytics Patch | Complete | `v0.3.1-alpha` | Initial `.ips.ca.synced` CoreAnalytics detection, parser, privacy handling, capped rows, fixtures, tests |
+| Phase 4: PWA and Release | Not started | Future | Offline/PWA hardening, deployment, CSP, release polish |
 
-- Phase 1: Complete.
-- Phase 2: Complete.
-- Phase 3: Complete.
-- `v0.3.1-alpha`: CoreAnalytics `.ips.ca.synced` detection and parser support implemented.
-- Phase 4: Not started.
+## Project Constraints
 
-| Phase | Name | Week | Status | Tasks |
-|---|---|---|---|---|
-| P1 | Core Parser | Week 1 | Complete | 13 tasks |
-| P2 | Full Section Rendering | Week 2 | Complete | 8 tasks |
-| P3 | UI Polish | Week 3 | Complete | 8 tasks |
-| v0.3.1-alpha | CoreAnalytics Support | Patch | Complete | Initial `.ips.ca.synced` detection and parser support |
-| P4 | PWA & Release | Week 4 | Not Started | 7 tasks |
+These constraints remain active for future phases unless explicitly changed:
 
----
+- Static browser app.
+- Browser-native ES modules.
+- No backend.
+- No authentication.
+- No analytics.
+- No cloud storage for user reports.
+- No external parsing services.
+- No framework dependencies unless explicitly approved.
+- Sanitized output remains the default.
+- Raw local view remains opt-in and local-only.
 
-## Phase 1 — Core Parser `Week 1`
+## Completed Milestones
 
-> **Deliverable:** Working `.ips` + `.crash` parser with Summary, Exception, and Crashed Thread rendered in the browser. Privacy-safe parsing is enabled by default, with panic-full detection stubbed for Phase 2.
+### Phase 1: Core Parser
 
-```
-phase_01_core_parser() → SectionModel[]
-```
+Completed in `v0.1.0-alpha`.
 
-**Parser foundation**
-- [ ] `a1b2c3` Project scaffold — single-page HTML + vanilla JS, zero build step
-- [ ] `d4e5f6` File type auto-detection engine (`detect.js`)
-- [ ] `g7h8i9` `.ips` JSON parser → `SectionModel[]`
-- [ ] `j0k1l2` Legacy `.crash` text parser → `SectionModel[]`
-- [ ] `m3n4o5` Render: Summary card (app, device, OS, date)
-- [ ] `p6q7r8` Render: Exception card (type, signal, reason)
-- [ ] `s9t0u1` Render: Crashed Thread backtrace
+Delivered:
 
-**Privacy pipeline** _(architecture, not UI — the toggle comes in Phase 3)_
-- [ ] `u2v3w4` Define sanitized data pipeline — parsers output safe `SectionModel[]` by default
-- [ ] `x5y6z7` Add privacy sanitizer utility for UDIDs, serials, vendor IDs, advertising IDs, phone numbers
+- Static single-page app scaffold with no build step.
+- Browser-native ES module structure.
+- File type detection foundation.
+- Standard app crash `.ips` parsing.
+- Legacy `.crash` parsing.
+- Summary, Exception, and Crashed Thread sections.
+- Privacy sanitizer foundation.
+- Sanitized fictional fixtures.
+- Node/assert-only parser tests.
 
-**Panic-full stub**
-- [ ] `b8c9d0` Panic-full detection stub — detect file type and surface "panic file recognized; full rendering coming in Phase 2"
+### Phase 2: Full Section Rendering
 
-**Test fixtures**
-- [ ] `e1f2g3` Create `/tests/fixtures/` with sanitized fictional `.ips` and `.crash` files
-- [ ] `h4i5j6` Basic parser assertions — file detection, summary extraction, exception extraction, crashed thread extraction
+Completed in `v0.2.0-alpha`.
 
----
+Delivered:
 
-## Phase 2 — Full Section Rendering `Week 2`
+- Per-section table rendering with section-specific columns.
+- All Threads sections for standard `.ips` and legacy `.crash` reports.
+- Binary Images sections for standard `.ips` and legacy `.crash` reports.
+- Watchdog stackshot `.ips` rendering.
+- JetsamEvent parser with summary, victim/likely culprit, process table, system memory, limits, and memory chart.
+- Panic-full parser with panic string, panic flags, kernel backtrace, loaded kexts, and system info.
+- Generic analytics text fallback parser.
+- Real-world validation fixes for Jetsam and panic-full formats.
 
-> **Deliverable:** All 5 file types parsed end-to-end. Every section — threads, binaries, memory — visible and navigable.
+### Phase 3: UI Polish
 
-```
-phase_02_full_sections() → SectionModel[]
-```
+Completed in `v0.3.0-alpha`.
 
-- [ ] `v2w3x4` All Threads section with per-thread collapse
-- [ ] `y5z6a7` Binary Images table (name, UUID, arch, load address)
-- [ ] `b8c9d0` JetsamEvent JSON parser
-- [ ] `e1f2g3` Memory process table sorted by footprint
-- [ ] `h4i5j6` Simple memory bar chart (Canvas API)
-- [ ] `k7l8m9` `.panic-full` text parser (Panic String + kexts)
-- [ ] `n0o1p2` Generic analytics text fallback parser
-- [ ] `q3r4s5` Universal `SectionModel` → DOM renderer
+Delivered:
 
----
+- App state boundaries for current source, parsed sections, source labels, detected type, privacy mode, search, and dense table state.
+- Production examples loaded from `examples/`.
+- File picker, explicit paste parsing, optional drag-and-drop, and Clear Report.
+- Jump-link section navigation.
+- Search/filter over parsed `SectionModel` data.
+- Copy section actions using visible rendered content.
+- Dense table controls for thread groups, Jetsam row limits, panic kext collapse, and compact binary image tables.
+- Privacy toggle with sanitized mode as default and raw local view as opt-in.
+- Accessibility and mobile Safari improvements.
+- Pre-release hardening for privacy lifecycle, status accuracy, and copy visibility behavior.
 
-## Phase 3 — UI Polish `Week 3`
+### v0.3.1-alpha: CoreAnalytics Patch
 
-> **Deliverable:** Production-quality UX. Privacy mode on by default. Works on iPhone Safari.
+Completed after Phase 3.
 
-```
-phase_03_ui_polish() → production_ready
-```
+Delivered:
 
-- [ ] `t6u7v8` Drag & drop anywhere + paste textarea
-- [ ] `w9x0y1` Tab navigation between sections
-- [ ] `z2a3b4` Search / filter within parsed output
-- [ ] `c5d6e7` Privacy mode toggle UI — safe mode on by default, optional raw view for local inspection
-- [ ] `f8g9h0` Copy section button on each card
-- [ ] `i1j2k3` Load example files (one per file type)
-- [ ] `l4m5n6` Dark / light mode via `prefers-color-scheme`
-- [ ] `o7p8q9` Responsive layout — tested on iPhone 15 Safari
+- Content-based detection for newline-delimited CoreAnalytics `.ips.ca.synced` reports.
+- Dedicated CoreAnalytics parser.
+- Rendered CoreAnalytics sections:
+  - `coreanalytics-summary`
+  - `coreanalytics-configuration`
+  - `coreanalytics-record-overview`
+  - `coreanalytics-event-types`
+  - `coreanalytics-sample-records`
+  - `coreanalytics-parser-notes`
+- Key-aware privacy handling for `incident_id`, `deviceId`, `uuid`, `configUuid`, and `sessionId`.
+- 100-row caps for grouped event rows and sample record rows.
+- Sanitized fictional fixtures and regression tests.
 
----
+Known CoreAnalytics limits:
 
-## Phase 4 — PWA & Release `Week 4`
+- Full raw JSON bodies are not rendered.
+- Search and copy operate on rendered capped rows, not every source record.
 
-> **Deliverable:** Deployed, offline-capable, CSP-locked. Zero data leaves the device.
+## Active Roadmap: Phase 4
 
-```
-phase_04_pwa_release() → deployed ✓
-```
+Phase 4 has not started.
 
-- [ ] `r0s1t2` Service Worker — full offline support after first load
-- [ ] `u3v4w5` Web App Manifest — "Add to Home Screen" on iOS
-- [ ] `x6y7z8` Sanitized sample files with fictional data
-- [ ] `a9b0c1` Unit tests for all parsers (Vitest)
-- [ ] `d2e3f4` Content-Security-Policy — block all external requests
-- [ ] `g5h6i7` Mobile Safari QA pass
-- [ ] `j8k9l0` Deploy to GitHub Pages or Cloudflare Pages
+Primary goal: prepare the static app for release-quality deployment while preserving the local-first privacy model.
 
----
+Recommended Phase 4 scope:
 
-## Future Ideas `Post v1.0`
+- Web App Manifest for installability.
+- Service Worker for offline use after first load.
+- Content Security Policy hardening.
+- Static hosting setup, such as GitHub Pages or Cloudflare Pages.
+- Manual QA pass across supported examples and real-world validation patterns.
+- Mobile Safari QA pass.
+- Release checklist and versioning cleanup.
+- Documentation review before release.
 
-Ideas parked for v2 — visible but out of scope for the initial release.
+Phase 4 should not add:
 
-| Version | Feature |
-|---|---|
-| v2.0 | Client-side `.dSYM` symbolication — resolve raw addresses without a backend |
-| v2.0 | Confidence-based diagnosis rules — pattern-match known signatures and show plain-English likely causes with confidence levels |
-| v2.0 | Panic repair hint rules database — optional repair-focused explanations for repeated panic-full signatures |
-| v2.0 | MetricKit `MXCrashDiagnostic` format support |
-| v2.1 | Sysdiagnose `.tar.gz` extraction and file picker |
-| v2.1 | Diff view — compare two crash reports side by side |
-| v2.2 | Share link — encode parsed summary as URL fragment (no server) |
+- Backend services.
+- Authentication.
+- Analytics.
+- Cloud storage for user reports.
+- External parsing services.
+- Symbolication.
+- `.dSYM` support.
+- Sysdiagnose archive extraction.
+- New framework dependencies without explicit approval.
 
----
+Testing direction for Phase 4:
 
-## Timeline
+- Preserve existing Node/assert regression tests.
+- Add focused tests only where Phase 4 changes create testable logic.
+- Consider browser smoke tests only if approved.
+- Do not migrate the test runner unless the cost is justified and approved.
 
-```
-W1          W2          W3          W4
-●───────────●───────────●───────────●
-Core        Full        UI          PWA &
-Parser      Sections    Polish      Release
-```
+## Historical Planning Notes
 
----
+The original four-week checklist and task IDs have been replaced by the completed milestone summaries above. Those old checklist items were useful while planning, but they no longer reflected the released project state.
 
-*iOS Analytics File Parser · v1.0 roadmap*
+The original timeline should be treated as historical planning context, not the current source of truth. The current source of truth is:
+
+- `README.md` for user-facing support and limitations.
+- `CHANGELOG.md` for release history.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, and `PHASE_3_SUMMARY.md` for phase details.
+- This roadmap for active and future project direction.
+
+## Post-Phase-4 Exploratory Ideas
+
+These ideas are intentionally out of scope for Phase 4 unless explicitly approved later.
+
+| Area | Idea |
+| --- | --- |
+| Symbolication | Client-side `.dSYM` symbolication for resolving raw addresses without a backend |
+| Diagnostics | Confidence-based diagnosis rules for known crash signatures |
+| Panic analysis | Optional panic repair hint rules for repeated panic-full signatures |
+| MetricKit | `MXCrashDiagnostic` format support |
+| Sysdiagnose | Local sysdiagnose archive extraction and file picker |
+| Comparison | Diff view for comparing two reports side by side |
+| Sharing | Local-only share/export format that does not upload reports |
+
+## Next Planning Step
+
+Before Phase 4 implementation begins, produce a focused Phase 4 plan covering:
+
+- exact PWA/offline requirements
+- CSP policy
+- hosting target
+- manual QA matrix
+- browser smoke-test decision
+- release/versioning cleanup
