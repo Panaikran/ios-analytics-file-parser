@@ -1,0 +1,50 @@
+{
+  "bug_type": "298",
+  "reason": "per-process-limit",
+  "timestamp": "2026-06-21 16:00:00.000 +0700",
+  "os_version": "iPhone OS 17.5 (21F79)",
+  "device_model": "iPhone16,2",
+  "victim": {
+    "name": "MemoryHog",
+    "pid": 6001,
+    "footprintMB": 512
+  },
+  "rpages": 32768,
+  "memoryLimitMB": 600,
+  "processes": [
+    {
+      "name": "Maps",
+      "pid": 4002,
+      "rssMB": 180,
+      "footprintMB": 220,
+      "priority": 10,
+      "role": "foreground"
+    },
+    {
+      "name": "MemoryHog",
+      "pid": 6001,
+      "rssMB": 460,
+      "footprintMB": 512,
+      "priority": 3,
+      "role": "foreground"
+    },
+    {
+      "name": "syncdefaultsd",
+      "pid": 81,
+      "rssMB": 32,
+      "footprintMB": 48,
+      "priority": 1,
+      "role": "daemon"
+    }
+  ],
+  "memoryStatus": {
+    "pageSize": 16384,
+    "memoryPages": {
+      "free": 12000,
+      "active": 80000,
+      "inactive": 45000,
+      "wired": 30000,
+      "speculative": 6000
+    }
+  }
+}

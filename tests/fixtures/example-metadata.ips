@@ -1,0 +1,45 @@
+{"app_name":"MetadataApp","bundleID":"com.example.metadata","app_version":"9.9.9","build_version":"999","os_version":"iPhone OS 27.0 (24A5370h)","incident_id":"FAKE-METADATA-INCIDENT","bug_type":"309"}
+{
+  "bug_type": "309",
+  "incident": "BODY-INCIDENT-FALLBACK",
+  "captureTime": "2026-06-23 08:00:00.000 +0700",
+  "version": 2,
+  "procName": "BodyProcName",
+  "bundleInfo": {
+    "CFBundleIdentifier": "com.example.bundleinfo",
+    "CFBundleShortVersionString": "1.2.3",
+    "CFBundleVersion": "123"
+  },
+  "modelCode": "iPhone18,1",
+  "osVersion": {
+    "train": "iPhone OS 27.0",
+    "build": "24A5370h"
+  },
+  "exception": {
+    "type": "EXC_CRASH",
+    "signal": "SIGABRT",
+    "codes": "0x0000000000000000, 0x0000000000000000"
+  },
+  "faultingThread": 0,
+  "threads": [
+    {
+      "triggered": true,
+      "frames": [
+        {
+          "imageIndex": 0,
+          "imageOffset": 16,
+          "symbol": "main",
+          "symbolLocation": 4
+        }
+      ]
+    }
+  ],
+  "usedImages": [
+    {
+      "name": "MetadataApp",
+      "uuid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+      "base": 4294967296,
+      "arch": "arm64"
+    }
+  ]
+}

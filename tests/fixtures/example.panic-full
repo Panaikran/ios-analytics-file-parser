@@ -1,0 +1,18 @@
+panic(cpu 0 caller 0xfffffff007000000): "userspace watchdog timeout: no successful checkins from backboardd"
+Debugger message: panic
+Panic flags: 0x802
+OS version: iPhone OS 17.5 (21F79)
+Kernel version: Darwin Kernel Version 23.5.0: RELEASE_ARM64_T8120
+KernelCache UUID: AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE
+Hardware model: iPhone16,2
+
+Backtrace (CPU 0), Frame : Return Address
+0xffffffe00a123aa0 : 0xfffffff007123456
+0xffffffe00a123b10 : 0xfffffff007654321
+
+Kernel Extensions in backtrace:
+com.apple.driver.ExampleKext(1.0)[BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF]@0xfffffff008000000->0xfffffff00800ffff
+
+Loaded kexts:
+com.apple.driver.ExampleKext 1.0
+com.apple.iokit.IOExampleFamily 2.1

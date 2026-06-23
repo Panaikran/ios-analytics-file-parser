@@ -1,15 +1,18 @@
 import { detectFileType } from './detect.js';
+import { parseAnalytics } from './parseAnalytics.js';
 import { parseCrash } from './parseCrash.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 import { parseIps } from './parseIps.js';
 import { parseIpsWatchdogStackshot } from './parseIpsWatchdogStackshot.js';
-import { parsePanicStub } from './parsePanicStub.js';
+import { parseJetsam } from './parseJetsam.js';
+import { parsePanic } from './parsePanic.js';
 
 export function parseInput(input) {
   const type = detectFileType(input);
 
   if (type === 'ips') {
-    return parseIps(parseIpsContainer(input).body);
+    const parsed = parseIpsContainer(input);
+    return parseIps(parsed.body, parsed.metadata);
   }
 
   if (type === 'ips-watchdog-stackshot') {
@@ -21,9 +24,18 @@ export function parseInput(input) {
     return parseCrash(input);
   }
 
-  if (type === 'panic') {
-    return parsePanicStub();
+  if (type === 'jetsam') {
+    const parsed = parseIpsContainer(input);
+    return parseJetsam(parsed.body, parsed.metadata);
   }
 
-  throw new Error('Unsupported or unrecognized Phase 1 file type.');
+  if (type === 'panic') {
+    return parsePanic(input);
+  }
+
+  if (type === 'analytics') {
+    return parseAnalytics(input);
+  }
+
+  throw new Error('Unsupported or unrecognized file type.');
 }

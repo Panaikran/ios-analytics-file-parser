@@ -194,6 +194,25 @@ textarea {
   color: var(--critical);
 }
 
+.chart {
+  margin-top: 18px;
+}
+
+.chart canvas {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #111113;
+}
+
+.chart-caption {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .raw-note {
   margin: 16px 0 0;
   color: var(--warning);

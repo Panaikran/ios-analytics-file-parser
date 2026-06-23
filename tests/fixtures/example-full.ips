@@ -1,0 +1,58 @@
+{
+  "bug_type": "309",
+  "incident": "FAKE-FULL-IPS-0001",
+  "timestamp": "2026-06-21 15:00:00.000 +0700",
+  "app_name": "FullDemoApp",
+  "bundleID": "com.example.fulldemo",
+  "app_version": "3.0.0",
+  "build_version": "900",
+  "os_version": "iPhone OS 17.5 (21F79)",
+  "device_model": "iPhone16,2",
+  "exception": {
+    "type": "EXC_BAD_ACCESS",
+    "signal": "SIGSEGV",
+    "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000"
+  },
+  "termination": {
+    "namespace": "SIGNAL",
+    "code": 11,
+    "indicator": "Segmentation fault: 11"
+  },
+  "faultingThread": 0,
+  "threads": [
+    {
+      "triggered": true,
+      "id": 101,
+      "frames": [
+        { "imageIndex": 0, "imageOffset": 4096, "symbol": "crashNow", "symbolLocation": 12 },
+        { "imageIndex": 1, "imageOffset": 8192, "symbol": "UIApplicationMain", "symbolLocation": 88 }
+      ]
+    },
+    {
+      "id": 202,
+      "frames": [
+        { "imageIndex": 2, "imageOffset": 128, "symbol": "mach_msg_trap", "symbolLocation": 8 }
+      ]
+    }
+  ],
+  "usedImages": [
+    {
+      "name": "FullDemoApp",
+      "uuid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+      "base": 4294967296,
+      "arch": "arm64"
+    },
+    {
+      "name": "UIKitCore",
+      "uuid": "BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF",
+      "base": 8589934592,
+      "arch": "arm64"
+    },
+    {
+      "name": "libsystem_kernel.dylib",
+      "uuid": "CCCCCCCC-DDDD-EEEE-FFFF-000000000000",
+      "base": 12884901888,
+      "arch": "arm64e"
+    }
+  ]
+}

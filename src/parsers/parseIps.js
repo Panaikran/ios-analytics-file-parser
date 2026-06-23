@@ -1,24 +1,26 @@
 import { createSection } from '../models/sectionModel.js';
 import { sanitizeText } from '../privacy/sanitize.js';
 
-export function parseIps(report) {
+export function parseIps(report, metadata = {}) {
   const images = Array.isArray(report.usedImages) ? report.usedImages : [];
   const triggeredThreadIndex = findTriggeredThreadIndex(report);
   const triggeredThread = report.threads?.[triggeredThreadIndex] ?? report.threads?.[0] ?? {};
+  const normalizedMetadata = normalizeMetadata(report, metadata);
 
-  return [
+  const sections = [
     createSection({
       id: 'summary',
       title: 'Summary',
       priority: 'info',
       fields: compactFields([
-        ['App', report.app_name || report.procName || report.processName],
-        ['Bundle ID', report.bundleID || report.bundleIdentifier],
-        ['Version', report.app_version || report.version],
-        ['Build', report.build_version || report.build],
-        ['Device', report.device_model || report.modelCode],
-        ['OS Version', report.os_version || report.osVersion],
-        ['Incident Date', report.timestamp || report.captureTime],
+        ['App', normalizedMetadata.appName],
+        ['Bundle ID', normalizedMetadata.bundleId],
+        ['Version', normalizedMetadata.appVersion],
+        ['Build', normalizedMetadata.buildNumber],
+        ['Device', normalizedMetadata.device],
+        ['OS Version', normalizedMetadata.osVersion],
+        ['Incident Date', normalizedMetadata.incidentDate],
+        ['Incident ID', normalizedMetadata.incidentId],
       ]),
     }),
     createSection({
@@ -41,6 +43,92 @@ export function parseIps(report) {
       table: framesToRows(triggeredThread.frames, images),
     }),
   ];
+
+  if (Array.isArray(report.threads) && report.threads.length) {
+    sections.push(
+      createSection({
+        id: 'all-threads',
+        title: 'All Threads',
+        priority: 'info',
+        tableColumns: [
+          { key: 'thread', label: 'Thread' },
+          { key: 'frame', label: 'Frame' },
+          { key: 'binary', label: 'Binary' },
+          { key: 'address', label: 'Address' },
+          { key: 'symbol', label: 'Symbol' },
+        ],
+        table: allThreadsToRows(report.threads, images),
+      })
+    );
+  }
+
+  if (images.length) {
+    sections.push(
+      createSection({
+        id: 'binary-images',
+        title: 'Binary Images',
+        priority: 'info',
+        tableColumns: [
+          { key: 'name', label: 'Name' },
+          { key: 'uuid', label: 'UUID' },
+          { key: 'arch', label: 'Arch' },
+          { key: 'loadAddress', label: 'Load Address' },
+        ],
+        table: imagesToRows(images),
+      })
+    );
+  }
+
+  return sections;
+}
+
+function normalizeMetadata(report, metadata = {}) {
+  metadata ??= {};
+  const bundleInfo = report.bundleInfo ?? {};
+
+  return {
+    appName: firstValue(metadata.app_name, metadata.name, bundleInfo.CFBundleName, report.app_name, report.procName, report.processName),
+    bundleId: firstValue(
+      metadata.bundleID,
+      metadata.bundleIdentifier,
+      bundleInfo.CFBundleIdentifier,
+      report.bundleID,
+      report.bundleIdentifier
+    ),
+    appVersion: firstValue(
+      metadata.app_version,
+      metadata.version,
+      bundleInfo.CFBundleShortVersionString,
+      report.app_version,
+      report.appVersion,
+      report.version
+    ),
+    buildNumber: firstValue(
+      metadata.build_version,
+      metadata.build,
+      bundleInfo.CFBundleVersion,
+      report.build_version,
+      report.build
+    ),
+    osVersion: firstValue(metadata.os_version, formatOsVersion(metadata.osVersion), formatOsVersion(report.osVersion), report.os_version),
+    incidentId: firstValue(metadata.incident_id, metadata.incident, report.incident_id, report.incident),
+    incidentDate: firstValue(metadata.timestamp, report.timestamp, report.captureTime),
+    device: firstValue(metadata.device_model, metadata.modelCode, report.device_model, report.modelCode),
+  };
+}
+
+function firstValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
+function formatOsVersion(osVersion) {
+  if (!osVersion) return '';
+  if (typeof osVersion === 'string') return osVersion;
+  if (typeof osVersion !== 'object') return String(osVersion);
+
+  return [osVersion.train, osVersion.build ? `(${osVersion.build})` : '', osVersion.releaseType]
+    .filter(Boolean)
+    .join(' ');
 }
 
 function findTriggeredThreadIndex(report) {
@@ -67,6 +155,24 @@ function framesToRows(frames = [], images = []) {
       symbol: sanitizeText(symbol || '<redacted or unavailable>'),
     };
   });
+}
+
+function allThreadsToRows(threads, images) {
+  return threads.flatMap((thread, threadIndex) =>
+    framesToRows(thread.frames, images).map((row) => ({
+      thread: `Thread ${threadIndex}`,
+      ...row,
+    }))
+  );
+}
+
+function imagesToRows(images) {
+  return images.map((image) => ({
+    name: sanitizeText(image.name || 'Unknown'),
+    uuid: image.uuid || '',
+    arch: sanitizeText(image.arch || ''),
+    loadAddress: typeof image.base === 'number' ? `0x${image.base.toString(16).padStart(16, '0')}` : '',
+  }));
 }
 
 function formatTermination(termination) {

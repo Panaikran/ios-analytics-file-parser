@@ -1,0 +1,25 @@
+Incident Identifier: FAKE-FULL-CRASH-0001
+Hardware Model: iPhone16,2
+Process: FullDemoApp [5150]
+Identifier: com.example.fulldemo
+Version: 3.0.0 (900)
+Code Type: ARM-64
+OS Version: iPhone OS 17.5 (21F79)
+Date/Time: 2026-06-21 15:00:00.000 +0700
+
+Exception Type: EXC_BAD_ACCESS (SIGSEGV)
+Exception Subtype: KERN_INVALID_ADDRESS at 0x0000000000000000
+Exception Codes: 0x0000000000000001, 0x0000000000000000
+Termination Reason: Namespace SIGNAL, Code 11 Segmentation fault: 11
+Triggered by Thread: 0
+
+Thread 0 Crashed:
+0   FullDemoApp                     0x0000000100001000 crashNow + 12
+1   UIKitCore                       0x0000000200002000 UIApplicationMain + 88
+
+Thread 1:
+0   libsystem_kernel.dylib          0x0000000300000080 mach_msg_trap + 8
+
+Binary Images:
+0x100000000 - 0x10002ffff FullDemoApp arm64  <AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE> /private/var/containers/Bundle/Application/FAKE/FullDemoApp.app/FullDemoApp
+0x200000000 - 0x200ffffff UIKitCore arm64  <BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF> /System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore

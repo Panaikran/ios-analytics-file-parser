@@ -1,0 +1,62 @@
+{"bug_type":"298","timestamp":"2026-06-23 01:23:24.00 +0700","os_version":"iPhone OS 27.0 (24A5370h)","incident_id":"C2D7624C-69D5-43C1-BBCF-922926A98333"}
+{
+  "bug_type": "298",
+  "date": "2026-06-23 01:23:24.78 +0700",
+  "build": "iPhone OS 27.0 (24A5370h)",
+  "product": "iPhone18,1",
+  "incident": "C2D7624C-69D5-43C1-BBCF-922926A98333",
+  "largestProcess": "LargeApp",
+  "memoryStatus": {
+    "pageSize": 16384,
+    "memoryPages": {
+      "active": 144915,
+      "throttled": 0,
+      "fileBacked": 175137,
+      "wired": 319250,
+      "anonymous": 114179,
+      "purgeable": 1515,
+      "inactive": 139130,
+      "free": 10272,
+      "speculative": 5271
+    }
+  },
+  "processes": [
+    {
+      "states": ["daemon", "idle"],
+      "purgeable": 0,
+      "rpages": 256,
+      "physicalPages": {
+        "internal": [82, 39]
+      },
+      "name": "lowmemoryd",
+      "priority": 0,
+      "reason": "highwater",
+      "pid": 103,
+      "lifetimeMax": 300,
+      "killDelta": 1309330
+    },
+    {
+      "states": ["suspended"],
+      "purgeable": 0,
+      "rpages": 65536,
+      "physicalPages": {
+        "internal": [32000, 30000]
+      },
+      "name": "LargeApp",
+      "priority": 0,
+      "pid": 1202,
+      "lifetimeMax": 70000
+    },
+    {
+      "states": ["active"],
+      "purgeable": 0,
+      "physicalPages": {
+        "internal": [10000, 6384]
+      },
+      "name": "Messenger",
+      "priority": 100,
+      "pid": 1236,
+      "lifetimeMax": 20000
+    }
+  ]
+}
