@@ -1,0 +1,4 @@
+{"bug_type":"211","timestamp":"2026-06-23 07:00:00.00 +0700","os_version":"iPhone OS 27.0 (24A5370h)","roots_installed":0,"incident_id":"11111111-2222-3333-4444-555555555555"}
+{"_marker":"config","configDbVersion":"100","configUuid":"AAAA1111-BBBB-2222-CCCC-333333333333","sessionId":"SESSION-COREANALYTICS-0001","rolloverReason":"scheduled"}
+{"aggregationPeriod":"daily","deviceId":"DEVICE-COREANALYTICS-0001","message":"com.example.launch","name":"launchCount","numDaysAggregated":1,"sampling":"100","uuid":"AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"}
+{"_marker":"end"}

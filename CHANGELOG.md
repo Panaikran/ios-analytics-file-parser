@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.3.1-alpha
+
+CoreAnalytics patch release.
+
+### Added
+
+- Content-based CoreAnalytics `.ips.ca.synced` detection.
+- Dedicated CoreAnalytics parser for newline-delimited JSON records.
+- CoreAnalytics sections for summary, configuration, record overview, event types, sample records, and parser notes.
+- Key-aware CoreAnalytics privacy handling for `incident_id`, `deviceId`, `uuid`, `configUuid`, and `sessionId`.
+- 100-row caps for CoreAnalytics grouped event rows and sample record rows.
+- Sanitized fictional CoreAnalytics fixtures and regression tests.
+
+### Notes
+
+- CoreAnalytics search and copy operate on rendered capped rows, not every source record.
+- CoreAnalytics does not render full raw JSON bodies.
+- Phase 4 PWA/deployment work has not started.
+
 ## v0.3.0-alpha
 
 Phase 3 UI polish and release hardening.
@@ -37,7 +56,7 @@ Phase 3 UI polish and release hardening.
 
 ### Notes
 
-- Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON reports are not supported yet.
+- Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON reports were added later in `v0.3.1-alpha`.
 - Phase 4 PWA/deployment work has not started.
 
 ## v0.2.0-alpha

@@ -7,12 +7,21 @@
 
 ## Overall Progress
 
+Current release status:
+
+- Phase 1: Complete.
+- Phase 2: Complete.
+- Phase 3: Complete.
+- `v0.3.1-alpha`: CoreAnalytics `.ips.ca.synced` detection and parser support implemented.
+- Phase 4: Not started.
+
 | Phase | Name | Week | Status | Tasks |
 |---|---|---|---|---|
-| P1 | Core Parser | Week 1 | 🔵 In Progress | 13 tasks |
-| P2 | Full Section Rendering | Week 2 | ⚪ Upcoming | 8 tasks |
-| P3 | UI Polish | Week 3 | ⚪ Upcoming | 8 tasks |
-| P4 | PWA & Release | Week 4 | ⚪ Upcoming | 7 tasks |
+| P1 | Core Parser | Week 1 | Complete | 13 tasks |
+| P2 | Full Section Rendering | Week 2 | Complete | 8 tasks |
+| P3 | UI Polish | Week 3 | Complete | 8 tasks |
+| v0.3.1-alpha | CoreAnalytics Support | Patch | Complete | Initial `.ips.ca.synced` detection and parser support |
+| P4 | PWA & Release | Week 4 | Not Started | 7 tasks |
 
 ---
 

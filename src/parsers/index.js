@@ -1,5 +1,6 @@
 import { detectFileType } from './detect.js';
 import { parseAnalytics } from './parseAnalytics.js';
+import { parseCoreAnalytics } from './parseCoreAnalytics.js';
 import { parseCrash } from './parseCrash.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 import { parseIps } from './parseIps.js';
@@ -36,6 +37,10 @@ export function parseInput(input, { sanitize = true } = {}) {
 
   if (type === 'analytics') {
     return parseAnalytics(input, options);
+  }
+
+  if (type === 'coreanalytics') {
+    return parseCoreAnalytics(input, options);
   }
 
   throw new Error('Unsupported or unrecognized file type.');

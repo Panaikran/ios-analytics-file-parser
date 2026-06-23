@@ -34,6 +34,9 @@ const realSchemaJetsamText = await readFile(new URL('./fixtures/example-jetsam-r
 const panicText = await readFile(new URL('./fixtures/example.panic-full', import.meta.url), 'utf8');
 const jsonPanicText = await readFile(new URL('./fixtures/example-panic-json.ips', import.meta.url), 'utf8');
 const analyticsText = await readFile(new URL('./fixtures/example-analytics.txt', import.meta.url), 'utf8');
+const coreAnalyticsSmallText = await readFile(new URL('./fixtures/example-coreanalytics-small.ips.ca.synced', import.meta.url), 'utf8');
+const coreAnalyticsMediumText = await readFile(new URL('./fixtures/example-coreanalytics-medium.ips.ca.synced', import.meta.url), 'utf8');
+const coreAnalyticsLargeText = await readFile(new URL('./fixtures/example-coreanalytics-large.ips.ca.synced', import.meta.url), 'utf8');
 
 assert.deepEqual(
   EXAMPLE_REPORTS.map((example) => example.type),
@@ -78,6 +81,12 @@ assert.equal(
 );
 assert.equal(detectFileType(jsonPanicText), 'panic', 'detects JSON-wrapped panic-full IPS');
 assert.equal(detectFileType(analyticsText), 'analytics', 'detects generic analytics text');
+assert.equal(detectFileType(coreAnalyticsSmallText), 'coreanalytics', 'detects CoreAnalytics newline-delimited JSON');
+assert.equal(
+  detectFileType('{"not":"coreanalytics"}\n{"still":"not-coreanalytics"}'),
+  'unknown',
+  'malformed brace-starting JSON that is not CoreAnalytics remains unknown'
+);
 
 const ipsSections = parseInput(ipsText);
 assert.deepEqual(
@@ -425,6 +434,71 @@ assert.deepEqual(
 );
 assert.equal(fieldValue(sectionById(analyticsSections, 'analytics-summary'), 'Detected Sections'), '3');
 assert.match(sectionById(analyticsSections, 'analytics-sections').table[0].content, /Launch started/);
+
+const coreAnalyticsSections = parseInput(coreAnalyticsMediumText);
+assert.deepEqual(
+  coreAnalyticsSections.map((section) => section.id),
+  [
+    'coreanalytics-summary',
+    'coreanalytics-configuration',
+    'coreanalytics-record-overview',
+    'coreanalytics-event-types',
+    'coreanalytics-sample-records',
+    'coreanalytics-parser-notes',
+  ],
+  'CoreAnalytics parser returns the expected sections'
+);
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Bug Type'), '211');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Timestamp'), '2026-06-23 08:00:00.00 +0700');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'OS Version'), 'iPhone OS 27.0 (24A5370h)');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Roots Installed'), '0');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Incident ID'), '[identifier redacted]');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Total Records'), '9');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Parsed Records'), '8');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Invalid Records'), '1');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-record-overview'), 'Total event records'), '5');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-record-overview'), 'Unique message count'), '3');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-record-overview'), 'Unique name count'), '3');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-record-overview'), 'Aggregation periods observed'), 'daily, weekly');
+assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-record-overview'), 'Sampling values observed'), '100, 50, 25');
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-event-types').table[0].message, 'com.example.launch');
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-event-types').table[0].name, 'launchCount');
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-event-types').table[0].count, '2');
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-event-types').tableSummary, '3 of 3 event groups shown');
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-sample-records').table.length, 5);
+assert.equal(sectionById(coreAnalyticsSections, 'coreanalytics-sample-records').tableSummary, '5 of 5 event records shown');
+assert.match(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-parser-notes'), 'Invalid Lines'), /1 invalid/);
+assert.match(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-parser-notes'), 'Row Caps'), /100/);
+assert.match(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-parser-notes'), 'Privacy'), /omitted\/redacted/);
+
+const sanitizedCoreAnalyticsText = coreAnalyticsSections.flatMap((section) => [
+  ...(section.fields ?? []).map((field) => `${field.label}: ${field.value}`),
+  ...(section.table ?? []).flatMap((row) => Object.values(row)),
+]).join('\n');
+assert.doesNotMatch(sanitizedCoreAnalyticsText, /22222222-3333-4444-5555-666666666666/);
+assert.doesNotMatch(sanitizedCoreAnalyticsText, /DEVICE-COREANALYTICS-0002/);
+assert.doesNotMatch(sanitizedCoreAnalyticsText, /BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF/);
+assert.doesNotMatch(sanitizedCoreAnalyticsText, /SESSION-COREANALYTICS-0002/);
+assert.match(sanitizedCoreAnalyticsText, /\[identifier redacted\]/);
+
+const rawCoreAnalyticsSections = parseInput(coreAnalyticsMediumText, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawCoreAnalyticsSections, 'coreanalytics-summary'), 'Incident ID'),
+  '22222222-3333-4444-5555-666666666666',
+  'CoreAnalytics raw mode preserves fictional incident ID'
+);
+assert.equal(
+  fieldValue(sectionById(rawCoreAnalyticsSections, 'coreanalytics-configuration'), 'Session ID'),
+  'SESSION-COREANALYTICS-0002',
+  'CoreAnalytics raw mode preserves fictional session ID'
+);
+
+const largeCoreAnalyticsSections = parseInput(coreAnalyticsLargeText);
+assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-event-types').table.length, 100, 'CoreAnalytics grouped rows are capped');
+assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-records').table.length, 100, 'CoreAnalytics sample rows are capped');
+assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-event-types').tableSummary, '100 of 200 event groups shown');
+assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-records').tableSummary, '100 of 200 event records shown');
+assert.equal(fieldValue(sectionById(largeCoreAnalyticsSections, 'coreanalytics-record-overview'), 'Total event records'), '200');
 
 const sanitized = sanitizeText(
   'Email tester@example.com UDID 99999999-9999-9999-9999-999999999999 phone +1 (415) 555-1212 path C:\\Users\\Alice\\Desktop\\log.ips bundle com.example.demoapp uuid AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE'

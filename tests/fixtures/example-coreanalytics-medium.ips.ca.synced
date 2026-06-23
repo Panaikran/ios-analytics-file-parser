@@ -1,0 +1,9 @@
+{"bug_type":"211","timestamp":"2026-06-23 08:00:00.00 +0700","os_version":"iPhone OS 27.0 (24A5370h)","roots_installed":0,"incident_id":"22222222-3333-4444-5555-666666666666"}
+{"_marker":"config","configDbVersion":"101","configUuid":"BBBB1111-CCCC-2222-DDDD-333333333333","sessionId":"SESSION-COREANALYTICS-0002","rolloverReason":"scheduled","stateDbVersion":"20"}
+{"aggregationPeriod":"daily","deviceId":"DEVICE-COREANALYTICS-0002","message":"com.example.launch","name":"launchCount","numDaysAggregated":1,"sampling":"100","uuid":"BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF"}
+{"aggregationPeriod":"daily","deviceId":"DEVICE-COREANALYTICS-0002","message":"com.example.launch","name":"launchCount","numDaysAggregated":1,"sampling":"100","uuid":"CCCCCCCC-DDDD-EEEE-FFFF-000000000000"}
+{"aggregationPeriod":"weekly","deviceId":"DEVICE-COREANALYTICS-0002","message":"com.example.session","name":"duration","numDaysAggregated":7,"sampling":"50","uuid":"DDDDDDDD-EEEE-FFFF-0000-111111111111"}
+{"aggregationPeriod":"weekly","deviceId":"DEVICE-COREANALYTICS-0002","message":"com.example.session","name":"duration","numDaysAggregated":7,"sampling":"50","uuid":"EEEEEEEE-FFFF-0000-1111-222222222222"}
+{"aggregationPeriod":"daily","deviceId":"DEVICE-COREANALYTICS-0002","message":"com.example.network","name":"requestCount","numDaysAggregated":1,"sampling":"25","uuid":"FFFFFFFF-0000-1111-2222-333333333333"}
+{"this line is invalid json"
+{"_marker":"end"}

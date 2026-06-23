@@ -4,6 +4,8 @@
 
 Phase 3 is complete for the `v0.3.0-alpha` release target.
 
+Post-Phase 3 release note: `v0.3.1-alpha` adds initial CoreAnalytics `.ips.ca.synced` support after the `v0.3.0-alpha` UI release.
+
 This phase focused on turning the Phase 1 and Phase 2 parser layer into a more usable local diagnostic viewer. The app remains a static, browser-native ES module application with no build step and no server-side component.
 
 Phase 3 did not add backend services, authentication, analytics, cloud storage, framework dependencies, or report persistence.
@@ -58,6 +60,7 @@ Examples use the same parse path as file and paste input.
 - Matching table rows are filtered down to visible matches.
 - Empty result state shows `No matches in parsed output.`
 - Search results take precedence over collapsed dense table state.
+- CoreAnalytics search runs against rendered capped rows, not every source record.
 
 ### Copy Section Actions
 
@@ -66,6 +69,7 @@ Examples use the same parse path as file and paste input.
 - Copy includes visible section title, fields, table rows, table summaries, raw text, and chart data where present.
 - Copy respects current privacy mode.
 - Copy respects search filtering and dense table visibility.
+- CoreAnalytics copy uses rendered capped rows and does not include full raw JSON bodies.
 
 ### Dense Table Controls
 
@@ -216,6 +220,7 @@ The Node/assert-only test suite covers:
 - Jetsam row-limit helpers
 - large-kext detection
 - production example metadata and parsing
+- CoreAnalytics detection, parser summaries, row caps, and privacy behavior in `v0.3.1-alpha`
 
 Focused syntax checks used during Phase 3:
 
@@ -238,12 +243,13 @@ Validated successfully:
 
 - real standard app crash `.ips`
 - real panic-full `.ips`
+- real CoreAnalytics `.ips.ca.synced` files after the `v0.3.1-alpha` parser update
 
-Observed parser gap:
+Resolved parser gap:
 
-- structured CoreAnalytics `.ips.ca.synced` files using line-delimited JSON currently detect as `unknown` and are not parsed.
+- structured CoreAnalytics `.ips.ca.synced` files using line-delimited JSON now detect as `coreanalytics` and render capped summary, configuration, record overview, event type, sample record, and parser notes sections in `v0.3.1-alpha`.
 
-The `.ips.ca.synced` files should become future sanitized fictional fixture patterns because they contain structured analytics records and privacy-sensitive keys such as device IDs, UUIDs, session IDs, config UUIDs, and incident IDs.
+Sanitized fictional `.ips.ca.synced` fixture patterns were added for CoreAnalytics because real files contain structured analytics records and privacy-sensitive keys such as device IDs, UUIDs, session IDs, config UUIDs, and incident IDs.
 
 ## Known Limitations
 
@@ -262,8 +268,9 @@ The `.ips.ca.synced` files should become future sanitized fictional fixture patt
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
 - Examples may require serving the repository through a local static server because browser `file://` fetch behavior varies.
 - The current UI is dark themed; dark/light mode is not implemented.
-- Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON reports are not supported yet.
-- The generic analytics fallback supports generic/unstructured analytics text, not structured CoreAnalytics record streams.
+- CoreAnalytics does not render full raw JSON bodies.
+- CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
+- CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - No symbolication.
 - No `.dSYM` support.
 - No sysdiagnose archive extraction.

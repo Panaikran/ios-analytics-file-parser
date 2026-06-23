@@ -6,6 +6,7 @@ export function createSection({
   raw = '',
   table = null,
   tableColumns = null,
+  tableSummary = '',
   chart = null,
 }) {
   return {
@@ -16,6 +17,7 @@ export function createSection({
     raw,
     table,
     tableColumns,
+    tableSummary,
     chart,
   };
 }

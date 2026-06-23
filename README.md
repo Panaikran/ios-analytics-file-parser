@@ -20,7 +20,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Release target | `v0.3.0-alpha` |
+| Release target | `v0.3.1-alpha` |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -71,11 +71,11 @@ Raw mode applies only to the currently loaded report. Loading a new file, paste,
 | JetsamEvent `.ips` | `jetsam` | Summary, Victim / Likely Culprit, Process Table, System Memory, Limits, memory chart |
 | Panic-full text or JSON-wrapped `.ips` | `panic` | Panic String, Panic Flags, Kernel Backtrace, Loaded Kexts, System Info |
 | Generic analytics text | `analytics` | Fallback summary and grouped text sections |
-| Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `unknown` | Not supported yet |
+| Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `coreanalytics` | Summary, Configuration, Record Overview, Event Types, Sample Records, Parser Notes |
 
 ## Feature Support
 
-| Feature | v0.3.0-alpha |
+| Feature | v0.3.1-alpha |
 | --- | --- |
 | Static browser app | Supported |
 | Browser-native ES modules | Supported |
@@ -96,7 +96,7 @@ Raw mode applies only to the currently loaded report. Loading a new file, paste,
 | Binary image horizontal overflow | Supported |
 | Memory chart | Supported, simple Canvas chart |
 | Generic analytics fallback parser | Supported |
-| CoreAnalytics `.ips.ca.synced` line-delimited JSON | Not supported yet |
+| CoreAnalytics `.ips.ca.synced` line-delimited JSON | Supported, capped rendered rows |
 | PWA/offline mode | Not started |
 | Web App Manifest | Not started |
 | CSP hardening | Not started |
@@ -122,6 +122,7 @@ Raw mode applies only to the currently loaded report. Loading a new file, paste,
 - Jetsam process tables sorted by best available memory value.
 - Panic backtrace and loaded kext tables.
 - Generic analytics fallback grouping for unstructured analytics text.
+- CoreAnalytics `.ips.ca.synced` summary, configuration, record overview, event type grouping, capped sample records, and parser notes.
 - Section-specific table columns.
 - Simple Jetsam memory bar chart.
 
@@ -133,6 +134,18 @@ Raw mode applies only to the currently loaded report. Loading a new file, paste,
 - Search results override collapsed dense-table state so matches remain visible.
 - Copy buttons on each section.
 - Copy output uses plain text and reflects currently visible content.
+- CoreAnalytics search and copy operate on rendered capped rows, not every source record.
+
+### CoreAnalytics Sections
+
+Initial CoreAnalytics `.ips.ca.synced` support renders these sections:
+
+- `coreanalytics-summary`
+- `coreanalytics-configuration`
+- `coreanalytics-record-overview`
+- `coreanalytics-event-types`
+- `coreanalytics-sample-records`
+- `coreanalytics-parser-notes`
 
 ### Dense Table Controls
 
@@ -287,6 +300,7 @@ visible SectionModel -> src/clipboard/* -> plain text clipboard
 |   |   |-- parseIpsContainer.js
 |   |   |-- parseIpsWatchdogStackshot.js
 |   |   |-- parseJetsam.js
+|   |   |-- parseCoreAnalytics.js
 |   |   `-- parsePanic.js
 |   |-- privacy/
 |   |   `-- sanitize.js
@@ -333,6 +347,7 @@ parseInput(text, { sanitize: false })
 - `fields`
 - `table`
 - `tableColumns`
+- `tableSummary`
 - `chart`
 - `raw`
 
@@ -361,7 +376,7 @@ Test fixtures live separately in `tests/fixtures/` and should not be loaded by t
 - [Phase 2 Summary](PHASE_2_SUMMARY.md)
 - [Phase 3 Summary](PHASE_3_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
-- `CHANGELOG.md` is planned for release tracking.
+- [Changelog](CHANGELOG.md)
 
 ## Known Limitations
 
@@ -375,8 +390,9 @@ Test fixtures live separately in `tests/fixtures/` and should not be loaded by t
 - Clipboard behavior depends on browser permissions and secure-context rules.
 - Very large visible search results can still require substantial DOM rerendering.
 - Search is simple substring matching; there is no regex, tokenization, or highlighting.
-- Structured CoreAnalytics `.ips.ca.synced` reports that use line-delimited JSON are not supported yet.
-- The generic analytics fallback is for generic/unstructured analytics text, not structured CoreAnalytics record streams.
+- CoreAnalytics does not render full raw JSON bodies.
+- CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
+- CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
@@ -395,8 +411,8 @@ Test fixtures live separately in `tests/fixtures/` and should not be loaded by t
 | Phase 1 | Complete | Core `.ips` and `.crash` parser, privacy sanitizer, panic stub, tests |
 | Phase 2 | Complete | Full section rendering, JetsamEvent, panic-full, analytics fallback, memory chart |
 | Phase 3 | Complete | UI polish, examples, search, copy, dense tables, privacy toggle, mobile/accessibility improvements |
+| v0.3.1-alpha | Complete | Initial CoreAnalytics `.ips.ca.synced` line-delimited JSON detection and parser support |
 | Phase 4 | Not started | PWA, offline mode, web manifest, CSP hardening, deployment, release preparation |
-| Future | Not started | Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON support |
 
 Phase 4 should keep the same constraints:
 
