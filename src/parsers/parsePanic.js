@@ -1,8 +1,9 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 
-export function parsePanic(input) {
+export function parsePanic(input, options = {}) {
+  const sanitizeText = createSanitizer(options);
   const context = normalizePanicInput(input);
   const lines = context.panicText.split(/\r?\n/);
   const panicLine = lines.find((line) => /^panic\(/i.test(line)) ?? lines.find(Boolean) ?? '';
@@ -18,7 +19,7 @@ export function parsePanic(input) {
       id: 'panic-flags',
       title: 'Panic Flags',
       priority: 'warning',
-      fields: compactFields([['Flags', context.body?.panicFlags ?? findColonValue(lines, 'Panic flags')]]),
+      fields: compactFields([['Flags', context.body?.panicFlags ?? findColonValue(lines, 'Panic flags')]], sanitizeText),
     }),
     createSection({
       id: 'kernel-backtrace',
@@ -32,7 +33,7 @@ export function parsePanic(input) {
         { key: 'fp', label: 'FP' },
         { key: 'rawLine', label: 'Raw' },
       ],
-      table: parseBacktrace(lines),
+      table: parseBacktrace(lines, sanitizeText),
     }),
     createSection({
       id: 'loaded-kexts',
@@ -44,7 +45,7 @@ export function parsePanic(input) {
         { key: 'range', label: 'Range' },
         { key: 'kind', label: 'Kind' },
       ],
-      table: parseKexts(lines),
+      table: parseKexts(lines, sanitizeText),
     }),
     createSection({
       id: 'system-info',
@@ -57,7 +58,7 @@ export function parsePanic(input) {
         ['Date', context.metadata?.timestamp ?? context.body?.date],
         ['Bug Type', context.metadata?.bug_type ?? context.body?.bug_type],
         ['Incident ID', context.metadata?.incident_id ?? context.body?.incident],
-      ]),
+      ], sanitizeText),
     }),
   ];
 }
@@ -84,7 +85,7 @@ function findColonValue(lines, label) {
   return line?.slice(line.indexOf(':') + 1).trim() ?? '';
 }
 
-function parseBacktrace(lines) {
+function parseBacktrace(lines, sanitizeText) {
   const rows = [];
   let inTraditionalBacktrace = false;
 
@@ -131,7 +132,7 @@ function parseBacktrace(lines) {
   return rows;
 }
 
-function parseKexts(lines) {
+function parseKexts(lines, sanitizeText) {
   const rows = [];
   let inLoadedKexts = false;
 
@@ -172,7 +173,7 @@ function parseKexts(lines) {
   return rows;
 }
 
-function compactFields(entries) {
+function compactFields(entries, sanitizeText) {
   return entries
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: sanitizeText(String(value)) }));

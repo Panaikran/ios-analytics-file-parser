@@ -1,7 +1,8 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 
-export function parseIpsWatchdogStackshot(report, metadata = {}) {
+export function parseIpsWatchdogStackshot(report, metadata = {}, options = {}) {
+  const sanitizeText = createSanitizer(options);
   const process = findTargetProcess(report);
   const mainThread = findMainThread(process);
 
@@ -17,7 +18,7 @@ export function parseIpsWatchdogStackshot(report, metadata = {}) {
         ['OS Version', formatOsVersion(report.osVersion) || metadata?.os_version],
         ['Incident Date', report.captureTime || metadata?.timestamp],
         ['PID', report.pid],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'termination',
@@ -28,13 +29,13 @@ export function parseIpsWatchdogStackshot(report, metadata = {}) {
         ['Code', report.termination?.code],
         ['Flags', report.termination?.flags],
         ['Details', formatDetails(report.termination?.details)],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'main-thread-stackshot',
       title: mainThread ? `Main Thread Stackshot - Thread ${mainThread.id}` : 'Main Thread Stackshot',
       priority: 'critical',
-      table: framesToRows(mainThread?.userFrames ?? mainThread?.resampledUserFrames ?? [], report.binaryImages),
+      table: framesToRows(mainThread?.userFrames ?? mainThread?.resampledUserFrames ?? [], report.binaryImages, sanitizeText),
       raw: mainThread ? '' : 'Main thread stackshot was not available in this report.',
     }),
   ];
@@ -55,7 +56,7 @@ function findMainThread(process) {
   );
 }
 
-function framesToRows(frames, binaryImages = []) {
+function framesToRows(frames, binaryImages = [], sanitizeText) {
   return frames.map(([imageIndex, offset], frame) => {
     const image = binaryImages[imageIndex] ?? [];
     const base = typeof image[1] === 'number' ? image[1] : 0;
@@ -82,7 +83,7 @@ function formatDetails(details) {
   return Array.isArray(details) ? details.join(' ') : details;
 }
 
-function compactFields(entries) {
+function compactFields(entries, sanitizeText) {
   return entries
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: sanitizeText(String(value)) }));

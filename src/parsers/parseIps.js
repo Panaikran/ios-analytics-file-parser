@@ -1,7 +1,8 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 
-export function parseIps(report, metadata = {}) {
+export function parseIps(report, metadata = {}, options = {}) {
+  const sanitizeText = createSanitizer(options);
   const images = Array.isArray(report.usedImages) ? report.usedImages : [];
   const triggeredThreadIndex = findTriggeredThreadIndex(report);
   const triggeredThread = report.threads?.[triggeredThreadIndex] ?? report.threads?.[0] ?? {};
@@ -21,7 +22,7 @@ export function parseIps(report, metadata = {}) {
         ['OS Version', normalizedMetadata.osVersion],
         ['Incident Date', normalizedMetadata.incidentDate],
         ['Incident ID', normalizedMetadata.incidentId],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'exception',
@@ -34,13 +35,13 @@ export function parseIps(report, metadata = {}) {
         ['Codes', report.exception?.codes],
         ['Termination Reason', formatTermination(report.termination)],
         ['Triggered Thread', String(triggeredThreadIndex)],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'crashed-thread',
       title: `Crashed Thread - Thread ${triggeredThreadIndex}`,
       priority: 'critical',
-      table: framesToRows(triggeredThread.frames, images),
+      table: framesToRows(triggeredThread.frames, images, sanitizeText),
     }),
   ];
 
@@ -57,7 +58,7 @@ export function parseIps(report, metadata = {}) {
           { key: 'address', label: 'Address' },
           { key: 'symbol', label: 'Symbol' },
         ],
-        table: allThreadsToRows(report.threads, images),
+        table: allThreadsToRows(report.threads, images, sanitizeText),
       })
     );
   }
@@ -74,7 +75,7 @@ export function parseIps(report, metadata = {}) {
           { key: 'arch', label: 'Arch' },
           { key: 'loadAddress', label: 'Load Address' },
         ],
-        table: imagesToRows(images),
+        table: imagesToRows(images, sanitizeText),
       })
     );
   }
@@ -138,7 +139,7 @@ function findTriggeredThreadIndex(report) {
   return index >= 0 ? index : 0;
 }
 
-function framesToRows(frames = [], images = []) {
+function framesToRows(frames = [], images = [], sanitizeText) {
   return frames.map((frame, index) => {
     const image = images[frame.imageIndex] ?? {};
     const base = typeof image.base === 'number' ? image.base : 0;
@@ -157,16 +158,16 @@ function framesToRows(frames = [], images = []) {
   });
 }
 
-function allThreadsToRows(threads, images) {
+function allThreadsToRows(threads, images, sanitizeText) {
   return threads.flatMap((thread, threadIndex) =>
-    framesToRows(thread.frames, images).map((row) => ({
+    framesToRows(thread.frames, images, sanitizeText).map((row) => ({
       thread: `Thread ${threadIndex}`,
       ...row,
     }))
   );
 }
 
-function imagesToRows(images) {
+function imagesToRows(images, sanitizeText) {
   return images.map((image) => ({
     name: sanitizeText(image.name || 'Unknown'),
     uuid: image.uuid || '',
@@ -182,7 +183,7 @@ function formatTermination(termination) {
     .join(', ');
 }
 
-function compactFields(entries) {
+function compactFields(entries, sanitizeText) {
   return entries
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: sanitizeText(String(value)) }));

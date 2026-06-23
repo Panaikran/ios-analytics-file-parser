@@ -1,7 +1,8 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 
-export function parseAnalytics(text) {
+export function parseAnalytics(text, options = {}) {
+  const sanitizeText = createSanitizer(options);
   const groups = splitGroups(text);
 
   return [

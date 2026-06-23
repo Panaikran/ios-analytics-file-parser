@@ -17,21 +17,49 @@
         </p>
       </section>
 
-      <section class="input-panel" aria-labelledby="input-title">
+      <section class="input-panel" id="input-panel" aria-labelledby="input-title">
         <h2 id="input-title">Load a report</h2>
         <label class="file-picker">
           <span>Choose file</span>
           <input id="file-input" type="file" accept=".ips,.crash,.panic-full,.log,.txt,text/plain,application/json">
         </label>
 
+        <button id="clear-report" class="clear-report" type="button" disabled>Clear report</button>
+
+        <div class="example-picker" aria-labelledby="examples-title">
+          <h3 id="examples-title">Try an example</h3>
+          <div id="example-controls" class="example-controls"></div>
+        </div>
+
         <label class="paste-field">
           <span>Or paste report text</span>
           <textarea id="paste-input" rows="9" placeholder="Paste .ips JSON or .crash text here"></textarea>
         </label>
+
+        <button id="parse-paste" class="parse-paste" type="button">Parse pasted text</button>
       </section>
 
-      <section class="results" aria-live="polite">
-        <div id="status" class="status">No report loaded yet.</div>
+      <section class="results">
+        <div id="status" class="status" role="status" aria-live="polite">No report loaded yet.</div>
+        <div id="privacy-panel" class="privacy-panel" hidden>
+          <p id="privacy-mode-label" class="privacy-mode-label">Privacy mode: Sanitized view</p>
+          <button id="privacy-toggle" class="privacy-toggle" type="button" aria-pressed="false">
+            Switch to raw local view
+          </button>
+          <p id="privacy-warning" class="privacy-warning" hidden>
+            Raw local view may show device or report identifiers. Nothing is uploaded.
+          </p>
+        </div>
+        <div id="search-panel" class="search-panel" hidden>
+          <label class="search-field" for="result-search">
+            <span>Search parsed output</span>
+            <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text">
+          </label>
+          <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
+          <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
+        </div>
+        <nav id="section-nav" class="section-nav" aria-label="Parsed sections" hidden></nav>
+        <p id="empty-results" class="empty-results" hidden>No matches in parsed output.</p>
         <div id="sections" class="sections"></div>
       </section>
     </main>

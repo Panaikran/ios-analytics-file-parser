@@ -19,3 +19,7 @@ export function sanitizeText(value) {
     })
     .replace(PHONE_PATTERN, '[phone redacted]');
 }
+
+export function createSanitizer({ sanitize = true } = {}) {
+  return sanitize === false ? (value) => String(value ?? '') : sanitizeText;
+}

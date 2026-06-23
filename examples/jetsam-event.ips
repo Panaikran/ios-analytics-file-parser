@@ -1,0 +1,46 @@
+{"bug_type":"298","timestamp":"2026-06-23 01:23:24.00 +0700","os_version":"iPhone OS 18.5 (22F76)","incident_id":"EXAMPLE-JETSAM-INCIDENT"}
+{
+  "bug_type": "298",
+  "date": "2026-06-23 01:23:24.78 +0700",
+  "build": "iPhone OS 18.5 (22F76)",
+  "product": "iPhone17,2",
+  "incident": "EXAMPLE-JETSAM-INCIDENT",
+  "largestProcess": "ExampleMaps",
+  "memoryStatus": {
+    "pageSize": 16384,
+    "memoryPages": {
+      "active": 144915,
+      "wired": 319250,
+      "inactive": 139130,
+      "free": 10272,
+      "speculative": 5271
+    }
+  },
+  "processes": [
+    {
+      "states": ["daemon", "idle"],
+      "rpages": 256,
+      "name": "lowmemoryd",
+      "priority": 0,
+      "reason": "highwater",
+      "pid": 103,
+      "killDelta": 1309330
+    },
+    {
+      "states": ["suspended"],
+      "rpages": 65536,
+      "name": "ExampleMaps",
+      "priority": 0,
+      "pid": 1202
+    },
+    {
+      "states": ["active"],
+      "physicalPages": {
+        "internal": [10000, 6384]
+      },
+      "name": "ExampleChat",
+      "priority": 100,
+      "pid": 1236
+    }
+  ]
+}

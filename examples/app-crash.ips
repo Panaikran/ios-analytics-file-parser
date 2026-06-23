@@ -1,0 +1,69 @@
+{
+  "bug_type": "309",
+  "incident": "EXAMPLE-APP-CRASH-INCIDENT",
+  "timestamp": "2026-06-21 14:22:07.000 +0700",
+  "app_name": "ExampleNotes",
+  "bundleID": "com.example.notes",
+  "app_version": "3.2.1",
+  "build_version": "421",
+  "platform": 2,
+  "os_version": "iPhone OS 18.5 (22F76)",
+  "device_model": "iPhone17,2",
+  "exception": {
+    "type": "EXC_BAD_ACCESS",
+    "signal": "SIGSEGV",
+    "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000",
+    "codes": "0x0000000000000001, 0x0000000000000000"
+  },
+  "termination": {
+    "namespace": "SIGNAL",
+    "code": 11,
+    "indicator": "Segmentation fault: 11"
+  },
+  "faultingThread": 0,
+  "threads": [
+    {
+      "triggered": true,
+      "id": 501,
+      "frames": [
+        {
+          "imageIndex": 0,
+          "imageOffset": 15500,
+          "symbol": "saveDraft",
+          "symbolLocation": 18
+        },
+        {
+          "imageIndex": 0,
+          "imageOffset": 8464,
+          "symbol": "viewDidLoad",
+          "symbolLocation": 44
+        }
+      ]
+    },
+    {
+      "id": 502,
+      "frames": [
+        {
+          "imageIndex": 1,
+          "imageOffset": 8,
+          "symbol": "mach_msg_trap",
+          "symbolLocation": 8
+        }
+      ]
+    }
+  ],
+  "usedImages": [
+    {
+      "name": "ExampleNotes",
+      "uuid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+      "base": 4372566016,
+      "arch": "arm64"
+    },
+    {
+      "name": "UIKitCore",
+      "uuid": "BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF",
+      "base": 8589934592,
+      "arch": "arm64"
+    }
+  ]
+}

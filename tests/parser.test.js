@@ -1,7 +1,26 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { EXAMPLE_REPORTS } from '../examples/manifest.js';
+import {
+  createInitialAppState,
+  createParsedStatusMessage,
+  startNewReportState,
+  withParsedReport,
+  withPrivacyMode,
+  withStatus,
+} from '../src/appState.js';
 import { detectFileType } from '../src/parsers/detect.js';
 import { parseInput } from '../src/parsers/index.js';
+import { filterSectionsByQuery } from '../src/search/filterSections.js';
+import { serializeSectionForCopy } from '../src/clipboard/serializeSection.js';
+import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
+import {
+  findCrashedThreadName,
+  getLimitedRows,
+  groupRowsByThread,
+  isLargeKextTable,
+} from '../src/ui/denseTables.js';
+import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
@@ -15,6 +34,22 @@ const realSchemaJetsamText = await readFile(new URL('./fixtures/example-jetsam-r
 const panicText = await readFile(new URL('./fixtures/example.panic-full', import.meta.url), 'utf8');
 const jsonPanicText = await readFile(new URL('./fixtures/example-panic-json.ips', import.meta.url), 'utf8');
 const analyticsText = await readFile(new URL('./fixtures/example-analytics.txt', import.meta.url), 'utf8');
+
+assert.deepEqual(
+  EXAMPLE_REPORTS.map((example) => example.type),
+  ['ips', 'crash', 'ips-watchdog-stackshot', 'jetsam', 'panic', 'analytics'],
+  'production examples cover each supported file type once'
+);
+assert.equal(new Set(EXAMPLE_REPORTS.map((example) => example.id)).size, 6, 'production example IDs are unique');
+for (const example of EXAMPLE_REPORTS) {
+  assert.match(example.path, /^\.\/examples\//, 'production example files live in examples/');
+  assert.doesNotMatch(example.path, /tests\/fixtures/, 'production UI does not load test fixtures');
+  assert.match(example.sourceLabel, /^Example: /, 'production examples use explicit source labels');
+
+  const exampleText = await readFile(new URL(`../${example.path.slice(2)}`, import.meta.url), 'utf8');
+  assert.equal(detectFileType(exampleText), example.type, `${example.label} production example detects correctly`);
+  assert.ok(parseInput(exampleText).length > 0, `${example.label} production example parses into sections`);
+}
 
 function sectionById(sections, id) {
   return sections.find((section) => section.id === id);
@@ -46,6 +81,31 @@ assert.equal(detectFileType(analyticsText), 'analytics', 'detects generic analyt
 
 const ipsSections = parseInput(ipsText);
 assert.deepEqual(
+  createSectionNavItems(ipsSections),
+  ipsSections.map((section) => ({ id: section.id, label: section.title, href: `#${section.id}` })),
+  'section nav items use section IDs and titles as jump-link labels'
+);
+assert.deepEqual(
+  parseInput(realSchemaJetsamText),
+  parseInput(realSchemaJetsamText, { sanitize: true }),
+  'parseInput(text) matches explicit sanitized parsing'
+);
+assert.equal(
+  fieldValue(sectionById(parseInput(realSchemaJetsamText), 'summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'parseInput sanitizes sensitive identifiers by default'
+);
+assert.equal(
+  fieldValue(sectionById(parseInput(realSchemaJetsamText, { sanitize: false }), 'summary'), 'Incident ID'),
+  'C2D7624C-69D5-43C1-BBCF-922926A98333',
+  'parseInput can preserve raw values when sanitization is explicitly disabled'
+);
+assert.equal(
+  fieldValue(sectionById(parseInput(jsonPanicText, { sanitize: false }), 'system-info'), 'Incident ID'),
+  'ACA545E6-9828-4065-BF5E-3FF1C8125455',
+  'panic parsing preserves raw incident IDs only when sanitization is explicitly disabled'
+);
+assert.deepEqual(
   ipsSections.slice(0, 3).map((section) => section.id),
   ['summary', 'exception', 'crashed-thread'],
   'IPS Phase 1 core sections remain first'
@@ -57,6 +117,186 @@ assert.equal(fieldValue(sectionById(ipsSections, 'exception'), 'Signal'), 'SIGSE
 assert.equal(sectionById(ipsSections, 'crashed-thread').table[0].symbol, 'doThing + 18');
 
 const fullIpsSections = parseInput(fullIpsText);
+assert.equal(findCrashedThreadName(fullIpsSections), 'Thread 0', 'dense table UI infers crashed thread from section title');
+assert.deepEqual(
+  groupRowsByThread(sectionById(fullIpsSections, 'all-threads').table, {
+    crashedThread: 'Thread 0',
+    expandedThreads: {},
+    forceExpanded: false,
+  }).map((group) => ({
+    thread: group.thread,
+    frameCount: group.frameCount,
+    expanded: group.expanded,
+    stateLabel: group.stateLabel,
+  })),
+  [
+    { thread: 'Thread 0', frameCount: 2, expanded: true, stateLabel: 'expanded' },
+    { thread: 'Thread 1', frameCount: 1, expanded: false, stateLabel: 'collapsed' },
+  ],
+  'all threads are grouped by thread with crashed thread expanded by default'
+);
+assert.deepEqual(
+  groupRowsByThread(sectionById(fullIpsSections, 'all-threads').table, {
+    crashedThread: 'Thread 0',
+    expandedThreads: { 'Thread 1': true },
+    forceExpanded: false,
+  }).map((group) => ({ thread: group.thread, expanded: group.expanded })),
+  [
+    { thread: 'Thread 0', expanded: true },
+    { thread: 'Thread 1', expanded: true },
+  ],
+  'thread group expansion can be controlled by UI state'
+);
+assert.equal(
+  groupRowsByThread(sectionById(fullIpsSections, 'all-threads').table, {
+    crashedThread: 'Thread 0',
+    expandedThreads: { 'Thread 1': false },
+    forceExpanded: true,
+  }).every((group) => group.expanded),
+  true,
+  'search force-expanded sections keep matching thread groups visible'
+);
+
+const sixtyProcessRows = Array.from({ length: 60 }, (_, index) => ({ process: `Process ${index}` }));
+assert.deepEqual(
+  getLimitedRows(sixtyProcessRows, { limit: 50, forceExpanded: false }),
+  {
+    rows: sixtyProcessRows.slice(0, 50),
+    shown: 50,
+    total: 60,
+    summary: '50 of 60 rows shown',
+    allShown: false,
+  },
+  'Jetsam-style row limits show the first 50 rows initially'
+);
+assert.equal(
+  getLimitedRows(sixtyProcessRows, { limit: 50, forceExpanded: true }).shown,
+  60,
+  'search force-expanded sections bypass row limits'
+);
+assert.equal(isLargeKextTable({ id: 'loaded-kexts', table: sixtyProcessRows }), true, 'large kext tables collapse by default');
+
+const uikitSearch = filterSectionsByQuery(fullIpsSections, 'UIKitCore');
+assert.equal(uikitSearch.active, true, 'search is active for non-empty queries');
+assert.ok(uikitSearch.totalMatches >= 1, 'search reports a visible match count');
+assert.equal(sectionById(uikitSearch.sections, 'summary'), undefined, 'search hides sections with zero matches');
+assert.equal(
+  sectionById(uikitSearch.sections, 'binary-images').forceExpanded,
+  true,
+  'search marks matching sections to override collapse state'
+);
+assert.equal(sectionById(uikitSearch.sections, 'binary-images').table.length, 1, 'search shows matching table rows only');
+assert.equal(
+  sectionById(uikitSearch.sections, 'binary-images').tableSummary,
+  `1 of ${sectionById(fullIpsSections, 'binary-images').table.length} rows shown`,
+  'search annotates filtered table row counts'
+);
+assert.ok(fullIpsSections.find((section) => section.id === 'binary-images').table.length > 1, 'search does not mutate parser output');
+
+const noSearchMatches = filterSectionsByQuery(fullIpsSections, 'definitely-not-present');
+assert.equal(noSearchMatches.totalMatches, 0, 'search reports zero matches');
+assert.deepEqual(noSearchMatches.sections, [], 'search returns no sections when nothing matches');
+
+const inactiveSearch = filterSectionsByQuery(fullIpsSections, '   ');
+assert.equal(inactiveSearch.active, false, 'blank search is inactive');
+assert.equal(inactiveSearch.sections, fullIpsSections, 'blank search returns original parsed sections');
+
+assert.equal(
+  serializeSectionForCopy({
+    title: 'Diagnostics',
+    fields: [
+      { label: 'App', value: 'DemoApp' },
+      { label: 'Reason', value: 'EXC_BAD_ACCESS' },
+    ],
+    tableColumns: [
+      { key: 'frame', label: 'Frame' },
+      { key: 'symbol', label: 'Symbol' },
+    ],
+    table: [
+      { frame: 0, symbol: 'doThing + 18' },
+      { frame: 1, symbol: 'viewDidLoad + 44' },
+    ],
+    raw: 'Raw panic line',
+    chart: {
+      title: 'Memory chart',
+      items: [
+        { label: 'free', value: 12 },
+        { label: 'wired', value: 34 },
+      ],
+    },
+  }),
+  [
+    'Diagnostics',
+    '',
+    'App: DemoApp',
+    'Reason: EXC_BAD_ACCESS',
+    '',
+    'Frame\tSymbol',
+    '0\tdoThing + 18',
+    '1\tviewDidLoad + 44',
+    '',
+    'Raw panic line',
+    '',
+    'Memory chart',
+    'free\t12',
+    'wired\t34',
+  ].join('\n'),
+  'copy serialization includes title, fields, TSV tables, raw text, and chart data'
+);
+assert.equal(
+  serializeSectionForCopy(
+    getVisibleSectionForCopy(
+      {
+        id: 'process-table',
+        title: 'Process Table',
+        tableColumns: [{ key: 'process', label: 'Process' }],
+        table: sixtyProcessRows,
+      },
+      { denseTableState: { rowLimits: { 'process-table': 50 } } }
+    )
+  ).split('\n').filter((line) => /^Process \d+$/.test(line)).length,
+  50,
+  'copy respects Jetsam row limits'
+);
+assert.deepEqual(
+  getVisibleSectionForCopy(
+    sectionById(fullIpsSections, 'all-threads'),
+    {
+      denseTableState: { expandedThreadGroups: { 'all-threads:Thread 1': false } },
+      allSections: fullIpsSections,
+    }
+  ).table.map((row) => row.thread),
+  ['Thread 0', 'Thread 0'],
+  'copy respects collapsed thread groups'
+);
+assert.deepEqual(
+  getVisibleSectionForCopy(
+    sectionById(fullIpsSections, 'all-threads'),
+    {
+      denseTableState: { expandedThreadGroups: { 'all-threads:Thread 1': true } },
+      allSections: fullIpsSections,
+    }
+  ).table.map((row) => row.thread),
+  ['Thread 0', 'Thread 0', 'Thread 1'],
+  'copy respects expanded thread groups'
+);
+assert.equal(
+  getVisibleSectionForCopy(
+    { id: 'loaded-kexts', title: 'Loaded Kexts', table: sixtyProcessRows },
+    { denseTableState: { expandedTables: {} } }
+  ).table.length,
+  0,
+  'copy respects collapsed panic kext tables'
+);
+assert.equal(
+  getVisibleSectionForCopy(
+    { id: 'loaded-kexts', title: 'Loaded Kexts', table: sixtyProcessRows },
+    { denseTableState: { expandedTables: { 'loaded-kexts': true } } }
+  ).table.length,
+  60,
+  'copy respects expanded panic kext tables'
+);
+
 assert.deepEqual(
   fullIpsSections.map((section) => section.id),
   ['summary', 'exception', 'crashed-thread', 'all-threads', 'binary-images'],
@@ -200,5 +440,46 @@ assert.equal(
   'timestamp 2026-06-21 10:56:49.4455 +0700 code 2343432205',
   'does not redact timestamps or numeric termination codes as phone numbers'
 );
+
+const initialState = createInitialAppState();
+const parsedState = withParsedReport(initialState, {
+  sourceText: 'raw local source',
+  sourceLabel: 'fixture.ips',
+  detectedType: 'ips',
+  sections: ipsSections,
+});
+assert.equal(initialState.sanitize, true, 'app state defaults to sanitized mode');
+assert.equal(withPrivacyMode(initialState, false).sanitize, false, 'app state can switch to raw local parsing');
+assert.equal(withPrivacyMode(withPrivacyMode(initialState, false), true).sanitize, true, 'app state can switch back to sanitized parsing');
+assert.equal(startNewReportState(withPrivacyMode(parsedState, false)).sanitize, true, 'loading a new report resets raw mode to sanitized');
+assert.match(
+  createParsedStatusMessage('fixture.ips', 'ips', true),
+  /Sanitized view/,
+  'status text reflects sanitized mode'
+);
+assert.match(
+  createParsedStatusMessage('fixture.ips', 'ips', false),
+  /Raw local view/,
+  'status text reflects raw mode'
+);
+assert.doesNotMatch(
+  createParsedStatusMessage('fixture.ips', 'ips', false),
+  /Sanitized view/,
+  'status text never claims sanitized mode while raw content is rendered'
+);
+assert.equal(parsedState.sourceText, 'raw local source', 'app state keeps current source text in memory');
+assert.equal(parsedState.detectedType, 'ips', 'app state tracks current detected type');
+assert.equal(parsedState.sections, ipsSections, 'app state tracks current parsed sections');
+assert.deepEqual(
+  withStatus(parsedState, { message: 'Paste a report before parsing.', tone: 'error', clearSections: true }),
+  {
+    ...parsedState,
+    sections: [],
+    statusMessage: 'Paste a report before parsing.',
+    statusTone: 'error',
+  },
+  'app state can update status and clear rendered sections without changing source text'
+);
+assert.deepEqual(createInitialAppState(), initialState, 'new initial state wipes current report state');
 
 console.log('Phase 2 parser tests passed');

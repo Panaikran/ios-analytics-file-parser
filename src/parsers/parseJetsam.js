@@ -1,9 +1,10 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 
 const BYTES_PER_MB = 1024 * 1024;
 
-export function parseJetsam(report, metadata = {}) {
+export function parseJetsam(report, metadata = {}, options = {}) {
+  const sanitizeText = createSanitizer(options);
   metadata ??= {};
   const pageSize = numberOrNull(report.memoryStatus?.pageSize ?? report.systemMemory?.pageSize ?? report.pageSize);
   const processes = normalizeProcesses(report.processes ?? report.processList ?? [], pageSize);
@@ -24,7 +25,7 @@ export function parseJetsam(report, metadata = {}) {
         ['OS Version', metadata.os_version ?? report.os_version ?? report.build ?? formatOsVersion(report.osVersion)],
         ['Timestamp', metadata.timestamp ?? report.timestamp ?? report.date ?? report.captureTime],
         ['Incident ID', metadata.incident_id ?? metadata.incident ?? report.incident_id ?? report.incident],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'victim',
@@ -37,7 +38,7 @@ export function parseJetsam(report, metadata = {}) {
         ['Pages', culprit.process?.pages],
         ['Reason', culprit.process?.reason],
         ['Selection', culprit.reason],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'process-table',
@@ -75,7 +76,7 @@ export function parseJetsam(report, metadata = {}) {
         ['Inactive Pages', memoryPages.inactive],
         ['Wired Pages', memoryPages.wired],
         ['Speculative Pages', memoryPages.speculative],
-      ]),
+      ], sanitizeText),
       chart: {
         type: 'memory-bars',
         title: 'System memory pages',
@@ -94,7 +95,7 @@ export function parseJetsam(report, metadata = {}) {
         ['Per-process Limit', limitValue === undefined ? 'Not available' : formatOptionalMB(limitValue)],
         ['Per-process Reason', culprit.process?.reason ?? report.reason],
         ['Resident Pages', report.rpages],
-      ]),
+      ], sanitizeText),
     }),
   ];
 }
@@ -238,7 +239,7 @@ function formatOsVersion(osVersion) {
   return [osVersion.train, osVersion.build ? `(${osVersion.build})` : '', osVersion.releaseType].filter(Boolean).join(' ');
 }
 
-function compactFields(entries) {
+function compactFields(entries, sanitizeText) {
   return entries
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: sanitizeText(String(value)) }));

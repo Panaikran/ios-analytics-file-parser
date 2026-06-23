@@ -1,0 +1,9 @@
+2026-06-21 17:00:00 +0700 Launch started
+Subsystem: com.example.analytics
+Event: app became active
+---
+2026-06-21 17:01:00 +0700 Network check
+Status: offline
+---
+Final summary
+No crash detected

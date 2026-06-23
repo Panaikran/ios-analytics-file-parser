@@ -1,7 +1,8 @@
 import { createSection } from '../models/sectionModel.js';
-import { sanitizeText } from '../privacy/sanitize.js';
+import { createSanitizer } from '../privacy/sanitize.js';
 
-export function parseCrash(text) {
+export function parseCrash(text, options = {}) {
+  const sanitizeText = createSanitizer(options);
   const lines = text.split(/\r?\n/);
   const header = mapColonLines(lines);
   const triggeredThread = Number.parseInt(header['Triggered by Thread'] ?? '0', 10) || 0;
@@ -18,7 +19,7 @@ export function parseCrash(text) {
         ['Device', header['Hardware Model']],
         ['OS Version', header['OS Version']],
         ['Incident Date', header['Date/Time']],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'exception',
@@ -31,17 +32,17 @@ export function parseCrash(text) {
         ['Codes', header['Exception Codes']],
         ['Termination Reason', header['Termination Reason']],
         ['Triggered Thread', String(triggeredThread)],
-      ]),
+      ], sanitizeText),
     }),
     createSection({
       id: 'crashed-thread',
       title: `Crashed Thread - Thread ${triggeredThread}`,
       priority: 'critical',
-      table: parseThreadFrames(lines, triggeredThread),
+      table: parseThreadFrames(lines, triggeredThread, sanitizeText),
     }),
   ];
 
-  const allThreadRows = parseAllThreadFrames(lines);
+  const allThreadRows = parseAllThreadFrames(lines, sanitizeText);
   if (allThreadRows.length) {
     sections.push(
       createSection({
@@ -60,7 +61,7 @@ export function parseCrash(text) {
     );
   }
 
-  const binaryRows = parseBinaryImages(lines);
+  const binaryRows = parseBinaryImages(lines, sanitizeText);
   if (binaryRows.length) {
     sections.push(
       createSection({
@@ -104,7 +105,7 @@ function parseSignal(value = '') {
   return value.match(/\(([^)]+)\)/)?.[1] ?? '';
 }
 
-function parseThreadFrames(lines, threadNumber) {
+function parseThreadFrames(lines, threadNumber, sanitizeText) {
   const headerPattern = new RegExp(`^Thread\\s+${threadNumber}\\s+Crashed:`);
   const start = lines.findIndex((line) => headerPattern.test(line));
   if (start < 0) return [];
@@ -115,14 +116,14 @@ function parseThreadFrames(lines, threadNumber) {
     if (!line.trim()) break;
     if (/^Thread\s+\d+/.test(line) || /^Binary Images:/.test(line)) break;
 
-    const row = parseFrameLine(line);
+    const row = parseFrameLine(line, sanitizeText);
     if (row) rows.push(row);
   }
 
   return rows;
 }
 
-function parseAllThreadFrames(lines) {
+function parseAllThreadFrames(lines, sanitizeText) {
   const rows = [];
   let currentThread = null;
 
@@ -144,7 +145,7 @@ function parseAllThreadFrames(lines) {
     }
 
     if (currentThread) {
-      const row = parseFrameLine(line);
+      const row = parseFrameLine(line, sanitizeText);
       if (row) rows.push({ thread: currentThread, ...row });
     }
   }
@@ -152,7 +153,7 @@ function parseAllThreadFrames(lines) {
   return rows;
 }
 
-function parseBinaryImages(lines) {
+function parseBinaryImages(lines, sanitizeText) {
   const start = lines.findIndex((line) => line.trim() === 'Binary Images:');
   if (start < 0) return [];
 
@@ -175,7 +176,7 @@ function parseBinaryImages(lines) {
   return rows;
 }
 
-function parseFrameLine(line) {
+function parseFrameLine(line, sanitizeText) {
   const match = line.match(/^\s*(\d+)\s+(.+?)\s+(0x[0-9a-fA-F]+)\s+(.+)$/);
   if (!match) return null;
 
@@ -187,7 +188,7 @@ function parseFrameLine(line) {
   };
 }
 
-function compactFields(entries) {
+function compactFields(entries, sanitizeText) {
   return entries
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([label, value]) => ({ label, value: sanitizeText(String(value)) }));

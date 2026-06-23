@@ -1,117 +1,157 @@
 # iOS Analytics File Parser
 
-A privacy-first, browser-based tool for reading and understanding iPhone and iPad diagnostic logs without uploading them to a server.
+A privacy-first, browser-based tool for reading iPhone and iPad diagnostic logs locally.
 
-The goal of this project is to make Apple diagnostic files easier to inspect by converting raw crash reports, watchdog reports, panic logs, and analytics data into structured, human-readable sections.
+The app converts Apple diagnostic files into structured, human-readable sections without uploading reports to a server.
 
-## Privacy First
+## Overview
+
+iOS Analytics File Parser is a static browser app for inspecting common iOS and iPadOS diagnostic report formats:
+
+- application crash reports
+- watchdog stackshots
+- JetsamEvent memory reports
+- panic-full logs
+- generic analytics text logs
+
+It is intentionally local-first. Reports are parsed in the browser, sanitized by default, and displayed as structured sections, tables, charts, and raw notes where useful.
+
+## Release Status
+
+| Item | Status |
+| --- | --- |
+| Release target | `v0.3.0-alpha` |
+| Phase 1 | Complete |
+| Phase 2 | Complete |
+| Phase 3 | Complete |
+| Phase 4 | Not started |
+| App type | Static browser app |
+| Build step | None |
+| Backend | None |
+| Framework dependencies | None |
+
+Note: `package.json` may still show `0.1.0` until release versioning is updated.
+
+## Why This Exists
+
+Apple diagnostic files are useful, but they are dense and hard to scan quickly. This project provides a local tool for turning those reports into readable diagnostic sections while preserving privacy by default.
+
+The goal is not to symbolicate, upload, diagnose, or store reports. The goal is to make the report content easier to inspect safely on the user's own machine.
+
+## Privacy Model
 
 All parsing happens locally in the browser.
 
-* No backend
-* No uploads
-* No accounts
-* No tracking
-* No cloud processing
+- No uploads.
+- No backend.
+- No analytics.
+- No accounts.
+- No cloud processing.
+- No external parsing service.
+- No persistence of user logs.
+- No `localStorage`, `sessionStorage`, `IndexedDB`, cookies, or hidden report storage.
 
-Diagnostic files never leave the user's device.
+Sanitized mode is the default. It redacts sensitive identifiers before content is rendered.
+
+Raw local view is opt-in. When enabled, the current report is reparsed from in-memory source text with sanitization disabled and labeled as:
+
+```text
+Raw local view - not uploaded
+```
+
+Raw mode applies only to the currently loaded report. Loading a new file, paste, drop, or example resets back to sanitized mode.
 
 ## Supported Formats
 
-### Current (v0.1.0-alpha)
+| Format | Detection | Current support |
+| --- | --- | --- |
+| Standard app crash `.ips` | `ips` | Summary, Exception, Crashed Thread, All Threads, Binary Images |
+| Legacy `.crash` | `crash` | Summary, Exception, Crashed Thread, All Threads, Binary Images |
+| Watchdog stackshot `.ips` | `ips-watchdog-stackshot` | Summary, Termination, Main Thread Stackshot |
+| JetsamEvent `.ips` | `jetsam` | Summary, Victim / Likely Culprit, Process Table, System Memory, Limits, memory chart |
+| Panic-full text or JSON-wrapped `.ips` | `panic` | Panic String, Panic Flags, Kernel Backtrace, Loaded Kexts, System Info |
+| Generic analytics text | `analytics` | Fallback summary and grouped text sections |
+| Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `unknown` | Not supported yet |
 
-* Modern `.ips` crash reports
-* Legacy `.crash` reports
-* Watchdog-stackshot `.ips` reports
-* Panic-full detection (placeholder support)
+## Feature Support
 
-### Planned
+| Feature | v0.3.0-alpha |
+| --- | --- |
+| Static browser app | Supported |
+| Browser-native ES modules | Supported |
+| File picker | Supported |
+| Paste textarea | Supported |
+| Explicit paste parse button | Supported |
+| Drag-and-drop | Supported, optional |
+| Production examples | Supported |
+| Sanitized-by-default parsing | Supported |
+| Raw local view | Supported, opt-in |
+| Clear Report | Supported |
+| Section jump navigation | Supported |
+| Search/filter parsed output | Supported |
+| Copy visible section content | Supported |
+| Thread grouping/collapse | Supported |
+| Jetsam row limits | Supported |
+| Panic kext collapse | Supported |
+| Binary image horizontal overflow | Supported |
+| Memory chart | Supported, simple Canvas chart |
+| Generic analytics fallback parser | Supported |
+| CoreAnalytics `.ips.ca.synced` line-delimited JSON | Not supported yet |
+| PWA/offline mode | Not started |
+| Web App Manifest | Not started |
+| CSP hardening | Not started |
+| Symbolication | Not supported |
+| `.dSYM` support | Not supported |
+| Sysdiagnose archive extraction | Not supported |
 
-* JetsamEvent reports
-* Full `.panic-full` parsing
-* Generic analytics text logs
-* Additional iOS diagnostic formats
+## Current Features
 
-## Features
+### Input
 
-### Crash Reports
+- Choose a local report file.
+- Paste report text and parse explicitly.
+- Drop a file onto the input panel.
+- Load sanitized fictional examples from `examples/`.
+- Clear the current report and reset UI state.
 
-* Summary view
-* Exception information
-* Crashed thread rendering
-* Privacy-safe output
+### Parsing And Rendering
 
-### Watchdog Stackshots
+- Summary, exception, termination, victim, system memory, limits, and system info sections.
+- Crashed thread and all-thread stack rendering.
+- Binary image tables.
+- Jetsam process tables sorted by best available memory value.
+- Panic backtrace and loaded kext tables.
+- Generic analytics fallback grouping for unstructured analytics text.
+- Section-specific table columns.
+- Simple Jetsam memory bar chart.
 
-* Metadata + report body IPS parsing
-* Termination details
-* Main thread stackshot rendering
+### Navigation And Inspection
 
-### Privacy Sanitization
+- Jump-link section navigation.
+- Search across section titles, field labels, field values, table cells, and raw text.
+- Matching table rows only are shown while search is active.
+- Search results override collapsed dense-table state so matches remain visible.
+- Copy buttons on each section.
+- Copy output uses plain text and reflects currently visible content.
 
-Sensitive identifiers are sanitized by default, including:
+### Dense Table Controls
 
-* Email addresses
-* UDIDs
-* Serial numbers
-* Advertising identifiers
-* Vendor identifiers
-* User-specific file paths
-* Phone numbers
+- All Threads groups rows by thread.
+- Crashed thread expands by default.
+- Other threads collapse by default.
+- Jetsam process tables show the first 50 rows initially, with Show more and Show all controls.
+- Large panic loaded-kext tables collapse by default.
+- Binary image tables use compact rendering with horizontal overflow.
 
-Debugging-useful values remain visible where appropriate:
+### Accessibility And Mobile
 
-* Bundle identifiers
-* App names
-* Framework names
-* Process names
-* Timestamps
-* Stack frame addresses
-* Binary image UUIDs
-
-## Project Status
-
-**Version:** v0.1.0-alpha
-**Status:** Phase 1 Complete
-
-### Implemented
-
-* Browser-native ES module architecture
-* File type detection
-* `.ips` parser
-* `.crash` parser
-* Watchdog-stackshot support
-* Privacy sanitizer
-* Test fixtures
-* Parser test suite
-
-### Not Yet Implemented
-
-* JetsamEvent parser
-* Full panic-full parser
-* Binary image tables
-* Memory visualization
-* Generic analytics parser
-* Drag-and-drop UI
-* Search and filtering
-* PWA support
-* Symbolication
-
-## Architecture
-
-```text
-index.html
-src/
-├── main.js
-├── models/
-├── parsers/
-├── privacy/
-└── ui/
-styles/
-tests/
-```
-
-The project intentionally avoids framework dependencies and build tooling. Browser-native ES modules are used throughout.
+- Real buttons and anchors for primary controls.
+- Visible labels for search and input controls.
+- `aria-expanded` on collapse controls.
+- Focus styling for the custom file picker.
+- Scoped live regions for status/search feedback.
+- Textarea font size is at least 16px for iPhone Safari.
+- Mobile layout supports horizontally scrollable section navigation and tables.
 
 ## Running Locally
 
@@ -122,48 +162,268 @@ git clone https://github.com/Panaikran/ios-analytics-file-parser.git
 cd ios-analytics-file-parser
 ```
 
-Open `index.html` in a browser or serve the directory using a simple local web server.
+The app has no build step. You can open `index.html` directly for basic file and paste parsing.
+
+For production examples, serve the folder with a local static server. Examples are loaded with `fetch()`, and browser `file://` behavior varies.
+
+Using Python:
+
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/
+```
+
+On systems where `python` is unavailable, use any static file server that serves the repository root.
 
 ## Tests
 
-Run the parser test suite:
+Run the Node/assert-only test suite:
 
-```bash
+```powershell
 npm.cmd test
 ```
 
-or:
+Direct equivalent:
 
-```bash
+```powershell
 node tests/parser.test.js
 ```
 
+PowerShell note: `npm.cmd test` avoids execution-policy issues that can occur when `npm.ps1` is invoked.
+
+## Architecture Overview
+
+The project is a static, local-first browser app.
+
+- `index.html` loads `src/main.js` with `type="module"`.
+- `src/main.js` coordinates input, parsing, search, privacy mode, copy, dense table state, and rendering.
+- `src/parsers/` detects and parses supported report formats.
+- `src/privacy/sanitize.js` applies default sanitization.
+- `src/models/sectionModel.js` documents the shared section shape.
+- `src/ui/` renders sections, tables, charts, dense table controls, and navigation.
+- `src/search/` filters parsed section data without scanning the DOM.
+- `src/clipboard/` serializes visible section content for copy actions.
+- `examples/` contains sanitized fictional examples for production UI use.
+- `tests/fixtures/` contains sanitized test-only fixtures.
+
+### Architecture Flow
+
+```text
+User input
+  |
+  |-- file picker
+  |-- pasted text
+  |-- drag/drop
+  |-- example file
+  v
+src/main.js
+  |
+  |-- detectFileType(text)
+  |-- parseInput(text, { sanitize })
+  v
+src/parsers/*
+  |
+  |-- createSanitizer({ sanitize })
+  |-- normalize report fields
+  |-- emit SectionModel[]
+  v
+src/search/filterSections.js
+  |
+  |-- optional search-filtered SectionModel[]
+  v
+src/ui/*
+  |
+  |-- section cards
+  |-- fields
+  |-- tables
+  |-- charts
+  |-- dense table controls
+  v
+Browser DOM
+
+Copy actions:
+
+visible SectionModel -> src/clipboard/* -> plain text clipboard
+```
+
+## Architecture Directory Tree
+
+```text
+.
+|-- index.html
+|-- README.md
+|-- ROADMAP.md
+|-- PHASE_1_SUMMARY.md
+|-- PHASE_2_SUMMARY.md
+|-- PHASE_3_SUMMARY.md
+|-- package.json
+|-- examples/
+|   |-- manifest.js
+|   |-- app-crash.ips
+|   |-- legacy.crash
+|   |-- watchdog.ips
+|   |-- jetsam-event.ips
+|   |-- panic-full.ips
+|   `-- analytics.txt
+|-- src/
+|   |-- main.js
+|   |-- appState.js
+|   |-- clipboard/
+|   |   |-- serializeSection.js
+|   |   `-- visibleSection.js
+|   |-- models/
+|   |   `-- sectionModel.js
+|   |-- parsers/
+|   |   |-- detect.js
+|   |   |-- index.js
+|   |   |-- parseAnalytics.js
+|   |   |-- parseCrash.js
+|   |   |-- parseIps.js
+|   |   |-- parseIpsContainer.js
+|   |   |-- parseIpsWatchdogStackshot.js
+|   |   |-- parseJetsam.js
+|   |   `-- parsePanic.js
+|   |-- privacy/
+|   |   `-- sanitize.js
+|   |-- search/
+|   |   `-- filterSections.js
+|   `-- ui/
+|       |-- denseTables.js
+|       |-- renderApp.js
+|       |-- renderSection.js
+|       `-- renderSectionNav.js
+|-- styles/
+|   `-- main.css
+`-- tests/
+    |-- parser.test.js
+    `-- fixtures/
+```
+
+## Parser Contract
+
+The parser entry point is:
+
+```js
+parseInput(text, { sanitize = true } = {}) -> SectionModel[]
+```
+
+Equivalent default behavior:
+
+```js
+parseInput(text)
+parseInput(text, { sanitize: true })
+```
+
+Raw local parsing must be explicit:
+
+```js
+parseInput(text, { sanitize: false })
+```
+
+`SectionModel` objects are rendered by the UI. Sections may include:
+
+- `id`
+- `title`
+- `priority`
+- `fields`
+- `table`
+- `tableColumns`
+- `chart`
+- `raw`
+
+Parser output is treated as immutable by search and UI controls. Search and dense table state are UI concerns layered on top of parsed sections.
+
+## Example Files
+
+Production UI examples live in `examples/`.
+
+They are sanitized fictional files and are loaded through `examples/manifest.js`.
+
+Current examples:
+
+- `examples/app-crash.ips`
+- `examples/legacy.crash`
+- `examples/watchdog.ips`
+- `examples/jetsam-event.ips`
+- `examples/panic-full.ips`
+- `examples/analytics.txt`
+
+Test fixtures live separately in `tests/fixtures/` and should not be loaded by the production UI.
+
+## Documentation Links
+
+- [Phase 1 Summary](PHASE_1_SUMMARY.md)
+- [Phase 2 Summary](PHASE_2_SUMMARY.md)
+- [Phase 3 Summary](PHASE_3_SUMMARY.md)
+- [Roadmap](ROADMAP.md)
+- `CHANGELOG.md` is planned for release tracking.
+
+## Known Limitations
+
+- Phase 4 has not started.
+- No PWA/offline support yet.
+- No service worker.
+- No Web App Manifest.
+- No CSP hardening yet.
+- No hosted deployment yet.
+- No automated browser or mobile Safari test harness.
+- Clipboard behavior depends on browser permissions and secure-context rules.
+- Very large visible search results can still require substantial DOM rerendering.
+- Search is simple substring matching; there is no regex, tokenization, or highlighting.
+- Structured CoreAnalytics `.ips.ca.synced` reports that use line-delimited JSON are not supported yet.
+- The generic analytics fallback is for generic/unstructured analytics text, not structured CoreAnalytics record streams.
+- Section navigation marks clicked links only; there is no scroll-spy observer.
+- Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
+- Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
+- Examples may require serving the repository through a local static server.
+- Current UI is dark themed; dark/light mode via `prefers-color-scheme` is not implemented.
+- Panic parsing is regex/section based and may need expansion for uncommon layouts.
+- Jetsam culprit selection is heuristic when no explicit victim exists.
+- No symbolication.
+- No `.dSYM` support.
+- No sysdiagnose archive extraction.
+
 ## Roadmap
 
-### Phase 2
+| Phase | Status | Scope |
+| --- | --- | --- |
+| Phase 1 | Complete | Core `.ips` and `.crash` parser, privacy sanitizer, panic stub, tests |
+| Phase 2 | Complete | Full section rendering, JetsamEvent, panic-full, analytics fallback, memory chart |
+| Phase 3 | Complete | UI polish, examples, search, copy, dense tables, privacy toggle, mobile/accessibility improvements |
+| Phase 4 | Not started | PWA, offline mode, web manifest, CSP hardening, deployment, release preparation |
+| Future | Not started | Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON support |
 
-* JetsamEvent parser
-* Full panic-full parser
-* Binary image decoding
-* All threads rendering
-* Memory process tables
-* Generic analytics parser
+Phase 4 should keep the same constraints:
 
-### Phase 3
+- static browser app
+- browser-native ES modules
+- no backend
+- no authentication
+- no analytics
+- no cloud storage for user reports
+- no external parsing services
+- no framework dependencies unless explicitly approved
+- sanitized output remains default
 
-* Drag-and-drop support
-* Search and filtering
-* Privacy toggle UI
-* Copy helpers
-* Mobile UI polish
+## Screenshots / Demo
 
-### Phase 4
+Screenshots are not included yet.
 
-* PWA support
-* Offline mode
-* Deployment hardening
-* CSP lockdown
-* Release preparation
+Useful future screenshots:
+
+- input area with file picker, paste, examples, and Clear Report
+- standard `.ips` crash summary and crashed thread
+- All Threads grouped by thread
+- Jetsam process table with row controls
+- panic loaded-kext collapse controls
+- search/filter result state
+- privacy toggle in raw local view
+- mobile Safari layout
 
 ## License
 

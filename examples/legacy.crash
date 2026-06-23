@@ -1,0 +1,26 @@
+Incident Identifier: EXAMPLE-LEGACY-CRASH-INCIDENT
+Hardware Model: iPhone17,2
+Process: ExampleNotes [4242]
+Path: /private/var/containers/Bundle/Application/EXAMPLE/ExampleNotes.app/ExampleNotes
+Identifier: com.example.notes
+Version: 3.2.1 (421)
+Code Type: ARM-64
+Role: Foreground
+OS Version: iPhone OS 18.5 (22F76)
+Date/Time: 2026-06-21 14:22:07.000 +0700
+
+Exception Type: EXC_BAD_ACCESS (SIGSEGV)
+Exception Subtype: KERN_INVALID_ADDRESS at 0x0000000000000000
+Exception Codes: 0x0000000000000001, 0x0000000000000000
+Termination Reason: Namespace SIGNAL, Code 11 Segmentation fault: 11
+Triggered by Thread: 0
+
+Thread 0 Crashed:
+0   ExampleNotes                    0x00000001049a3c8c saveDraft + 18
+1   ExampleNotes                    0x00000001049a2110 viewDidLoad + 44
+
+Thread 1:
+0   libsystem_kernel.dylib          0x00000001d1234568 mach_msg_trap + 8
+
+Binary Images:
+0x104990000 - 0x1049b3fff ExampleNotes arm64  <AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE> /private/var/containers/Bundle/Application/EXAMPLE/ExampleNotes.app/ExampleNotes

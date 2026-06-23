@@ -1,0 +1,11 @@
+{"bug_type":"210","timestamp":"2024-12-26 08:38:53.00 +0700","os_version":"iPhone OS 18.2 (22C152)","incident_id":"EXAMPLE-PANIC-INCIDENT"}
+{
+  "build": "iPhone OS 18.2 (22C152)",
+  "product": "iPhone17,1",
+  "incident": "EXAMPLE-PANIC-INCIDENT",
+  "kernel": "Darwin Kernel Version 24.2.0: RELEASE_ARM64_T8140",
+  "date": "2024-12-26 08:38:53.11 +0700",
+  "panicFlags": "0x802",
+  "bug_type": "210",
+  "panicString": "panic(cpu 3 caller 0xfffffff051260638): \"Example LLC Bus error from cpu3\" @AppleExampleErrorHandler.cpp:468\nDebugger message: panic\nOS version: 22C152\nKernel version: Darwin Kernel Version 24.2.0: RELEASE_ARM64_T8140\nPanicked thread: 0xffffffe4ba25e200, backtrace: 0xffffffef16ceb580, tid: 205230\n\t\t  lr: 0xfffffff05046e9cc  fp: 0xffffffef16ceb5f0\n\t\t  lr: 0xfffffff0505e0410  fp: 0xffffffef16ceb660\n      Kernel Extensions in backtrace:\n         com.apple.driver.AppleARMPlatform(1.0.2)[69E78B4A-6673-3C59-9DD5-79A01FA700A3]@0xfffffff050dadf30->0xfffffff050e014c3\n            dependency: com.apple.iokit.IOReportFamily(47)[653A540C-F0B4-3DAB-9D1E-492000EB2885]@0xfffffff052587070->0xfffffff052589cc7\n\nloaded kexts:\ncom.apple.driver.AppleIDAMInterface\t1\ncom.apple.driver.AppleUSBEthernetDevice\t7.0\n"
+}
