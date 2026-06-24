@@ -35,10 +35,18 @@ const emptyResults = document.querySelector('#empty-results');
 const sectionsElement = document.querySelector('#sections');
 const offlineStatus = document.querySelector('#offline-status');
 
+const OFFLINE_READY_MESSAGE = 'Offline app shell ready. Examples can open offline. Reports are still not saved.';
+const OFFLINE_SETUP_FAILED_MESSAGE = 'Offline setup unavailable. Online parsing still works.';
+const UPDATE_READY_MESSAGE = 'Update ready. Reload when done with the current report.';
+const EXAMPLE_UNAVAILABLE_OFFLINE_MESSAGE = 'Example unavailable offline. Reconnect once to refresh offline examples.';
+
 let appState = createInitialAppState();
 let searchQuery = '';
 let searchTimer = null;
 let denseTableState = createInitialDenseTableState();
+let lastOfflineStatusKey = '';
+let waitingServiceWorker = null;
+let reloadAfterControllerChange = false;
 
 function createInitialDenseTableState() {
   return {
@@ -220,7 +228,9 @@ async function loadExample(example) {
     showParsedReport(text, example.sourceLabel);
   } catch {
     appState = withStatus(createInitialAppState(), {
-      message: `Could not load ${example.sourceLabel}. Serve the project folder through a local static server to use examples.`,
+      message: navigator.onLine === false
+        ? EXAMPLE_UNAVAILABLE_OFFLINE_MESSAGE
+        : `Could not load ${example.sourceLabel}. Serve the project folder through a local static server to use examples.`,
       tone: 'error',
       clearSections: true,
     });
@@ -368,15 +378,51 @@ inputPanel.addEventListener('drop', async (event) => {
 clearButton.addEventListener('click', clearReport);
 privacyToggle.addEventListener('click', togglePrivacyMode);
 
-function setOfflineStatus(message, tone = 'info') {
+function setOfflineStatus(message, tone = 'info', action = null) {
   if (!offlineStatus) return;
-  offlineStatus.textContent = message;
+
+  const statusKey = `${tone}:${message}:${action?.label ?? ''}`;
+  if (statusKey === lastOfflineStatusKey) return;
+
+  lastOfflineStatusKey = statusKey;
+  offlineStatus.replaceChildren();
+
+  if (message) {
+    const text = document.createElement('span');
+    text.textContent = message;
+    offlineStatus.append(text);
+  }
+
+  if (action) {
+    const button = document.createElement('button');
+    button.className = 'offline-status__button';
+    button.type = 'button';
+    button.textContent = action.label;
+    button.addEventListener('click', action.onClick);
+    offlineStatus.append(button);
+  }
+
   offlineStatus.dataset.tone = tone;
   offlineStatus.hidden = !message;
 }
 
-function showUpdateReady() {
-  setOfflineStatus('Update ready. Reload when done with the current report.');
+function showUpdateReady(worker = null) {
+  waitingServiceWorker = worker ?? waitingServiceWorker;
+  setOfflineStatus(UPDATE_READY_MESSAGE, 'info', {
+    label: 'Reload app',
+    onClick: reloadForWaitingUpdate,
+  });
+}
+
+function reloadForWaitingUpdate() {
+  reloadAfterControllerChange = true;
+
+  if (waitingServiceWorker) {
+    waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+    return;
+  }
+
+  window.location.reload();
 }
 
 function watchServiceWorkerState(worker) {
@@ -384,24 +430,24 @@ function watchServiceWorkerState(worker) {
 
   worker.addEventListener('statechange', () => {
     if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-      showUpdateReady();
+      showUpdateReady(worker);
       return;
     }
 
     if (worker.state === 'activated') {
-      setOfflineStatus('Offline app shell ready. Reports are still not saved.');
+      setOfflineStatus(OFFLINE_READY_MESSAGE);
       return;
     }
 
     if (worker.state === 'redundant' && !navigator.serviceWorker.controller) {
-      setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+      setOfflineStatus(OFFLINE_SETUP_FAILED_MESSAGE, 'warning');
     }
   });
 }
 
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) {
-    setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+    setOfflineStatus(OFFLINE_SETUP_FAILED_MESSAGE, 'warning');
     return;
   }
 
@@ -411,11 +457,11 @@ async function registerServiceWorker() {
     const registration = await navigator.serviceWorker.register(workerUrl, { scope: scopeUrl });
 
     if (registration.waiting) {
-      showUpdateReady();
+      showUpdateReady(registration.waiting);
     }
 
     if (registration.active && !registration.waiting) {
-      setOfflineStatus('Offline app shell ready. Reports are still not saved.');
+      setOfflineStatus(OFFLINE_READY_MESSAGE);
     }
 
     watchServiceWorkerState(registration.installing);
@@ -424,8 +470,15 @@ async function registerServiceWorker() {
       watchServiceWorkerState(registration.installing);
     });
   } catch {
-    setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+    setOfflineStatus(OFFLINE_SETUP_FAILED_MESSAGE, 'warning');
   }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!reloadAfterControllerChange) return;
+    window.location.reload();
+  });
 }
 
 renderExampleControls();

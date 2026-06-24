@@ -1,5 +1,8 @@
 const CACHE_PREFIX = 'ios-analytics-parser-';
-const CACHE_VERSION = 'v0.3.1-alpha-slice2-mobile-overflow-2026-06-24';
+// Developer checklist: if any precached asset changes, bump CACHE_VERSION.
+// Precached assets include index.html, styles/main.css, src modules, examples,
+// manifest, icons, and the service-worker allowlist itself.
+const CACHE_VERSION = 'v0.3.1-alpha-slice3-offline-update-2026-06-24';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -100,6 +103,12 @@ self.addEventListener('activate', (event) => {
       )
       .then(() => self.clients.claim())
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {

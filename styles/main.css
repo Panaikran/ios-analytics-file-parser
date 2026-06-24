@@ -156,6 +156,10 @@ h1 {
 }
 
 .offline-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   max-width: 680px;
   margin: 12px 0 0;
   border: 1px solid rgba(48, 209, 88, 0.28);
@@ -173,6 +177,23 @@ h1 {
 .offline-status[data-tone="warning"] {
   border-color: rgba(255, 214, 10, 0.35);
   background: rgba(255, 214, 10, 0.08);
+}
+
+.offline-status__button {
+  min-height: 44px;
+  border: 1px solid rgba(48, 209, 88, 0.45);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.offline-status__button:hover,
+.offline-status__button:focus-visible {
+  border-color: rgba(48, 209, 88, 0.75);
+  color: var(--success);
 }
 
 .input-panel,

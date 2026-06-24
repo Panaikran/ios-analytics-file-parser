@@ -1,6 +1,6 @@
 export const MAX_SAFE_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 export const FILE_ERROR_UNSUPPORTED = 'This file does not look like a supported text diagnostic report.';
-export const FILE_ERROR_TOO_LARGE = 'This file is too large to open safely in mobile Safari.';
+export const FILE_ERROR_TOO_LARGE = 'This file exceeds the 20 MB safety limit and was not opened.';
 
 const SAFE_EXTENSIONS = [
   '.ips.ca.synced',
