@@ -15,6 +15,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 * {
@@ -25,6 +27,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--text);
+  max-width: 100%;
   overflow-x: hidden;
 }
 
@@ -409,6 +412,7 @@ textarea {
   border-radius: 8px;
   background: var(--surface);
   padding: 12px;
+  min-width: 0;
 }
 
 .section-nav[hidden] {
@@ -425,6 +429,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .section-nav__link {
@@ -451,6 +456,7 @@ textarea {
 .section-card {
   padding: 18px;
   scroll-margin-top: 18px;
+  overflow: hidden;
 }
 
 .section-card__header {
@@ -458,6 +464,12 @@ textarea {
   align-items: start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.section-card__header h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .section-copy {
@@ -561,14 +573,20 @@ textarea {
 
 .table-scroll {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .frame-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   margin-top: 18px;
   border-collapse: collapse;
   font-size: 0.9rem;
+  table-layout: auto;
 }
 
 .thread-group .frame-table,
@@ -587,6 +605,7 @@ textarea {
   padding: 10px;
   text-align: left;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .frame-table th {
@@ -620,11 +639,15 @@ textarea {
 .raw-note {
   margin: 16px 0 0;
   color: var(--warning);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 720px) {
   .app-shell {
-    padding: 28px max(10px, env(safe-area-inset-right)) 28px max(10px, env(safe-area-inset-left));
+    padding: 28px max(10px, env(safe-area-inset-right)) max(48px, calc(28px + env(safe-area-inset-bottom))) max(10px, env(safe-area-inset-left));
   }
 
   .field-list {
@@ -632,15 +655,17 @@ textarea {
     gap: 4px;
   }
 
-  .frame-table {
-    display: block;
-    overflow-x: auto;
+  .section-card {
+    padding: 14px;
   }
 
   .section-nav__links {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-bottom: 2px;
+    margin: 0 -4px;
+    padding: 2px 4px 8px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .section-nav__link {
