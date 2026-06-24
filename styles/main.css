@@ -665,10 +665,17 @@ textarea {
 .raw-note {
   margin: 16px 0 0;
   color: var(--warning);
+}
+
+.raw-note--wrap {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
   word-break: break-word;
   line-break: anywhere;
+  contain: inline-size;
 }
 
 @media (max-width: 720px) {

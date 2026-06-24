@@ -74,8 +74,8 @@ export function renderSection(
   }
 
   if (section.raw) {
-    const raw = document.createElement('p');
-    raw.className = 'raw-note';
+    const raw = document.createElement('div');
+    raw.className = 'raw-note raw-note--wrap';
     raw.textContent = section.raw;
     article.append(raw);
   }

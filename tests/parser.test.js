@@ -46,6 +46,8 @@ const coreAnalyticsLargeText = await readFile(new URL('./fixtures/example-corean
 const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
+const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
 
 assert.match(indexHtmlText, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/, 'viewport supports mobile Safari safe-area rendering without disabling zoom');
 assert.match(indexHtmlText, /<input id="file-input" type="file">/, 'file picker does not restrict iOS analytics file extensions with accept filters');
@@ -57,6 +59,15 @@ assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|
 assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
 assert.match(mainScriptText, /new URL\('\.\.\/service-worker\.js', import\.meta\.url\)/, 'service worker registration uses a GitHub Pages-safe relative script URL');
 assert.match(mainScriptText, /new URL\('\.\.\/', import\.meta\.url\)/, 'service worker registration derives scope from the current module URL');
+assert.match(renderSectionText, /document\.createElement\('div'\)/, 'raw section text renders inside a block wrapper');
+assert.match(renderSectionText, /raw-note raw-note--wrap/, 'raw section text uses the mobile wrapping class');
+const rawWrapRule = styleText.match(/\.raw-note--wrap\s*{(?<body>[^}]*)}/s)?.groups?.body ?? '';
+assert.match(rawWrapRule, /white-space:\s*pre-wrap;/, 'raw wrapping class preserves panic string line breaks');
+assert.match(rawWrapRule, /overflow-wrap:\s*anywhere;/, 'raw wrapping class allows arbitrary token wrapping');
+assert.match(rawWrapRule, /word-break:\s*break-word;/, 'raw wrapping class breaks long fallback tokens');
+assert.match(rawWrapRule, /line-break:\s*anywhere;/, 'raw wrapping class handles iOS slash-heavy panic tokens');
+assert.match(rawWrapRule, /max-width:\s*100%;/, 'raw wrapping class stays inside the card width');
+assert.match(rawWrapRule, /min-width:\s*0;/, 'raw wrapping class can shrink inside grid and flex parents');
 
 assert.deepEqual(
   EXAMPLE_REPORTS.map((example) => example.type),
