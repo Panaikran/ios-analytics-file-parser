@@ -37,6 +37,19 @@ const analyticsText = await readFile(new URL('./fixtures/example-analytics.txt',
 const coreAnalyticsSmallText = await readFile(new URL('./fixtures/example-coreanalytics-small.ips.ca.synced', import.meta.url), 'utf8');
 const coreAnalyticsMediumText = await readFile(new URL('./fixtures/example-coreanalytics-medium.ips.ca.synced', import.meta.url), 'utf8');
 const coreAnalyticsLargeText = await readFile(new URL('./fixtures/example-coreanalytics-large.ips.ca.synced', import.meta.url), 'utf8');
+const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
+const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+
+assert.match(indexHtmlText, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/, 'viewport supports mobile Safari safe-area rendering without disabling zoom');
+assert.match(indexHtmlText, /<input id="file-input" type="file">/, 'file picker does not restrict iOS analytics file extensions with accept filters');
+assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
+assert.doesNotMatch(serviceWorkerText, /cache\.put/, 'service worker does not dynamically cache network responses');
+assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
+assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
+assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
+assert.match(mainScriptText, /new URL\('\.\.\/service-worker\.js', import\.meta\.url\)/, 'service worker registration uses a GitHub Pages-safe relative script URL');
+assert.match(mainScriptText, /new URL\('\.\.\/', import\.meta\.url\)/, 'service worker registration derives scope from the current module URL');
 
 assert.deepEqual(
   EXAMPLE_REPORTS.map((example) => example.type),

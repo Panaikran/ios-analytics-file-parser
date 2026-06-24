@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">iOS Analytics File Parser icon</title>
+  <desc id="desc">A local diagnostic report with a privacy shield.</desc>
+  <rect width="64" height="64" rx="14" fill="#0d0d0f"/>
+  <rect x="16" y="10" width="26" height="44" rx="5" fill="#1c1c1e" stroke="#f2f2f7" stroke-width="3"/>
+  <path d="M38 10v12h12" fill="none" stroke="#f2f2f7" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M24 27h18M24 35h13M24 43h10" stroke="#8e8e93" stroke-width="3" stroke-linecap="round"/>
+  <path d="M43 31l11 4v8c0 7-4.8 11-11 13-6.2-2-11-6-11-13v-8l11-4z" fill="#30d158" stroke="#0d0d0f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M38 43l3 3 7-8" fill="none" stroke="#0d0d0f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

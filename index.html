@@ -2,8 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0d0d0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="iOS Parser">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>iOS Analytics File Parser</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
     <link rel="stylesheet" href="./styles/main.css">
   </head>
   <body>
@@ -12,16 +21,36 @@
         <p class="privacy-badge">Parsed locally - not uploaded</p>
         <h1>iOS Analytics File Parser</h1>
         <p>
-          Open a standard app crash <code>.ips</code> or legacy <code>.crash</code>
-          file and read the core crash details in structured sections.
+          Open iPhone and iPad diagnostic reports and inspect them as structured
+          sections. Reports are parsed in this browser session only.
         </p>
+        <div class="trust-strip" aria-label="Privacy guarantees">
+          <span>No uploads</span>
+          <span>No analytics</span>
+          <span>No saved reports</span>
+        </div>
+        <details class="install-help">
+          <summary>Install app</summary>
+          <div class="install-help__content">
+            <p>
+              Install the app for quick access. Installation saves the app
+              identity on your device; it does not save uploaded or pasted
+              reports.
+            </p>
+            <ul>
+              <li>On iPhone or iPad, use Share, then Add to Home Screen.</li>
+              <li>On desktop, use your browser's install option when offered.</li>
+            </ul>
+          </div>
+        </details>
+        <p id="offline-status" class="offline-status" role="status" aria-live="polite" hidden></p>
       </section>
 
       <section class="input-panel" id="input-panel" aria-labelledby="input-title">
         <h2 id="input-title">Load a report</h2>
         <label class="file-picker">
           <span>Choose file</span>
-          <input id="file-input" type="file" accept=".ips,.crash,.panic-full,.log,.txt,text/plain,application/json">
+          <input id="file-input" type="file">
         </label>
 
         <button id="clear-report" class="clear-report" type="button" disabled>Clear report</button>

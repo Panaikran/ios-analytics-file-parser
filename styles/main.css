@@ -12,6 +12,11 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -20,6 +25,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 code,
@@ -29,9 +35,10 @@ textarea,
 }
 
 .app-shell {
-  width: min(1120px, calc(100% - 32px));
+  width: 100%;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 48px 0;
+  padding: 48px 16px;
 }
 
 .intro {
@@ -62,9 +69,88 @@ h1 {
   line-height: 1.6;
 }
 
+.trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.trust-strip span {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(48, 209, 88, 0.25);
+  border-radius: 999px;
+  background: rgba(48, 209, 88, 0.08);
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 0.86rem;
+}
+
+.install-help {
+  max-width: 680px;
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(28, 28, 30, 0.72);
+}
+
+.install-help summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--text);
+  font-weight: 650;
+}
+
+.install-help summary:focus-visible {
+  outline: 2px solid rgba(48, 209, 88, 0.7);
+  outline-offset: 3px;
+}
+
+.install-help__content {
+  border-top: 1px solid var(--border);
+  padding: 0 12px 12px;
+}
+
+.install-help__content p,
+.install-help__content ul {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.install-help__content ul {
+  padding-left: 20px;
+}
+
+.offline-status {
+  max-width: 680px;
+  margin: 12px 0 0;
+  border: 1px solid rgba(48, 209, 88, 0.28);
+  border-radius: 8px;
+  background: rgba(48, 209, 88, 0.08);
+  color: var(--text);
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.offline-status[hidden] {
+  display: none;
+}
+
+.offline-status[data-tone="warning"] {
+  border-color: rgba(255, 214, 10, 0.35);
+  background: rgba(255, 214, 10, 0.08);
+}
+
 .input-panel,
 .section-card,
 .status {
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
@@ -538,8 +624,7 @@ textarea {
 
 @media (max-width: 720px) {
   .app-shell {
-    width: min(100% - 20px, 1120px);
-    padding: 28px 0;
+    padding: 28px max(10px, env(safe-area-inset-right)) 28px max(10px, env(safe-area-inset-left));
   }
 
   .field-list {

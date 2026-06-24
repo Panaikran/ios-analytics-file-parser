@@ -32,6 +32,7 @@ const searchCount = document.querySelector('#search-count');
 const sectionNavElement = document.querySelector('#section-nav');
 const emptyResults = document.querySelector('#empty-results');
 const sectionsElement = document.querySelector('#sections');
+const offlineStatus = document.querySelector('#offline-status');
 
 let appState = createInitialAppState();
 let searchQuery = '';
@@ -351,5 +352,66 @@ inputPanel.addEventListener('drop', async (event) => {
 clearButton.addEventListener('click', clearReport);
 privacyToggle.addEventListener('click', togglePrivacyMode);
 
+function setOfflineStatus(message, tone = 'info') {
+  if (!offlineStatus) return;
+  offlineStatus.textContent = message;
+  offlineStatus.dataset.tone = tone;
+  offlineStatus.hidden = !message;
+}
+
+function showUpdateReady() {
+  setOfflineStatus('Update ready. Reload when done with the current report.');
+}
+
+function watchServiceWorkerState(worker) {
+  if (!worker) return;
+
+  worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+      showUpdateReady();
+      return;
+    }
+
+    if (worker.state === 'activated') {
+      setOfflineStatus('Offline app shell ready. Reports are still not saved.');
+      return;
+    }
+
+    if (worker.state === 'redundant' && !navigator.serviceWorker.controller) {
+      setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+    }
+  });
+}
+
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+    return;
+  }
+
+  try {
+    const workerUrl = new URL('../service-worker.js', import.meta.url);
+    const scopeUrl = new URL('../', import.meta.url);
+    const registration = await navigator.serviceWorker.register(workerUrl, { scope: scopeUrl });
+
+    if (registration.waiting) {
+      showUpdateReady();
+    }
+
+    if (registration.active && !registration.waiting) {
+      setOfflineStatus('Offline app shell ready. Reports are still not saved.');
+    }
+
+    watchServiceWorkerState(registration.installing);
+
+    registration.addEventListener('updatefound', () => {
+      watchServiceWorkerState(registration.installing);
+    });
+  } catch {
+    setOfflineStatus('Offline setup unavailable. Online parsing still works.', 'warning');
+  }
+}
+
 renderExampleControls();
 renderApp();
+registerServiceWorker();
