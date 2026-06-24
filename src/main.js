@@ -8,6 +8,7 @@ import {
 } from './appState.js';
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import { serializeSectionForCopy } from './clipboard/serializeSection.js';
+import { validateReportFile } from './fileValidation.js';
 import { detectFileType } from './parsers/detect.js';
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
@@ -229,6 +230,21 @@ async function loadExample(example) {
 
 async function loadFile(file) {
   if (!file) return;
+
+  const validation = validateReportFile(file);
+  if (!validation.ok) {
+    appState = withStatus(createInitialAppState(), {
+      message: validation.message,
+      tone: 'error',
+      clearSections: true,
+    });
+    fileInput.value = '';
+    pasteInput.value = '';
+    clearSearchState();
+    resetDenseTableState();
+    renderApp();
+    return;
+  }
 
   try {
     const text = await file.text();

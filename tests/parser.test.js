@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import {
+  FILE_ERROR_TOO_LARGE,
+  FILE_ERROR_UNSUPPORTED,
+  MAX_SAFE_FILE_SIZE_BYTES,
+  validateReportFile,
+} from '../src/fileValidation.js';
+import {
   createInitialAppState,
   createParsedStatusMessage,
   startNewReportState,
@@ -46,6 +52,7 @@ assert.match(indexHtmlText, /<input id="file-input" type="file">/, 'file picker 
 assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
 assert.doesNotMatch(serviceWorkerText, /cache\.put/, 'service worker does not dynamically cache network responses');
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
+assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
 assert.match(mainScriptText, /new URL\('\.\.\/service-worker\.js', import\.meta\.url\)/, 'service worker registration uses a GitHub Pages-safe relative script URL');
@@ -66,6 +73,42 @@ for (const example of EXAMPLE_REPORTS) {
   assert.equal(detectFileType(exampleText), example.type, `${example.label} production example detects correctly`);
   assert.ok(parseInput(exampleText).length > 0, `${example.label} production example parses into sections`);
 }
+
+function mockFile(name, type = '', size = 1024) {
+  return { name, type, size };
+}
+
+assert.equal(validateReportFile(mockFile('Crash.ips')).ok, true, 'file validation allows .ips reports without MIME help');
+assert.equal(validateReportFile(mockFile('Legacy.crash')).ok, true, 'file validation allows .crash reports');
+assert.equal(validateReportFile(mockFile('panic-full-2024.ips.panic-full')).ok, true, 'file validation allows panic-full reports');
+assert.equal(
+  validateReportFile(mockFile('Analytics.ips.ca.synced', 'application/octet-stream')).ok,
+  true,
+  'file validation allows known CoreAnalytics extension even when Safari reports octet-stream'
+);
+assert.equal(validateReportFile(mockFile('Report.synced')).ok, true, 'file validation allows .synced reports');
+assert.equal(validateReportFile(mockFile('diagnostic.unknown', 'text/plain')).ok, true, 'file validation allows unknown text/plain files');
+assert.equal(validateReportFile(mockFile('diagnostic.data', 'application/json')).ok, true, 'file validation allows unknown application/json files');
+assert.deepEqual(
+  validateReportFile(mockFile('photo.jpg', 'image/jpeg')),
+  { ok: false, reason: 'unsupported', message: FILE_ERROR_UNSUPPORTED },
+  'file validation rejects images before reading'
+);
+assert.equal(validateReportFile(mockFile('movie.mov', 'video/quicktime')).ok, false, 'file validation rejects videos before reading');
+assert.equal(validateReportFile(mockFile('voice.m4a', 'audio/mp4')).ok, false, 'file validation rejects audio before reading');
+assert.equal(validateReportFile(mockFile('manual.pdf', 'application/pdf')).ok, false, 'file validation rejects PDFs before reading');
+assert.equal(validateReportFile(mockFile('archive.zip', 'application/zip')).ok, false, 'file validation rejects archives before reading');
+assert.equal(validateReportFile(mockFile('unknown.bin', 'application/octet-stream')).ok, false, 'file validation rejects octet-stream without a known safe extension');
+assert.deepEqual(
+  validateReportFile(mockFile('huge.ips', 'text/plain', MAX_SAFE_FILE_SIZE_BYTES + 1)),
+  { ok: false, reason: 'too-large', message: FILE_ERROR_TOO_LARGE },
+  'file validation rejects oversized files before reading'
+);
+assert.equal(
+  validateReportFile(mockFile('limit.ips', 'text/plain', MAX_SAFE_FILE_SIZE_BYTES)).ok,
+  true,
+  'file validation allows files at the configured safe size limit'
+);
 
 function sectionById(sections, id) {
   return sections.find((section) => section.id === id);

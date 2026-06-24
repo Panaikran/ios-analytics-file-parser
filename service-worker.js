@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'ios-analytics-parser-';
-const CACHE_VERSION = 'v0.3.1-alpha-slice2-mobile-filefix-2026-06-24';
+const CACHE_VERSION = 'v0.3.1-alpha-slice2-file-intake-safety-2026-06-24';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -9,6 +9,7 @@ const PRECACHE_URLS = [
   './styles/main.css',
   './src/main.js',
   './src/appState.js',
+  './src/fileValidation.js',
   './src/models/sectionModel.js',
   './src/privacy/sanitize.js',
   './src/search/filterSections.js',
