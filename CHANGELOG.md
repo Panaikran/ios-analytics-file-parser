@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.4.0-alpha
+
+Phase 4 PWA, offline app shell, mobile Safari hardening, and release-readiness update.
+
+### Added
+
+- Web App Manifest with GitHub Pages-safe relative paths.
+- PWA icons, maskable icon, favicon, and Apple touch icon.
+- Apple web app meta tags and theme color.
+- Install guidance explaining that installation saves the app shell, not reports.
+- Root service worker for an offline app shell after first successful load.
+- Offline support for sanitized fictional examples.
+- Offline-ready, offline-setup-failed, and update-ready status messages.
+- Explicit `Reload app` button for applying a waiting service worker update.
+- Developer cache-version reminder for precached asset changes.
+- Release hardening documentation and Phase 4 summary.
+
+### Improved
+
+- File picker behavior for iPhone and iPad Safari by keeping selection broad enough for `.ips` and related diagnostic files.
+- Safe file intake by validating selected files before calling `file.text()`.
+- Mobile Safari safety limit for files larger than 20 MB.
+- Rejection of clearly unsupported binary, media, PDF, and ZIP files before reading.
+- Panic/raw diagnostic text wrapping on iPhone Safari.
+- Mobile layout containment for raw text, tables, section cards, section navigation, and safe-area bottom padding.
+- Service worker cache-version discipline after CSS/JS and file-message changes.
+
+### Notes
+
+- CSP/header hardening is deferred for `v0.4.0-alpha`.
+- GitHub Pages is the deployment target.
+- The service worker caches only allowlisted app-shell assets and sanitized fictional examples.
+- Uploaded files, pasted report text, parsed sections, raw-mode output, search state, dense-table state, and clipboard output are not cached or persisted by the app.
+- `package.json` remains unchanged and may still show the legacy `0.1.0` value; release state is tracked by tags and documentation.
+
 ## v0.3.1-alpha
 
 CoreAnalytics patch release.
@@ -17,7 +52,7 @@ CoreAnalytics patch release.
 
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - CoreAnalytics does not render full raw JSON bodies.
-- Phase 4 PWA/deployment work has not started.
+- Phase 4 PWA/deployment work was added later for the `v0.4.0-alpha` release target.
 
 ## v0.3.0-alpha
 
@@ -57,7 +92,7 @@ Phase 3 UI polish and release hardening.
 ### Notes
 
 - Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON reports were added later in `v0.3.1-alpha`.
-- Phase 4 PWA/deployment work has not started.
+- Phase 4 PWA/deployment work was added later for the `v0.4.0-alpha` release target.
 
 ## v0.2.0-alpha
 

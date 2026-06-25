@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for `v0.3.1-alpha`
+Status: updated for `v0.4.0-alpha` release preparation
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -12,7 +12,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Phase 2: Full Section Rendering | Complete | `v0.2.0-alpha` | All Threads, Binary Images, JetsamEvent, panic-full, analytics fallback, memory chart |
 | Phase 3: UI Polish | Complete | `v0.3.0-alpha` | Examples, input UX, section navigation, search/filter, copy actions, dense tables, privacy toggle |
 | CoreAnalytics Patch | Complete | `v0.3.1-alpha` | Initial `.ips.ca.synced` CoreAnalytics detection, parser, privacy handling, capped rows, fixtures, tests |
-| Phase 4: PWA and Release | Not started | Future | Offline/PWA hardening, deployment, CSP, release polish |
+| Phase 4: PWA and Release | Mostly complete | `v0.4.0-alpha` target | Manifest/install identity, service worker app shell, offline examples, update UX, mobile Safari hardening, release docs |
 
 ## Project Constraints
 
@@ -28,6 +28,7 @@ These constraints remain active for future phases unless explicitly changed:
 - No framework dependencies unless explicitly approved.
 - Sanitized output remains the default.
 - Raw local view remains opt-in and local-only.
+- Uploaded or pasted reports remain memory-only.
 
 ## Completed Milestones
 
@@ -105,22 +106,70 @@ Known CoreAnalytics limits:
 
 ## Active Roadmap: Phase 4
 
-Phase 4 has not started.
+Phase 4 is the active release-hardening phase for the `v0.4.0-alpha` target.
 
-Primary goal: prepare the static app for release-quality deployment while preserving the local-first privacy model.
+Primary goal: prepare the static app for GitHub Pages deployment while preserving the local-first privacy model.
 
-Recommended Phase 4 scope:
+### Completed Phase 4 Slices
 
-- Web App Manifest for installability.
-- Service Worker for offline use after first load.
-- Content Security Policy hardening.
-- Static hosting setup, such as GitHub Pages or Cloudflare Pages.
-- Manual QA pass across supported examples and real-world validation patterns.
-- Mobile Safari QA pass.
-- Release checklist and versioning cleanup.
-- Documentation review before release.
+#### Slice 1: PWA Identity And Installability
 
-Phase 4 should not add:
+Implemented:
+
+- `manifest.webmanifest` with GitHub Pages-safe relative paths.
+- PWA icons, maskable icon, favicon, and Apple touch icon.
+- Apple web app meta tags.
+- Theme color.
+- Install guidance UI.
+- Privacy trust messaging explaining that installation saves the app shell, not reports.
+
+#### Slice 2: Offline App Shell And Service Worker
+
+Implemented:
+
+- Root `service-worker.js`.
+- GitHub Pages-safe service worker registration from `src/main.js`.
+- Versioned app cache.
+- Explicit precache allowlist for app shell, CSS, ES modules, manifest, icons, and sanitized fictional examples.
+- Cache cleanup for old `ios-analytics-parser-*` caches during activation.
+- Cache-first behavior only for allowlisted same-origin GET assets.
+- Navigation fallback to cached `index.html`.
+- No runtime caching of unknown requests.
+- No dynamic `cache.put`.
+- No Background Sync, Periodic Sync, Push, Share Target, or file handlers.
+
+#### Slice 3: Offline, Install, Update, And Mobile UX Polish
+
+Implemented:
+
+- Offline-ready status:
+  - `Offline app shell ready. Examples can open offline. Reports are still not saved.`
+- Offline setup failure status:
+  - `Offline setup unavailable. Online parsing still works.`
+- Update-ready status:
+  - `Update ready. Reload when done with the current report.`
+- Explicit `Reload app` button for service worker updates.
+- Install guidance copy for iPhone, iPad, and desktop.
+- Developer cache-version reminder for precached asset changes.
+- Broad file picker with safe pre-read validation.
+- 20 MB mobile Safari safety limit.
+- Rejection of clearly unsupported binary/media/PDF/ZIP files before reading.
+- Panic/raw diagnostic text wrapping fixes for iPhone Safari.
+- Safe-area and bottom-toolbar layout padding.
+- Static tests for service worker privacy boundaries, cache-version reminders, file validation, and update UX copy.
+
+### Slice 4: Release Hardening And Documentation
+
+Current focus:
+
+- Align README, ROADMAP, CHANGELOG, and phase summaries with implemented Phase 4 behavior.
+- Create `PHASE_4_SUMMARY.md`.
+- Document GitHub Pages deployment expectations.
+- Document manual QA requirements for desktop, iPhone, iPad, installed PWA, offline examples, and update-ready flow.
+- Document CSP/header hardening decision and deferral.
+- Confirm package version handling without changing `package.json` unless explicitly approved.
+
+### Phase 4 Should Not Add
 
 - Backend services.
 - Authentication.
@@ -131,26 +180,40 @@ Phase 4 should not add:
 - `.dSYM` support.
 - Sysdiagnose archive extraction.
 - New framework dependencies without explicit approval.
+- Runtime caching of unknown requests.
+- Report persistence, recent files, or history.
 
-Testing direction for Phase 4:
+### Testing Direction For Phase 4
 
 - Preserve existing Node/assert regression tests.
-- Add focused tests only where Phase 4 changes create testable logic.
-- Consider browser smoke tests only if approved.
+- Keep static checks for service worker cache boundaries and forbidden persistence APIs.
+- Run syntax checks for touched JavaScript files when code changes are made.
+- Keep browser/mobile checks manual unless browser automation is explicitly approved.
 - Do not migrate the test runner unless the cost is justified and approved.
+
+## Post-v0.4.0-alpha Work
+
+These items are intentionally outside the `v0.4.0-alpha` release target unless explicitly approved later.
+
+| Area | Future work |
+| --- | --- |
+| CSP/header hardening | Stronger response-header CSP on a host that supports custom headers, such as Cloudflare Pages |
+| Browser QA | Optional automated browser smoke tests |
+| Release operations | Package metadata/version cleanup if release process moves beyond Git tags/docs |
+| Visual QA | Screenshot/demo capture for README and GitHub Releases |
 
 ## Historical Planning Notes
 
-The original four-week checklist and task IDs have been replaced by the completed milestone summaries above. Those old checklist items were useful while planning, but they no longer reflected the released project state.
+The original four-week checklist and task IDs have been replaced by completed milestone summaries and active Phase 4 slices above. Those old checklist items were useful while planning, but they no longer reflect the released project state.
 
-The original timeline should be treated as historical planning context, not the current source of truth. The current source of truth is:
+The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, and `PHASE_3_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, and `PHASE_4_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
-## Post-Phase-4 Exploratory Ideas
+## Exploratory Ideas
 
 These ideas are intentionally out of scope for Phase 4 unless explicitly approved later.
 
@@ -164,13 +227,19 @@ These ideas are intentionally out of scope for Phase 4 unless explicitly approve
 | Comparison | Diff view for comparing two reports side by side |
 | Sharing | Local-only share/export format that does not upload reports |
 
-## Next Planning Step
+## Next Release Step
 
-Before Phase 4 implementation begins, produce a focused Phase 4 plan covering:
+Before tagging `v0.4.0-alpha`:
 
-- exact PWA/offline requirements
-- CSP policy
-- hosting target
-- manual QA matrix
-- browser smoke-test decision
-- release/versioning cleanup
+- Confirm docs are aligned.
+- Confirm package version handling decision.
+- Run `npm.cmd test`.
+- Run focused syntax checks:
+  - `node --check src\main.js`
+  - `node --check service-worker.js`
+  - `node --check src\fileValidation.js`
+- Perform local static-server QA.
+- Perform GitHub Pages QA.
+- Perform iPhone and iPad Safari QA.
+- Perform installed PWA/offline/update-ready QA.
+- Confirm no uploaded or pasted reports are persisted or cached.

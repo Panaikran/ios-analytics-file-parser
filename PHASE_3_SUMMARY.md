@@ -6,6 +6,8 @@ Phase 3 is complete for the `v0.3.0-alpha` release target.
 
 Post-Phase 3 release note: `v0.3.1-alpha` adds initial CoreAnalytics `.ips.ca.synced` support after the `v0.3.0-alpha` UI release.
 
+Post-Phase 4 release note: PWA identity, service worker app shell, offline examples, update UX, safe file intake, and mobile Safari hardening were added later for the `v0.4.0-alpha` release target. See `PHASE_4_SUMMARY.md` for the current PWA/offline status.
+
 This phase focused on turning the Phase 1 and Phase 2 parser layer into a more usable local diagnostic viewer. The app remains a static, browser-native ES module application with no build step and no server-side component.
 
 Phase 3 did not add backend services, authentication, analytics, cloud storage, framework dependencies, or report persistence.
@@ -127,13 +129,13 @@ Sanitized mode is default.
 
 Raw local view is opt-in and applies only to the currently loaded report. It reparses the current in-memory source text with sanitization disabled.
 
-No persistence was added:
+No persistence was added during Phase 3:
 
 - no `localStorage`
 - no `sessionStorage`
 - no `IndexedDB`
 - no cookies
-- no service worker cache
+- no service worker cache existed at the Phase 3 release point
 - no hidden report storage
 
 No external services were added:
@@ -253,12 +255,10 @@ Sanitized fictional `.ips.ca.synced` fixture patterns were added for CoreAnalyti
 
 ## Known Limitations
 
-- Phase 4 has not started.
-- No PWA/offline support yet.
-- No service worker.
-- No Web App Manifest.
-- No CSP hardening yet.
-- No hosted deployment yet.
+- Historical note: the Phase 4/PWA limitations in this section described the project state at the end of Phase 3 and the `v0.3.x` releases.
+- Current PWA/offline status is documented in `PHASE_4_SUMMARY.md`.
+- CSP/header hardening remains deferred for the `v0.4.0-alpha` release target.
+- No Cloudflare/header CSP deployment is configured yet.
 - No automated browser or mobile Safari test harness.
 - Clipboard behavior depends on browser permissions and secure-context rules.
 - Very large visible search results can still require substantial DOM rerendering.
@@ -277,7 +277,7 @@ Sanitized fictional `.ips.ca.synced` fixture patterns were added for CoreAnalyti
 
 ## Phase 4 Preview
 
-Phase 4 should focus on release hardening and deployment:
+Phase 4 was planned to focus on release hardening and deployment:
 
 - manual QA pass across supported examples and real-world validation patterns
 - optional browser smoke tests if approved
@@ -287,6 +287,8 @@ Phase 4 should focus on release hardening and deployment:
 - static hosting setup
 - release checklist and versioning cleanup
 - changelog maintenance
+
+As of the `v0.4.0-alpha` release target, manifest/install identity, service worker app shell, offline examples, update UX, safe file intake, and mobile Safari hardening have been implemented. CSP/header hardening is intentionally deferred.
 
 Phase 4 should preserve the existing constraints:
 
