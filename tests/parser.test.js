@@ -81,7 +81,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice4b-search-copy-metadata-ui-2026-06-26/, 'service worker cache version reflects the current search/copy metadata UI precache update');
+assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice5-mobile-safari-polish-2026-06-27/, 'service worker cache version reflects the current mobile Safari CSS precache update');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -110,6 +110,18 @@ assert.match(rawWrapRule, /word-break:\s*break-word;/, 'raw wrapping class break
 assert.match(rawWrapRule, /line-break:\s*anywhere;/, 'raw wrapping class handles iOS slash-heavy panic tokens');
 assert.match(rawWrapRule, /max-width:\s*100%;/, 'raw wrapping class stays inside the card width');
 assert.match(rawWrapRule, /min-width:\s*0;/, 'raw wrapping class can shrink inside grid and flex parents');
+assert.match(styleText, /html\s*{[^}]*overflow-x:\s*clip;/s, 'root element clips accidental page-level horizontal overflow');
+assert.match(styleText, /body\s*{[^}]*overflow-x:\s*clip;/s, 'body clips accidental page-level horizontal overflow');
+assert.match(styleText, /env\(safe-area-inset-bottom\)/, 'mobile layout preserves safe-area bottom padding');
+assert.match(styleText, /\.table-scroll\s*{[^}]*overflow-x:\s*auto;/s, 'tables keep horizontal scrolling inside table-scroll wrappers');
+assert.match(styleText, /\.search-count\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'search status wraps inside narrow mobile cards');
+assert.match(styleText, /\.section-copy__feedback\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'copy feedback wraps without widening section cards');
+assert.match(styleText, /\.coreanalytics-overview__chip\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'CoreAnalytics facet chips wrap long rendered values');
+assert.match(styleText, /\.section-nav__link\s*{[^}]*min-height:\s*44px;/s, 'section nav chips have practical mobile touch targets');
+assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
+assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
+assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
+assert.match(styleText, /\.thread-group__toggle,\s*\.table-toggle,\s*\.table-control-button\s*{[^}]*min-height:\s*44px;/s, 'dense table controls have practical mobile touch targets');
 assert.doesNotMatch(
   `${searchMetadataSource}\n${copyMetadataSource}`,
   /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/,
