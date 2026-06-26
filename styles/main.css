@@ -33,6 +33,15 @@ main,
 .search-panel,
 .section-nav,
 .sections,
+.coreanalytics-overview,
+.coreanalytics-overview__metrics,
+.coreanalytics-overview__metric,
+.coreanalytics-overview__tables,
+.coreanalytics-overview__table-count,
+.coreanalytics-overview__facets,
+.coreanalytics-overview__facet-group,
+.coreanalytics-overview__chips,
+.coreanalytics-overview__notes,
 .section-card,
 .section-card__header,
 .section-copy,
@@ -197,6 +206,7 @@ h1 {
 }
 
 .input-panel,
+.coreanalytics-overview,
 .section-card,
 .status {
   border: 1px solid var(--border);
@@ -216,6 +226,7 @@ h1 {
 }
 
 .input-panel h2,
+.coreanalytics-overview h2,
 .section-card h2 {
   margin: 0;
   font-size: 1rem;
@@ -496,6 +507,84 @@ textarea {
   display: grid;
   gap: 14px;
   margin-top: 14px;
+}
+
+.coreanalytics-overview {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  overflow: hidden;
+}
+
+.coreanalytics-overview h3 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.coreanalytics-overview__intro,
+.coreanalytics-overview__note,
+.coreanalytics-overview__warning,
+.coreanalytics-overview__notes ul {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.coreanalytics-overview__warning {
+  color: var(--warning);
+}
+
+.coreanalytics-overview__metrics,
+.coreanalytics-overview__tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.coreanalytics-overview__metric,
+.coreanalytics-overview__table-count {
+  border: 1px solid var(--surface-strong);
+  border-radius: 8px;
+  background: #111113;
+  padding: 10px;
+}
+
+.coreanalytics-overview__metric dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.coreanalytics-overview__metric dd,
+.coreanalytics-overview__table-count p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.coreanalytics-overview__facets,
+.coreanalytics-overview__facet-group,
+.coreanalytics-overview__notes {
+  display: grid;
+  gap: 10px;
+}
+
+.coreanalytics-overview__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coreanalytics-overview__chip {
+  border: 1px solid var(--surface-strong);
+  border-radius: 999px;
+  background: #111113;
+  color: var(--text);
+  padding: 6px 9px;
+  overflow-wrap: anywhere;
+}
+
+.coreanalytics-overview__notes ul {
+  padding-left: 20px;
 }
 
 .section-card {

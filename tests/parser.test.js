@@ -37,6 +37,7 @@ import {
   isLargeKextTable,
 } from '../src/ui/denseTables.js';
 import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
+import { getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
 
@@ -44,6 +45,9 @@ const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
 const metadataIpsText = await readFile(new URL('./fixtures/example-metadata.ips', import.meta.url), 'utf8');
 const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSection.js', import.meta.url), 'utf8');
+const searchSource = await readFile(new URL('../src/search/filterSections.js', import.meta.url), 'utf8');
+const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
+const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
@@ -73,9 +77,13 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.4\.1-alpha-skip-waiting-hotfix-2026-06-25/, 'service worker cache version reflects the current skip-waiting hotfix');
+assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice3b-coreanalytics-overview-2026-06-26/, 'service worker cache version reflects the current CoreAnalytics overview precache update');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
+assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
+assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
+assert.match(serviceWorkerText, /\.\/src\/models\/reportSize\.js/, 'service worker precaches report-size helper dependencies');
+assert.match(serviceWorkerText, /\.\/src\/ui\/tableView\.js/, 'service worker precaches shared table-view helper dependencies');
 assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
 assert.match(mainScriptText, /new URL\('\.\.\/service-worker\.js', import\.meta\.url\)/, 'service worker registration uses a GitHub Pages-safe relative script URL');
 assert.match(mainScriptText, /new URL\('\.\.\/', import\.meta\.url\)/, 'service worker registration derives scope from the current module URL');
@@ -693,6 +701,19 @@ assert.equal(
   false,
   'render path no longer duplicates dense-table row decision helpers'
 );
+assert.match(mainScriptText, /getCoreAnalyticsView/, 'main app computes the CoreAnalytics overview view model');
+assert.match(mainScriptText, /getCoreAnalyticsView\(appState\.sections\)/, 'CoreAnalytics overview uses original parsed sections, not search-filtered sections');
+assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
+assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
+assert.match(renderCoreAnalyticsOverviewSource, /Tables show rendered capped rows only\. Full raw JSON bodies are not rendered\./, 'CoreAnalytics overview explains rendered capped rows');
+assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rendered rows only\./, 'CoreAnalytics overview explains search and copy row boundaries');
+assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
+assert.doesNotMatch(
+  renderCoreAnalyticsOverviewSource,
+  /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
+  'CoreAnalytics overview renderer stays DOM-only without parser, search, storage, clipboard, or source-text access'
+);
+assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
 const plainCopySection = {
   id: 'plain-copy',
   title: 'Plain Copy',
@@ -963,6 +984,17 @@ assert.deepEqual(
   ],
   'CoreAnalytics parser returns the expected sections'
 );
+const coreAnalyticsSearch = filterSectionsByQuery(coreAnalyticsSections, 'com.example.launch');
+assert.equal(coreAnalyticsSearch.active, true, 'CoreAnalytics search behavior remains active for event terms');
+assert.ok(
+  coreAnalyticsSearch.sections.every((section) => section.id.startsWith('coreanalytics-')),
+  'CoreAnalytics search returns parser sections only, not the overview panel'
+);
+assert.doesNotMatch(
+  serializeSectionForCopy(sectionById(coreAnalyticsSections, 'coreanalytics-event-types')),
+  /CoreAnalytics Overview/,
+  'CoreAnalytics copy behavior remains tied to existing sections only'
+);
 assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Bug Type'), '211');
 assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'Timestamp'), '2026-06-23 08:00:00.00 +0700');
 assert.equal(fieldValue(sectionById(coreAnalyticsSections, 'coreanalytics-summary'), 'OS Version'), 'iPhone OS 27.0 (24A5370h)');
@@ -1014,6 +1046,106 @@ assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-recor
 assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-event-types').tableSummary, '100 of 200 event groups shown');
 assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-records').tableSummary, '100 of 200 event records shown');
 assert.equal(fieldValue(sectionById(largeCoreAnalyticsSections, 'coreanalytics-record-overview'), 'Total event records'), '200');
+
+const coreAnalyticsView = getCoreAnalyticsView(coreAnalyticsSections);
+assert.equal(coreAnalyticsView.isCoreAnalytics, true, 'CoreAnalytics view detects complete CoreAnalytics section sets');
+assert.equal(coreAnalyticsView.fields.summary.byLabel['Bug Type'], '211', 'CoreAnalytics view exposes summary fields by label');
+assert.equal(coreAnalyticsView.fields.configuration.byLabel['Session ID'], '[identifier redacted]', 'CoreAnalytics view exposes configuration fields by label');
+assert.equal(coreAnalyticsView.fields.recordOverview.byLabel['Total event records'], '5', 'CoreAnalytics view exposes overview fields by label');
+assert.equal(coreAnalyticsView.tables.eventTypes.rows[0].message, 'com.example.launch', 'CoreAnalytics view exposes event type rows');
+assert.equal(coreAnalyticsView.tables.eventTypes.columns[0].key, 'message', 'CoreAnalytics view exposes event type columns');
+assert.equal(coreAnalyticsView.tables.eventTypes.tableSummary, '3 of 3 event groups shown', 'CoreAnalytics view preserves event type table summary');
+assert.deepEqual(
+  coreAnalyticsView.tables.eventTypes.counts,
+  { known: true, shown: 3, total: 3 },
+  'CoreAnalytics view parses event type visible and total counts'
+);
+assert.equal(coreAnalyticsView.tables.eventTypes.capped, false, 'CoreAnalytics view does not mark uncapped event tables as capped');
+assert.deepEqual(
+  coreAnalyticsView.tables.sampleRecords.counts,
+  { known: true, shown: 5, total: 5 },
+  'CoreAnalytics view parses sample record visible and total counts'
+);
+assert.deepEqual(
+  parseTableSummary('100 of 200 event records shown'),
+  { known: true, shown: 100, total: 200 },
+  'CoreAnalytics summary parser handles visible and total count text'
+);
+assert.deepEqual(
+  parseTableSummary('not a count summary'),
+  { known: false, shown: null, total: null },
+  'CoreAnalytics summary parser treats malformed summaries as unknown'
+);
+assert.match(coreAnalyticsView.warnings.join('\n'), /1 invalid line ignored/, 'CoreAnalytics view extracts parser-note warning text');
+assert.equal(coreAnalyticsView.facets.source, 'rendered/capped rows only', 'CoreAnalytics view labels facets as rendered-row only');
+assert.deepEqual(
+  coreAnalyticsView.facets.values.message.slice(0, 3),
+  [
+    { value: 'com.example.launch', count: 3 },
+    { value: 'com.example.session', count: 3 },
+    { value: 'com.example.network', count: 2 },
+  ],
+  'CoreAnalytics view builds message facets from rendered rows only'
+);
+assert.deepEqual(
+  coreAnalyticsView.facets.values.aggregationPeriod,
+  [
+    { value: 'daily', count: 5 },
+    { value: 'weekly', count: 3 },
+  ],
+  'CoreAnalytics view builds aggregation period facets from rendered rows only'
+);
+assert.equal(coreAnalyticsView.size.metrics.sections, 6, 'CoreAnalytics view includes report size summary by default');
+
+const largeCoreAnalyticsView = getCoreAnalyticsView(largeCoreAnalyticsSections);
+assert.equal(largeCoreAnalyticsView.tables.eventTypes.capped, true, 'CoreAnalytics view marks capped grouped event tables');
+assert.equal(largeCoreAnalyticsView.tables.sampleRecords.capped, true, 'CoreAnalytics view marks capped sample record tables');
+assert.deepEqual(
+  largeCoreAnalyticsView.tables.eventTypes.counts,
+  { known: true, shown: 100, total: 200 },
+  'CoreAnalytics view parses capped grouped event counts'
+);
+
+const nonCoreAnalyticsView = getCoreAnalyticsView(ipsSections);
+assert.equal(nonCoreAnalyticsView.isCoreAnalytics, false, 'CoreAnalytics view returns false for non-CoreAnalytics reports');
+assert.deepEqual(nonCoreAnalyticsView.tables.eventTypes.rows, [], 'CoreAnalytics view returns empty table models for non-CoreAnalytics reports');
+assert.deepEqual(nonCoreAnalyticsView.facets.values.message, [], 'CoreAnalytics view returns empty facets for non-CoreAnalytics reports');
+
+const missingCoreAnalyticsSectionView = getCoreAnalyticsView(coreAnalyticsSections.filter((section) => section.id !== 'coreanalytics-parser-notes'));
+assert.equal(missingCoreAnalyticsSectionView.isCoreAnalytics, false, 'CoreAnalytics view requires expected CoreAnalytics section IDs');
+
+const malformedCoreAnalyticsSections = coreAnalyticsSections.map((section) =>
+  section.id === 'coreanalytics-event-types'
+    ? { ...section, fields: [{ label: 'Ignored', value: 'field' }, { value: 'missing label' }], table: 'not rows', tableColumns: 'not columns', tableSummary: 'summary unavailable' }
+    : section
+);
+const malformedCoreAnalyticsView = getCoreAnalyticsView(malformedCoreAnalyticsSections);
+assert.equal(malformedCoreAnalyticsView.isCoreAnalytics, true, 'CoreAnalytics view tolerates malformed table payloads when section IDs are present');
+assert.deepEqual(malformedCoreAnalyticsView.tables.eventTypes.rows, [], 'CoreAnalytics view handles malformed event type table rows');
+assert.deepEqual(malformedCoreAnalyticsView.tables.eventTypes.columns, [], 'CoreAnalytics view handles malformed event type columns');
+assert.deepEqual(malformedCoreAnalyticsView.tables.eventTypes.counts, { known: false, shown: null, total: null }, 'CoreAnalytics view handles malformed table summaries');
+assert.equal(malformedCoreAnalyticsView.tables.eventTypes.capped, false, 'CoreAnalytics view does not mark unknown counts as capped');
+
+const emptyCoreAnalyticsSections = coreAnalyticsSections.map((section) =>
+  section.id === 'coreanalytics-sample-records' ? { ...section, table: [], tableSummary: '0 of 0 event records shown' } : section
+);
+const emptyCoreAnalyticsView = getCoreAnalyticsView(emptyCoreAnalyticsSections);
+assert.deepEqual(emptyCoreAnalyticsView.tables.sampleRecords.rows, [], 'CoreAnalytics view handles empty sample tables');
+assert.deepEqual(emptyCoreAnalyticsView.tables.sampleRecords.counts, { known: true, shown: 0, total: 0 }, 'CoreAnalytics view parses empty table summaries');
+
+const coreAnalyticsBeforeView = JSON.stringify(coreAnalyticsSections);
+getCoreAnalyticsView(coreAnalyticsSections);
+assert.equal(JSON.stringify(coreAnalyticsSections), coreAnalyticsBeforeView, 'CoreAnalytics view does not mutate input sections');
+
+const sanitizedCoreAnalyticsViewText = [
+  ...Object.values(coreAnalyticsView.fields).flatMap((model) => model.items.map((field) => `${field.label}: ${field.value}`)),
+  ...Object.values(coreAnalyticsView.tables).flatMap((model) => model.rows.flatMap((row) => Object.values(row))),
+  ...Object.values(coreAnalyticsView.facets.values).flatMap((items) => items.map((item) => item.value)),
+].join('\n');
+assert.doesNotMatch(sanitizedCoreAnalyticsViewText, /22222222-3333-4444-5555-666666666666/, 'CoreAnalytics view does not expose sanitized incident IDs');
+assert.doesNotMatch(sanitizedCoreAnalyticsViewText, /DEVICE-COREANALYTICS-0002/, 'CoreAnalytics view does not expose sanitized device IDs');
+assert.doesNotMatch(sanitizedCoreAnalyticsViewText, /BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF/, 'CoreAnalytics view does not expose sanitized UUIDs');
+assert.doesNotMatch(sanitizedCoreAnalyticsViewText, /SESSION-COREANALYTICS-0002/, 'CoreAnalytics view does not expose sanitized session IDs');
 
 const sanitized = sanitizeText(
   'Email tester@example.com UDID 99999999-9999-9999-9999-999999999999 phone +1 (415) 555-1212 path C:\\Users\\Alice\\Desktop\\log.ips bundle com.example.demoapp uuid AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE'

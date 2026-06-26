@@ -12,6 +12,7 @@ import { validateReportFile } from './fileValidation.js';
 import { detectFileType } from './parsers/detect.js';
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
+import { getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
 import { renderSectionNav } from './ui/renderSectionNav.js';
 
@@ -58,6 +59,7 @@ function createInitialDenseTableState() {
 
 function renderApp() {
   const searchResult = filterSectionsByQuery(appState.sections, searchQuery);
+  const coreAnalyticsView = getCoreAnalyticsView(appState.sections);
   const visibleSections = searchResult.sections;
   const hasParsedSections = appState.sections.length > 0;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
@@ -74,6 +76,8 @@ function renderApp() {
     onShowAllRows: showAllRows,
     onToggleDenseTable: toggleDenseTable,
     allSections: appState.sections,
+    coreAnalyticsView,
+    searchActive: searchResult.active,
   });
   emptyResults.hidden = !emptySearch;
   clearButton.disabled = !appState.sourceText && !appState.sections.length;

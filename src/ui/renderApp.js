@@ -1,4 +1,5 @@
 import { renderSection } from './renderSection.js';
+import { renderCoreAnalyticsOverview } from './renderCoreAnalyticsOverview.js';
 
 export function renderStatus(element, message, tone = 'info') {
   element.textContent = message;
@@ -6,5 +7,9 @@ export function renderStatus(element, message, tone = 'info') {
 }
 
 export function renderSections(element, sections, options = {}) {
-  element.replaceChildren(...sections.map((section) => renderSection(section, options)));
+  const overview = renderCoreAnalyticsOverview(options.coreAnalyticsView, {
+    searchActive: options.searchActive === true,
+  });
+  const sectionCards = sections.map((section) => renderSection(section, options));
+  element.replaceChildren(...[overview, ...sectionCards].filter(Boolean));
 }
