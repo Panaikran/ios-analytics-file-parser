@@ -22,7 +22,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Current release target | `v0.5.0-alpha` |
-| Current released tag | `v0.4.1-alpha` |
+| Current released tag | `v0.5.0-alpha` |
 | Upcoming release | `v0.5.0-alpha` release-ready pending tag/release approval |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
