@@ -12,6 +12,7 @@ import { validateReportFile } from './fileValidation.js';
 import { detectFileType } from './parsers/detect.js';
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
+import { getSearchMetadata } from './search/searchMetadata.js';
 import { getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
 import { renderSectionNav } from './ui/renderSectionNav.js';
@@ -60,13 +61,14 @@ function createInitialDenseTableState() {
 function renderApp() {
   const searchResult = filterSectionsByQuery(appState.sections, searchQuery);
   const coreAnalyticsView = getCoreAnalyticsView(appState.sections);
+  const searchMetadata = getSearchMetadata(searchResult, appState.sections, { coreAnalyticsView });
   const visibleSections = searchResult.sections;
   const hasParsedSections = appState.sections.length > 0;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
 
-  renderStatus(statusElement, statusMessageForSearch(searchResult), appState.statusTone);
+  renderStatus(statusElement, statusMessageForSearch(searchMetadata), appState.statusTone);
   renderPrivacyControls(hasParsedSections);
-  renderSearchControls(searchResult, hasParsedSections);
+  renderSearchControls(searchMetadata, hasParsedSections);
   renderSectionNav(sectionNavElement, visibleSections);
   renderSections(sectionsElement, visibleSections, {
     onCopySection: copySection,
@@ -77,7 +79,7 @@ function renderApp() {
     onToggleDenseTable: toggleDenseTable,
     allSections: appState.sections,
     coreAnalyticsView,
-    searchActive: searchResult.active,
+    searchActive: searchMetadata.searchActive,
   });
   emptyResults.hidden = !emptySearch;
   clearButton.disabled = !appState.sourceText && !appState.sections.length;
@@ -176,34 +178,43 @@ function clearSearchState() {
   searchInput.value = '';
 }
 
-function renderSearchControls(searchResult, hasParsedSections) {
+function renderSearchControls(searchMetadata, hasParsedSections) {
   searchPanel.hidden = !hasParsedSections;
-  clearSearchButton.hidden = !searchResult.active;
+  clearSearchButton.hidden = !searchMetadata.searchActive;
 
-  if (!hasParsedSections) {
+  if (!hasParsedSections || !searchMetadata.searchActive) {
     searchCount.textContent = 'Search inactive.';
     return;
   }
 
-  if (!searchResult.active) {
-    searchCount.textContent = `${appState.sections.length} sections available.`;
-    return;
-  }
-
-  searchCount.textContent =
-    searchResult.totalMatches === 1
-      ? '1 match in parsed output.'
-      : `${searchResult.totalMatches} matches in parsed output.`;
+  searchCount.textContent = searchStatusText(searchMetadata);
 }
 
-function statusMessageForSearch(searchResult) {
-  if (!searchResult.active) return appState.statusMessage;
-  if (searchResult.totalMatches === 0) return 'No matches in parsed output.';
-  return `${searchCountText(searchResult.totalMatches)} for "${searchResult.query}".`;
+function statusMessageForSearch(searchMetadata) {
+  if (!searchMetadata.searchActive) return appState.statusMessage;
+  return searchStatusText(searchMetadata);
+}
+
+function searchStatusText(searchMetadata) {
+  if (searchMetadata.matchCount === 0) return 'No matches in parsed output.';
+
+  if (searchMetadata.cappedCoreAnalytics) {
+    return `${searchCountText(searchMetadata.matchCount)} in rendered parsed output. Some source records are not rendered. Search and copy operate on rendered capped rows only.`;
+  }
+
+  if (searchMetadata.renderedRowsOnly) {
+    return `${searchCountText(searchMetadata.matchCount)} in rendered parsed output. Some source records are not rendered.`;
+  }
+
+  return `${searchCountText(searchMetadata.matchCount)} in parsed output.`;
 }
 
 function searchCountText(count) {
-  return count === 1 ? '1 match' : `${count} matches`;
+  if (count === 1) {
+    return '1 match';
+  }
+
+  return `${count} matches`;
 }
 
 function renderExampleControls() {

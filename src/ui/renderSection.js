@@ -1,4 +1,5 @@
 import { TABLE_VIEW_MODES, getTableView } from './tableView.js';
+import { getCopyMetadata } from '../clipboard/copyMetadata.js';
 import { getVisibleSectionForCopy } from '../clipboard/visibleSection.js';
 
 export function renderSection(
@@ -25,13 +26,15 @@ export function renderSection(
   header.append(title);
 
   if (onCopySection) {
+    const copyMetadata = getCopyMetadata(section, { denseTableState, allSections });
     header.append(
       renderCopyControl(
         getVisibleSectionForCopy(section, {
           denseTableState,
           allSections,
         }),
-        onCopySection
+        onCopySection,
+        copyMetadata
       )
     );
   }
@@ -171,7 +174,7 @@ function renderTableButton(label, onClick) {
   return button;
 }
 
-function renderCopyControl(section, onCopySection) {
+function renderCopyControl(section, onCopySection, copyMetadata) {
   const wrapper = document.createElement('div');
   wrapper.className = 'section-copy';
 
@@ -187,11 +190,23 @@ function renderCopyControl(section, onCopySection) {
 
   button.addEventListener('click', async () => {
     const result = await onCopySection(section);
-    feedback.textContent = result.ok ? 'Copied' : 'Copy failed. Select and copy manually.';
+    feedback.textContent = result.ok ? copyFeedbackText(copyMetadata) : 'Copy failed. Select and copy manually.';
   });
 
   wrapper.append(button, feedback);
   return wrapper;
+}
+
+function copyFeedbackText(copyMetadata) {
+  if (copyMetadata?.cappedCoreAnalytics) {
+    return 'Copied visible rows only. Search and copy operate on rendered capped rows only.';
+  }
+
+  if (copyMetadata?.limitedRows || copyMetadata?.collapsedRows || copyMetadata?.allRowsVisible === false) {
+    return 'Copied visible rows only.';
+  }
+
+  return 'Copied visible section content.';
 }
 
 function renderFields(fields) {

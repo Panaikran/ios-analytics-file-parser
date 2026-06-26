@@ -28,6 +28,8 @@ import {
   summarizeSectionSize,
 } from '../src/models/reportSize.js';
 import { filterSectionsByQuery } from '../src/search/filterSections.js';
+import { getSearchMetadata } from '../src/search/searchMetadata.js';
+import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
 import { serializeSectionForCopy } from '../src/clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
 import {
@@ -46,6 +48,8 @@ const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import
 const metadataIpsText = await readFile(new URL('./fixtures/example-metadata.ips', import.meta.url), 'utf8');
 const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSection.js', import.meta.url), 'utf8');
 const searchSource = await readFile(new URL('../src/search/filterSections.js', import.meta.url), 'utf8');
+const searchMetadataSource = await readFile(new URL('../src/search/searchMetadata.js', import.meta.url), 'utf8');
+const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata.js', import.meta.url), 'utf8');
 const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
@@ -77,11 +81,13 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice3b-coreanalytics-overview-2026-06-26/, 'service worker cache version reflects the current CoreAnalytics overview precache update');
+assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice4b-search-copy-metadata-ui-2026-06-26/, 'service worker cache version reflects the current search/copy metadata UI precache update');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
+assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
+assert.match(serviceWorkerText, /\.\/src\/clipboard\/copyMetadata\.js/, 'service worker precaches the copy metadata helper');
 assert.match(serviceWorkerText, /\.\/src\/models\/reportSize\.js/, 'service worker precaches report-size helper dependencies');
 assert.match(serviceWorkerText, /\.\/src\/ui\/tableView\.js/, 'service worker precaches shared table-view helper dependencies');
 assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
@@ -104,6 +110,16 @@ assert.match(rawWrapRule, /word-break:\s*break-word;/, 'raw wrapping class break
 assert.match(rawWrapRule, /line-break:\s*anywhere;/, 'raw wrapping class handles iOS slash-heavy panic tokens');
 assert.match(rawWrapRule, /max-width:\s*100%;/, 'raw wrapping class stays inside the card width');
 assert.match(rawWrapRule, /min-width:\s*0;/, 'raw wrapping class can shrink inside grid and flex parents');
+assert.doesNotMatch(
+  `${searchMetadataSource}\n${copyMetadataSource}`,
+  /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/,
+  'search and copy metadata helpers avoid persistent storage APIs'
+);
+assert.doesNotMatch(
+  `${searchMetadataSource}\n${copyMetadataSource}`,
+  /(?:sourceText|raw JSON|navigator\.clipboard|parseInput)/,
+  'search and copy metadata helpers do not inspect source text, raw JSON bodies, clipboard, or parser input'
+);
 
 assert.deepEqual(
   EXAMPLE_REPORTS.map((example) => example.type),
@@ -613,6 +629,153 @@ assert.equal(
   0,
   'table view handles malformed table input without throwing'
 );
+assert.deepEqual(
+  getCopyMetadata({ id: 'plain-table', title: 'Plain', table: plainTableRows }),
+  {
+    visibleRows: 3,
+    totalRows: 3,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes all visible section content.',
+  },
+  'copy metadata describes plain tables as fully visible'
+);
+assert.deepEqual(
+  getCopyMetadata({ id: 'process-table', table: sixtyProcessRows }),
+  {
+    visibleRows: 50,
+    totalRows: 60,
+    allRowsVisible: false,
+    limitedRows: true,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes visible rows only.',
+  },
+  'copy metadata matches default process-table row limits'
+);
+assert.deepEqual(
+  getCopyMetadata(
+    { id: 'process-table', table: sixtyProcessRows },
+    { denseTableState: { rowLimits: { 'process-table': 55 } } }
+  ),
+  {
+    visibleRows: 55,
+    totalRows: 60,
+    allRowsVisible: false,
+    limitedRows: true,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes visible rows only.',
+  },
+  'copy metadata matches Show more process-table row state'
+);
+assert.deepEqual(
+  getCopyMetadata(
+    { id: 'process-table', table: sixtyProcessRows },
+    { denseTableState: { rowLimits: { 'process-table': 60 } } }
+  ),
+  {
+    visibleRows: 60,
+    totalRows: 60,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes all visible section content.',
+  },
+  'copy metadata matches Show all process-table row state'
+);
+assert.deepEqual(
+  getCopyMetadata({ id: 'loaded-kexts', table: sixtyProcessRows }),
+  {
+    visibleRows: 0,
+    totalRows: 60,
+    allRowsVisible: false,
+    limitedRows: false,
+    collapsedRows: true,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy omits collapsed rows.',
+  },
+  'copy metadata matches collapsed loaded-kext tables'
+);
+assert.deepEqual(
+  getCopyMetadata(
+    { id: 'loaded-kexts', table: sixtyProcessRows },
+    { denseTableState: { expandedTables: { 'loaded-kexts': true } } }
+  ),
+  {
+    visibleRows: 60,
+    totalRows: 60,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes all visible section content.',
+  },
+  'copy metadata matches expanded loaded-kext tables'
+);
+assert.deepEqual(
+  getCopyMetadata(sectionById(fullIpsSections, 'all-threads'), { allSections: fullIpsSections }),
+  {
+    visibleRows: 2,
+    totalRows: 3,
+    allRowsVisible: false,
+    limitedRows: false,
+    collapsedRows: true,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes expanded thread groups only.',
+  },
+  'copy metadata matches collapsed All Threads groups'
+);
+assert.deepEqual(
+  getCopyMetadata(sectionById(fullIpsSections, 'all-threads'), {
+    allSections: fullIpsSections,
+    denseTableState: { expandedThreadGroups: { 'all-threads:Thread 1': true } },
+  }),
+  {
+    visibleRows: 3,
+    totalRows: 3,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes all visible section content.',
+  },
+  'copy metadata matches expanded All Threads groups'
+);
+assert.deepEqual(
+  getCopyMetadata(null),
+  {
+    visibleRows: 0,
+    totalRows: 0,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    knownSourceRecordTotal: 0,
+    note: 'Copy includes all visible section content.',
+  },
+  'copy metadata handles malformed input without throwing'
+);
 
 const uikitSearch = filterSectionsByQuery(fullIpsSections, 'UIKitCore');
 assert.equal(uikitSearch.active, true, 'search is active for non-empty queries');
@@ -638,6 +801,57 @@ assert.deepEqual(noSearchMatches.sections, [], 'search returns no sections when 
 const inactiveSearch = filterSectionsByQuery(fullIpsSections, '   ');
 assert.equal(inactiveSearch.active, false, 'blank search is inactive');
 assert.equal(inactiveSearch.sections, fullIpsSections, 'blank search returns original parsed sections');
+assert.deepEqual(
+  getSearchMetadata(inactiveSearch, fullIpsSections),
+  {
+    searchActive: false,
+    query: '',
+    matchCount: 0,
+    searchedSectionCount: 0,
+    searchedTableRowCount: 0,
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    hasCappedTables: false,
+    knownSourceRecordTotal: 0,
+    scopeNote: '',
+  },
+  'search metadata reports stable inactive state'
+);
+assert.deepEqual(
+  getSearchMetadata(uikitSearch, fullIpsSections),
+  {
+    searchActive: true,
+    query: 'uikitcore',
+    matchCount: uikitSearch.totalMatches,
+    searchedSectionCount: fullIpsSections.length,
+    searchedTableRowCount: fullIpsSections.reduce((total, section) => total + (section.table?.length ?? 0), 0),
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    hasCappedTables: false,
+    knownSourceRecordTotal: 0,
+    scopeNote: 'Search covers parsed output.',
+  },
+  'search metadata describes normal parsed-output search scope'
+);
+assert.deepEqual(
+  getSearchMetadata(noSearchMatches, fullIpsSections),
+  {
+    searchActive: true,
+    query: 'definitely-not-present',
+    matchCount: 0,
+    searchedSectionCount: fullIpsSections.length,
+    searchedTableRowCount: fullIpsSections.reduce((total, section) => total + (section.table?.length ?? 0), 0),
+    renderedRowsOnly: false,
+    cappedCoreAnalytics: false,
+    hasCappedTables: false,
+    knownSourceRecordTotal: 0,
+    scopeNote: 'Search covers parsed output.',
+  },
+  'search metadata describes no-match searches without treating them as inactive'
+);
+const searchMetadataBefore = JSON.stringify(fullIpsSections);
+getSearchMetadata(uikitSearch, fullIpsSections);
+assert.equal(JSON.stringify(fullIpsSections), searchMetadataBefore, 'search metadata does not mutate input sections');
 
 assert.equal(
   serializeSectionForCopy({
@@ -703,8 +917,20 @@ assert.equal(
 );
 assert.match(mainScriptText, /getCoreAnalyticsView/, 'main app computes the CoreAnalytics overview view model');
 assert.match(mainScriptText, /getCoreAnalyticsView\(appState\.sections\)/, 'CoreAnalytics overview uses original parsed sections, not search-filtered sections');
+assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
+assert.match(mainScriptText, /getSearchMetadata\(searchResult, appState\.sections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, original sections, and CoreAnalytics view');
+assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
+assert.match(mainScriptText, /statusMessageForSearch\(searchMetadata\)/, 'search status text is derived from metadata');
+assert.match(mainScriptText, /Search and copy operate on rendered capped rows only\./, 'CoreAnalytics capped search wording is available in status text');
+assert.match(mainScriptText, /Some source records are not rendered\./, 'large rendered-row search wording is available in status text');
 assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
 assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
+assert.match(renderSectionText, /getCopyMetadata/, 'render path computes copy metadata for feedback');
+assert.match(renderSectionText, /copyFeedbackText\(copyMetadata\)/, 'copy success feedback is derived from copy metadata');
+assert.match(renderSectionText, /Copied visible section content\./, 'copy feedback reports full visible section copy');
+assert.match(renderSectionText, /Copied visible rows only\./, 'copy feedback reports visible-row-only copy');
+assert.match(renderSectionText, /Copy failed\. Select and copy manually\./, 'copy failure feedback remains unchanged');
+assert.match(renderSectionText, /Search and copy operate on rendered capped rows only\./, 'copy feedback includes capped CoreAnalytics wording');
 assert.match(renderCoreAnalyticsOverviewSource, /Tables show rendered capped rows only\. Full raw JSON bodies are not rendered\./, 'CoreAnalytics overview explains rendered capped rows');
 assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rendered rows only\./, 'CoreAnalytics overview explains search and copy row boundaries');
 assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
@@ -1046,6 +1272,40 @@ assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-recor
 assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-event-types').tableSummary, '100 of 200 event groups shown');
 assert.equal(sectionById(largeCoreAnalyticsSections, 'coreanalytics-sample-records').tableSummary, '100 of 200 event records shown');
 assert.equal(fieldValue(sectionById(largeCoreAnalyticsSections, 'coreanalytics-record-overview'), 'Total event records'), '200');
+const largeCoreAnalyticsSearch = filterSectionsByQuery(largeCoreAnalyticsSections, 'metric-001');
+assert.deepEqual(
+  getSearchMetadata(largeCoreAnalyticsSearch, largeCoreAnalyticsSections, {
+    coreAnalyticsView: getCoreAnalyticsView(largeCoreAnalyticsSections),
+  }),
+  {
+    searchActive: true,
+    query: 'metric-001',
+    matchCount: largeCoreAnalyticsSearch.totalMatches,
+    searchedSectionCount: largeCoreAnalyticsSections.length,
+    searchedTableRowCount: largeCoreAnalyticsSections.reduce((total, section) => total + (section.table?.length ?? 0), 0),
+    renderedRowsOnly: true,
+    cappedCoreAnalytics: true,
+    hasCappedTables: true,
+    knownSourceRecordTotal: 400,
+    scopeNote: 'Search covers rendered capped CoreAnalytics rows only.',
+  },
+  'search metadata describes capped CoreAnalytics rendered-row search scope'
+);
+assert.deepEqual(
+  getCopyMetadata(sectionById(largeCoreAnalyticsSections, 'coreanalytics-event-types')),
+  {
+    visibleRows: 100,
+    totalRows: 100,
+    allRowsVisible: true,
+    limitedRows: false,
+    collapsedRows: false,
+    renderedRowsOnly: true,
+    cappedCoreAnalytics: true,
+    knownSourceRecordTotal: 200,
+    note: 'Copy includes rendered capped CoreAnalytics rows only.',
+  },
+  'copy metadata describes capped CoreAnalytics tables as rendered rows only'
+);
 
 const coreAnalyticsView = getCoreAnalyticsView(coreAnalyticsSections);
 assert.equal(coreAnalyticsView.isCoreAnalytics, true, 'CoreAnalytics view detects complete CoreAnalytics section sets');

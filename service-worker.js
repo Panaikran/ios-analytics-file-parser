@@ -2,7 +2,7 @@ const CACHE_PREFIX = 'ios-analytics-parser-';
 // Developer checklist: if any precached asset changes, bump CACHE_VERSION.
 // Precached assets include index.html, styles/main.css, src modules, examples,
 // manifest, icons, and the service-worker allowlist itself.
-const CACHE_VERSION = 'v0.5.0-alpha-slice3b-coreanalytics-overview-2026-06-26';
+const CACHE_VERSION = 'v0.5.0-alpha-slice4b-search-copy-metadata-ui-2026-06-26';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -17,6 +17,8 @@ const PRECACHE_URLS = [
   './src/models/sectionModel.js',
   './src/privacy/sanitize.js',
   './src/search/filterSections.js',
+  './src/search/searchMetadata.js',
+  './src/clipboard/copyMetadata.js',
   './src/clipboard/serializeSection.js',
   './src/clipboard/visibleSection.js',
   './src/ui/coreAnalyticsView.js',
