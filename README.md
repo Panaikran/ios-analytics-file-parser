@@ -21,16 +21,19 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Release target | `v0.4.0-alpha` |
-| Current tags | Through `v0.3.1-alpha` |
+| Current release | `v0.4.1-alpha` |
+| Current tags | Through `v0.4.1-alpha` |
+| Upcoming milestone | `v0.5.0-alpha` planned |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
 | CoreAnalytics patch | Complete in `v0.3.1-alpha` |
+| Phase 4 | Complete in `v0.4.0-alpha` |
 | Phase 4 Slice 1 | Implemented: manifest, icons, install identity |
 | Phase 4 Slice 2 | Implemented: service worker, offline app shell, offline examples |
 | Phase 4 Slice 3 | Implemented: offline/install/update UX polish and mobile Safari hardening |
-| Phase 4 Slice 4 | In progress: release documentation and deployment readiness |
+| Phase 4 Slice 4 | Complete: release documentation and deployment readiness |
+| PWA update hotfix | Complete in `v0.4.1-alpha` |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -84,7 +87,7 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 
 ## Feature Support
 
-| Feature | v0.4.0-alpha target |
+| Feature | v0.4.1-alpha |
 | --- | --- |
 | Static browser app | Supported |
 | Browser-native ES modules | Supported |
@@ -185,6 +188,7 @@ Initial CoreAnalytics `.ips.ca.synced` support renders these sections:
 - Offline status uses the copy: `Offline app shell ready. Examples can open offline. Reports are still not saved.`
 - Update-ready status uses the copy: `Update ready. Reload when done with the current report.`
 - Updates require the user to press `Reload app`; the app does not auto-reload while a report may be open.
+- `v0.4.1-alpha` fixes update activation by keeping the `skipWaiting()` request alive during the service worker message event.
 - Offline setup failures are non-blocking; online parsing still works.
 
 ### Accessibility And Mobile
@@ -448,7 +452,7 @@ After first successful service worker setup, these fictional examples are availa
 
 ## Known Limitations
 
-- CSP/header hardening is deferred for `v0.4.0-alpha`.
+- CSP/header hardening is deferred beyond `v0.4.1-alpha`.
 - GitHub Pages does not provide custom security headers; stronger header CSP may require a future hosting option such as Cloudflare Pages.
 - No Cloudflare/header CSP deployment is configured yet.
 - No report persistence, recent files, or history.
@@ -479,10 +483,13 @@ After first successful service worker setup, these fictional examples are availa
 | Phase 2 | Complete | Full section rendering, JetsamEvent, panic-full, analytics fallback, memory chart |
 | Phase 3 | Complete | UI polish, examples, search, copy, dense tables, privacy toggle, mobile/accessibility improvements |
 | v0.3.1-alpha | Complete | Initial CoreAnalytics `.ips.ca.synced` line-delimited JSON detection and parser support |
+| v0.4.0-alpha | Complete | PWA identity, offline app shell, offline examples, update UX, mobile Safari hardening, release docs |
+| v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
 | Phase 4 Slice 1 | Implemented | PWA identity, manifest, icons, Apple meta tags, install guidance |
 | Phase 4 Slice 2 | Implemented | Service worker, offline app shell, offline fictional examples |
 | Phase 4 Slice 3 | Implemented | Offline/install/update UX polish, safe file intake, mobile Safari fixes |
-| Phase 4 Slice 4 | In progress | Release docs, deployment readiness, manual QA checklist, CSP decision |
+| Phase 4 Slice 4 | Complete | Release docs, deployment readiness, manual QA checklist, CSP decision |
+| v0.5.0-alpha | Planned | Large Report Usability and Performance, with CoreAnalytics as the proving ground |
 
 Phase 4 keeps the same constraints:
 
@@ -496,7 +503,16 @@ Phase 4 keeps the same constraints:
 - no framework dependencies unless explicitly approved
 - sanitized output remains default
 
-CSP/header hardening is intentionally deferred beyond the `v0.4.0-alpha` release target unless approved as a focused follow-up.
+CSP/header hardening is intentionally deferred beyond the `v0.4.1-alpha` release unless approved as a focused follow-up.
+
+The planned `v0.5.0-alpha` milestone is not implemented yet. Its proposed direction is Large Report Usability and Performance:
+
+- large report baseline and guardrails
+- generalized table view controls
+- CoreAnalytics viewer improvements
+- search and copy behavior for large reports
+- mobile Safari polish for dense data views
+- release hardening
 
 ## Screenshots / Demo
 

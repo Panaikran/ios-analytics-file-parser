@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.4.1-alpha
+
+PWA update activation hotfix.
+
+### Fixed
+
+- Fixed a stuck `Update ready` state where a waiting service worker could remain waiting after the user pressed `Reload app`.
+- Service worker `SKIP_WAITING` message handling now uses `event.waitUntil(self.skipWaiting())` so the activation request is kept alive reliably.
+
+### Notes
+
+- No parser behavior changed.
+- No caching strategy changed.
+- No runtime caching, backend, analytics, cloud storage, or report persistence was added.
+
 ## v0.4.0-alpha
 
 Phase 4 PWA, offline app shell, mobile Safari hardening, and release-readiness update.

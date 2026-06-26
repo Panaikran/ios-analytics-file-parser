@@ -1,11 +1,4 @@
-import {
-  JETSAM_INITIAL_ROW_LIMIT,
-  JETSAM_ROW_INCREMENT,
-  findCrashedThreadName,
-  getLimitedRows,
-  groupRowsByThread,
-  isLargeKextTable,
-} from './denseTables.js';
+import { TABLE_VIEW_MODES, getTableView } from './tableView.js';
 import { getVisibleSectionForCopy } from '../clipboard/visibleSection.js';
 
 export function renderSection(
@@ -84,28 +77,23 @@ export function renderSection(
 }
 
 function renderSectionTable(section, options) {
-  if (section.id === 'all-threads') return renderThreadGroups(section, options);
-  if (section.id === 'process-table') return renderLimitedProcessTable(section, options);
-  if (isLargeKextTable(section)) return renderCollapsibleKextTable(section, options);
-  return renderTable(section.table, section.tableColumns, { compact: section.id === 'binary-images' });
-}
-
-function renderThreadGroups(section, { denseTableState, onToggleThreadGroup, allSections }) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'thread-groups';
-
-  const expandedThreads = {};
-  for (const [key, expanded] of Object.entries(denseTableState?.expandedThreadGroups ?? {})) {
-    if (key.startsWith(`${section.id}:`)) expandedThreads[key.slice(section.id.length + 1)] = expanded;
-  }
-
-  const groups = groupRowsByThread(section.table, {
-    crashedThread: findCrashedThreadName(allSections),
-    expandedThreads,
+  const view = getTableView(section, {
+    denseTableState: options.denseTableState,
+    allSections: options.allSections,
     forceExpanded: section.forceExpanded === true,
   });
 
-  for (const group of groups) {
+  if (view.mode === TABLE_VIEW_MODES.grouped) return renderThreadGroups(section, view, options);
+  if (view.mode === TABLE_VIEW_MODES.limited) return renderLimitedProcessTable(section, view, options);
+  if (view.mode === TABLE_VIEW_MODES.collapsed) return renderCollapsibleKextTable(section, view, options);
+  return renderTable(view.rows, section.tableColumns, { compact: view.mode === TABLE_VIEW_MODES.compact });
+}
+
+function renderThreadGroups(section, view, { onToggleThreadGroup }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'thread-groups';
+
+  for (const group of view.groups) {
     const groupElement = document.createElement('section');
     groupElement.className = 'thread-group';
 
@@ -128,21 +116,19 @@ function renderThreadGroups(section, { denseTableState, onToggleThreadGroup, all
   return wrapper;
 }
 
-function renderLimitedProcessTable(section, { denseTableState, onShowMoreRows, onShowAllRows }) {
-  const limit = denseTableState?.rowLimits?.[section.id] ?? JETSAM_INITIAL_ROW_LIMIT;
-  const result = getLimitedRows(section.table, { limit, forceExpanded: section.forceExpanded === true });
+function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRows }) {
   const wrapper = document.createElement('div');
   wrapper.className = 'limited-table';
 
-  wrapper.append(renderRowCount(result.summary));
-  wrapper.append(renderTable(result.rows, section.tableColumns));
+  wrapper.append(renderRowCount(view.summary));
+  wrapper.append(renderTable(view.rows, section.tableColumns));
 
-  if (!result.allShown && section.forceExpanded !== true) {
+  if (view.canShowMore) {
     const controls = document.createElement('div');
     controls.className = 'table-controls';
     controls.append(
-      renderTableButton('Show more', () => onShowMoreRows?.(section.id, Math.min(result.total, limit + JETSAM_ROW_INCREMENT))),
-      renderTableButton('Show all', () => onShowAllRows?.(section.id, result.total))
+      renderTableButton('Show more', () => onShowMoreRows?.(section.id, view.nextLimit)),
+      renderTableButton('Show all', () => onShowAllRows?.(section.id, view.totalRows))
     );
     wrapper.append(controls);
   }
@@ -150,22 +136,20 @@ function renderLimitedProcessTable(section, { denseTableState, onShowMoreRows, o
   return wrapper;
 }
 
-function renderCollapsibleKextTable(section, { denseTableState, onToggleDenseTable }) {
-  const forceExpanded = section.forceExpanded === true;
-  const expanded = forceExpanded || denseTableState?.expandedTables?.[section.id] === true;
+function renderCollapsibleKextTable(section, view, { onToggleDenseTable }) {
   const wrapper = document.createElement('div');
   wrapper.className = 'collapsible-table';
 
   const button = document.createElement('button');
   button.className = 'table-toggle';
   button.type = 'button';
-  button.setAttribute('aria-expanded', String(expanded));
-  button.textContent = `Loaded kexts - ${section.table.length} rows - ${expanded ? 'expanded' : 'collapsed'}`;
-  button.addEventListener('click', () => onToggleDenseTable?.(section.id, !expanded));
-  wrapper.append(button, renderRowCount(`${expanded ? section.table.length : 0} of ${section.table.length} rows shown`));
+  button.setAttribute('aria-expanded', String(view.expanded));
+  button.textContent = `Loaded kexts - ${view.totalRows} rows - ${view.expanded ? 'expanded' : 'collapsed'}`;
+  button.addEventListener('click', () => onToggleDenseTable?.(section.id, !view.expanded));
+  wrapper.append(button, renderRowCount(view.summary));
 
-  if (expanded) {
-    wrapper.append(renderTable(section.table, section.tableColumns));
+  if (view.expanded) {
+    wrapper.append(renderTable(view.rows, section.tableColumns));
   }
 
   return wrapper;

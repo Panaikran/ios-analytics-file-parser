@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 4 is the PWA, offline app shell, mobile Safari hardening, and release-readiness phase for the `v0.4.0-alpha` release target.
+Phase 4 is complete. It delivered the PWA, offline app shell, mobile Safari hardening, and release-readiness milestone in `v0.4.0-alpha`, followed by the `v0.4.1-alpha` PWA update activation hotfix.
 
 The project remains a static, browser-native ES module app. Phase 4 did not add a backend, authentication, analytics, cloud storage, external services, framework dependencies, report persistence, or parser behavior changes.
 
@@ -15,7 +15,10 @@ GitHub Pages is the deployment target.
 | Slice 1 | Complete | PWA identity, manifest, icons, Apple web app meta tags, install guidance, privacy trust copy |
 | Slice 2 | Complete | Service worker, offline app shell, offline fictional examples, strict cache allowlist |
 | Slice 3 | Complete | Offline/install/update UX polish, safe file intake, mobile Safari layout fixes |
-| Slice 4 | In progress | Release documentation alignment, deployment readiness, manual QA checklist, CSP decision |
+| Slice 4 | Complete | Release documentation alignment, deployment readiness, manual QA checklist, CSP decision |
+| v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
+
+Next planned milestone: `v0.5.0-alpha`, focused on Large Report Usability and Performance. See `ROADMAP.md` for the current v0.5 slice plan.
 
 ## Slices Completed
 
@@ -176,6 +179,12 @@ Approved update-ready copy:
 ```text
 Update ready. Reload when done with the current report.
 ```
+
+Post-release hotfix:
+
+- `v0.4.1-alpha` fixed a stuck `Update ready` state where a waiting service worker could remain waiting after reload.
+- The service worker `SKIP_WAITING` message flow now keeps `self.skipWaiting()` alive with `event.waitUntil(self.skipWaiting())`.
+- The hotfix did not change parser behavior, caching strategy, privacy model, backend behavior, analytics, cloud storage, or package metadata.
 
 ## Privacy Model
 
@@ -410,7 +419,9 @@ No documentation-specific test runner exists.
 
 ## Release Checklist
 
-Before tagging `v0.4.0-alpha`:
+Phase 4 release checklist was completed for `v0.4.0-alpha`, with the update activation hotfix released as `v0.4.1-alpha`.
+
+Before future release tags:
 
 - Confirm README, ROADMAP, CHANGELOG, and phase summaries are aligned.
 - Confirm package version handling decision.

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for `v0.4.0-alpha` release preparation
+Status: updated after `v0.4.1-alpha` hotfix release for `v0.5.0-alpha` planning
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -12,7 +12,9 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Phase 2: Full Section Rendering | Complete | `v0.2.0-alpha` | All Threads, Binary Images, JetsamEvent, panic-full, analytics fallback, memory chart |
 | Phase 3: UI Polish | Complete | `v0.3.0-alpha` | Examples, input UX, section navigation, search/filter, copy actions, dense tables, privacy toggle |
 | CoreAnalytics Patch | Complete | `v0.3.1-alpha` | Initial `.ips.ca.synced` CoreAnalytics detection, parser, privacy handling, capped rows, fixtures, tests |
-| Phase 4: PWA and Release | Mostly complete | `v0.4.0-alpha` target | Manifest/install identity, service worker app shell, offline examples, update UX, mobile Safari hardening, release docs |
+| Phase 4: PWA and Release | Complete | `v0.4.0-alpha` | Manifest/install identity, service worker app shell, offline examples, update UX, mobile Safari hardening, release docs |
+| PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
+| Large Report Usability and Performance | Planned | `v0.5.0-alpha` | Large report guardrails, table controls, CoreAnalytics viewer improvements, search/copy scale, mobile Safari polish |
 
 ## Project Constraints
 
@@ -104,72 +106,104 @@ Known CoreAnalytics limits:
 - Full raw JSON bodies are not rendered.
 - Search and copy operate on rendered capped rows, not every source record.
 
-## Active Roadmap: Phase 4
+### Phase 4: PWA And Release
 
-Phase 4 is the active release-hardening phase for the `v0.4.0-alpha` target.
+Completed in `v0.4.0-alpha`.
 
-Primary goal: prepare the static app for GitHub Pages deployment while preserving the local-first privacy model.
+Delivered:
 
-### Completed Phase 4 Slices
-
-#### Slice 1: PWA Identity And Installability
-
-Implemented:
-
-- `manifest.webmanifest` with GitHub Pages-safe relative paths.
-- PWA icons, maskable icon, favicon, and Apple touch icon.
-- Apple web app meta tags.
-- Theme color.
-- Install guidance UI.
-- Privacy trust messaging explaining that installation saves the app shell, not reports.
-
-#### Slice 2: Offline App Shell And Service Worker
-
-Implemented:
-
-- Root `service-worker.js`.
-- GitHub Pages-safe service worker registration from `src/main.js`.
-- Versioned app cache.
-- Explicit precache allowlist for app shell, CSS, ES modules, manifest, icons, and sanitized fictional examples.
-- Cache cleanup for old `ios-analytics-parser-*` caches during activation.
-- Cache-first behavior only for allowlisted same-origin GET assets.
-- Navigation fallback to cached `index.html`.
+- PWA identity and installability through `manifest.webmanifest`, icons, Apple web app meta tags, theme color, and install guidance.
+- Offline app shell through a conservative service worker.
+- Offline sanitized fictional examples after first successful load.
+- Strict service worker cache allowlist and old-cache cleanup.
 - No runtime caching of unknown requests.
 - No dynamic `cache.put`.
-- No Background Sync, Periodic Sync, Push, Share Target, or file handlers.
-
-#### Slice 3: Offline, Install, Update, And Mobile UX Polish
-
-Implemented:
-
-- Offline-ready status:
-  - `Offline app shell ready. Examples can open offline. Reports are still not saved.`
-- Offline setup failure status:
-  - `Offline setup unavailable. Online parsing still works.`
-- Update-ready status:
-  - `Update ready. Reload when done with the current report.`
-- Explicit `Reload app` button for service worker updates.
-- Install guidance copy for iPhone, iPad, and desktop.
-- Developer cache-version reminder for precached asset changes.
-- Broad file picker with safe pre-read validation.
+- Offline-ready, offline-setup-failed, and update-ready UX.
+- Safe file intake before `file.text()`.
 - 20 MB mobile Safari safety limit.
 - Rejection of clearly unsupported binary/media/PDF/ZIP files before reading.
-- Panic/raw diagnostic text wrapping fixes for iPhone Safari.
-- Safe-area and bottom-toolbar layout padding.
-- Static tests for service worker privacy boundaries, cache-version reminders, file validation, and update UX copy.
+- Panic/raw diagnostic text wrapping and mobile Safari layout containment.
+- GitHub Pages deployment notes and manual QA checklist.
+- CSP/header hardening decision and deferral.
 
-### Slice 4: Release Hardening And Documentation
+### v0.4.1-alpha: PWA Update Hotfix
 
-Current focus:
+Completed after Phase 4.
 
-- Align README, ROADMAP, CHANGELOG, and phase summaries with implemented Phase 4 behavior.
-- Create `PHASE_4_SUMMARY.md`.
-- Document GitHub Pages deployment expectations.
-- Document manual QA requirements for desktop, iPhone, iPad, installed PWA, offline examples, and update-ready flow.
-- Document CSP/header hardening decision and deferral.
-- Confirm package version handling without changing `package.json` unless explicitly approved.
+Delivered:
 
-### Phase 4 Should Not Add
+- Fixed a stuck `Update ready` state where a waiting service worker could remain waiting after reload.
+- Updated the service worker `SKIP_WAITING` message flow to keep `self.skipWaiting()` alive with `event.waitUntil(self.skipWaiting())`.
+- Bumped the service worker cache version for the hotfix.
+- Strengthened the static regression test for the skip-waiting flow.
+
+No parser behavior, caching strategy, privacy model, backend, analytics, cloud storage, or package metadata changed.
+
+## Active Roadmap: v0.5.0-alpha
+
+`v0.5.0-alpha` is planned, not implemented.
+
+Primary theme: Large Report Usability and Performance, with CoreAnalytics as the proving ground.
+
+Primary goal: make large diagnostic reports easier to inspect without changing the local-first privacy model, parser behavior, or PWA cache boundaries.
+
+### Planned v0.5.0-alpha Slices
+
+#### Slice 1: Large Report Baseline And Guardrails
+
+Planned:
+
+- Establish consistent large-section and large-table thresholds.
+- Add pure helpers and tests for report/table size summaries.
+- Document manual QA patterns for large CoreAnalytics, large Jetsam, large panic kext, and large thread reports.
+- Avoid visible UI redesign in the first slice.
+
+#### Slice 2: Generalized Table View Controls
+
+Planned:
+
+- Generalize existing dense-table behavior beyond the current special cases.
+- Preserve search-collapse precedence.
+- Preserve copy-visible-content semantics.
+- Keep table scroll contained inside cards.
+
+#### Slice 3: CoreAnalytics Viewer Upgrade
+
+Planned:
+
+- Improve CoreAnalytics grouping and filtering affordances.
+- Consider facets for message, name, aggregation period, and sampling.
+- Keep grouped/sample rows capped unless an approved large-table strategy changes that behavior.
+- Do not render full raw JSON bodies by default.
+
+#### Slice 4: Search/Copy For Large Reports
+
+Planned:
+
+- Clarify search counts when source rows exceed rendered rows.
+- Keep search over parsed data, not rendered DOM.
+- Keep copy output tied to visible content.
+- Consider visible-table TSV/Markdown copy only if privacy-mode behavior stays clear.
+
+#### Slice 5: Mobile Safari Polish
+
+Planned:
+
+- Verify large-report controls at 320, 375, 414, and 768 px widths.
+- Avoid page-level horizontal overflow.
+- Keep touch targets at least 44 px.
+- Avoid nested scroll traps where possible.
+
+#### Slice 6: Release Hardening
+
+Planned:
+
+- Update docs for completed v0.5 work.
+- Run Node/assert tests and focused syntax checks.
+- Run GitHub Pages, installed PWA, offline, update-ready, iPhone, and iPad QA.
+- Preserve service worker cache boundaries.
+
+### v0.5.0-alpha Should Not Add
 
 - Backend services.
 - Authentication.
@@ -182,18 +216,22 @@ Current focus:
 - New framework dependencies without explicit approval.
 - Runtime caching of unknown requests.
 - Report persistence, recent files, or history.
+- Full raw CoreAnalytics JSON rendering by default.
+- AI-style diagnosis or confident root-cause claims.
+- Framework or build-system migration.
 
-### Testing Direction For Phase 4
+### Testing Direction For v0.5.0-alpha
 
 - Preserve existing Node/assert regression tests.
-- Keep static checks for service worker cache boundaries and forbidden persistence APIs.
-- Run syntax checks for touched JavaScript files when code changes are made.
+- Add focused pure-helper tests for table sizing, row limits, search/copy visibility, and CoreAnalytics grouping.
+- Keep static checks for service worker cache boundaries and forbidden persistence APIs when service-worker-adjacent files change.
+- Run syntax checks for touched JavaScript modules.
 - Keep browser/mobile checks manual unless browser automation is explicitly approved.
 - Do not migrate the test runner unless the cost is justified and approved.
 
-## Post-v0.4.0-alpha Work
+## Post-v0.5.0-alpha Or Parallel Hardening
 
-These items are intentionally outside the `v0.4.0-alpha` release target unless explicitly approved later.
+These items are intentionally outside the planned `v0.5.0-alpha` scope unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -204,7 +242,7 @@ These items are intentionally outside the `v0.4.0-alpha` release target unless e
 
 ## Historical Planning Notes
 
-The original four-week checklist and task IDs have been replaced by completed milestone summaries and active Phase 4 slices above. Those old checklist items were useful while planning, but they no longer reflect the released project state.
+The original four-week checklist and task IDs have been replaced by completed milestone summaries and active milestone slices above. Those old checklist items were useful while planning, but they no longer reflect the released project state.
 
 The current source of truth is:
 
@@ -215,7 +253,7 @@ The current source of truth is:
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for Phase 4 unless explicitly approved later.
+These ideas are intentionally out of scope for `v0.5.0-alpha` unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |
@@ -227,19 +265,16 @@ These ideas are intentionally out of scope for Phase 4 unless explicitly approve
 | Comparison | Diff view for comparing two reports side by side |
 | Sharing | Local-only share/export format that does not upload reports |
 
-## Next Release Step
+## Next Planning Step
 
-Before tagging `v0.4.0-alpha`:
+Before implementing `v0.5.0-alpha` Slice 1:
 
-- Confirm docs are aligned.
-- Confirm package version handling decision.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect `v0.4.1-alpha`.
+- Confirm the `v0.5.0-alpha` theme and slice plan.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`
   - `node --check service-worker.js`
   - `node --check src\fileValidation.js`
-- Perform local static-server QA.
-- Perform GitHub Pages QA.
-- Perform iPhone and iPad Safari QA.
-- Perform installed PWA/offline/update-ready QA.
-- Confirm no uploaded or pasted reports are persisted or cached.
+- Start with large report baseline helpers and tests.
+- Preserve existing parser behavior and PWA privacy boundaries.

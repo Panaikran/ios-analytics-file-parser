@@ -17,6 +17,16 @@ import {
 } from '../src/appState.js';
 import { detectFileType } from '../src/parsers/detect.js';
 import { parseInput } from '../src/parsers/index.js';
+import {
+  REPORT_SIZE_LEVELS,
+  REPORT_SIZE_THRESHOLDS,
+  getReportSizeMetrics,
+  getSectionSizeMetrics,
+  isLargeReport,
+  isLargeSection,
+  summarizeReportSize,
+  summarizeSectionSize,
+} from '../src/models/reportSize.js';
 import { filterSectionsByQuery } from '../src/search/filterSections.js';
 import { serializeSectionForCopy } from '../src/clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
@@ -26,12 +36,15 @@ import {
   groupRowsByThread,
   isLargeKextTable,
 } from '../src/ui/denseTables.js';
+import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
 const metadataIpsText = await readFile(new URL('./fixtures/example-metadata.ips', import.meta.url), 'utf8');
+const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSection.js', import.meta.url), 'utf8');
+const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -135,6 +148,163 @@ assert.equal(
   true,
   'file validation allows files at the configured safe size limit'
 );
+
+function rows(count) {
+  return Array.from({ length: count }, (_, index) => ({ frame: index }));
+}
+
+function fields(count) {
+  return Array.from({ length: count }, (_, index) => ({ label: `Field ${index}`, value: index }));
+}
+
+assert.deepEqual(
+  REPORT_SIZE_THRESHOLDS,
+  {
+    tableRows: { medium: 100, large: 500 },
+    fields: { medium: 25, large: 100 },
+    rawCharacters: { medium: 10000, large: 100000 },
+    chartItems: { medium: 100, large: 500 },
+    sections: { medium: 12, large: 30 },
+  },
+  'large report thresholds are centralized and stable for future slices'
+);
+
+assert.deepEqual(
+  getSectionSizeMetrics({
+    table: rows(2),
+    fields: fields(3),
+    raw: 'hello',
+    chart: { items: rows(4) },
+  }),
+  { tableRows: 2, fields: 3, rawCharacters: 5, chartItems: 4 },
+  'section size metrics count rows, fields, raw text, and chart items'
+);
+assert.deepEqual(
+  summarizeSectionSize({ id: 'empty', title: 'Empty' }),
+  {
+    id: 'empty',
+    title: 'Empty',
+    level: REPORT_SIZE_LEVELS.empty,
+    isLarge: false,
+    metrics: { tableRows: 0, fields: 0, rawCharacters: 0, chartItems: 0 },
+    reasons: [],
+  },
+  'empty sections summarize as empty'
+);
+assert.equal(
+  summarizeSectionSize({ id: 'small', table: rows(REPORT_SIZE_THRESHOLDS.tableRows.medium - 1) }).level,
+  REPORT_SIZE_LEVELS.small,
+  'sections below medium thresholds summarize as small'
+);
+assert.deepEqual(
+  summarizeSectionSize({ id: 'medium', table: rows(REPORT_SIZE_THRESHOLDS.tableRows.medium) }),
+  {
+    id: 'medium',
+    title: '',
+    level: REPORT_SIZE_LEVELS.medium,
+    isLarge: false,
+    metrics: { tableRows: REPORT_SIZE_THRESHOLDS.tableRows.medium, fields: 0, rawCharacters: 0, chartItems: 0 },
+    reasons: [
+      {
+        metric: 'tableRows',
+        label: 'table rows',
+        value: REPORT_SIZE_THRESHOLDS.tableRows.medium,
+        level: REPORT_SIZE_LEVELS.medium,
+        threshold: REPORT_SIZE_THRESHOLDS.tableRows.medium,
+      },
+    ],
+  },
+  'sections at medium row threshold summarize as medium'
+);
+assert.deepEqual(
+  summarizeSectionSize({
+    id: 'large',
+    title: 'Large',
+    fields: fields(REPORT_SIZE_THRESHOLDS.fields.large),
+  }),
+  {
+    id: 'large',
+    title: 'Large',
+    level: REPORT_SIZE_LEVELS.large,
+    isLarge: true,
+    metrics: { tableRows: 0, fields: REPORT_SIZE_THRESHOLDS.fields.large, rawCharacters: 0, chartItems: 0 },
+    reasons: [
+      {
+        metric: 'fields',
+        label: 'fields',
+        value: REPORT_SIZE_THRESHOLDS.fields.large,
+        level: REPORT_SIZE_LEVELS.large,
+        threshold: REPORT_SIZE_THRESHOLDS.fields.large,
+      },
+    ],
+  },
+  'sections at large field threshold summarize as large'
+);
+assert.equal(
+  summarizeSectionSize({ raw: 'x'.repeat(REPORT_SIZE_THRESHOLDS.rawCharacters.large) }).level,
+  REPORT_SIZE_LEVELS.large,
+  'large raw text sections summarize as large'
+);
+assert.equal(
+  summarizeSectionSize({ chart: { items: rows(REPORT_SIZE_THRESHOLDS.chartItems.medium) } }).level,
+  REPORT_SIZE_LEVELS.medium,
+  'medium chart sections summarize as medium'
+);
+assert.equal(isLargeSection({ table: rows(REPORT_SIZE_THRESHOLDS.tableRows.large) }), true, 'isLargeSection detects large table sections');
+assert.equal(isLargeSection({ table: rows(REPORT_SIZE_THRESHOLDS.tableRows.large - 1) }), false, 'isLargeSection does not flag near-large table sections');
+assert.deepEqual(
+  getSectionSizeMetrics({
+    id: 123,
+    title: null,
+    table: 'not rows',
+    fields: { label: 'not an array' },
+    raw: 12345,
+    chart: { items: 'not items' },
+  }),
+  { tableRows: 0, fields: 0, rawCharacters: 0, chartItems: 0 },
+  'malformed section-like inputs do not throw and count as empty'
+);
+assert.deepEqual(
+  summarizeSectionSize(null),
+  {
+    id: '',
+    title: '',
+    level: REPORT_SIZE_LEVELS.empty,
+    isLarge: false,
+    metrics: { tableRows: 0, fields: 0, rawCharacters: 0, chartItems: 0 },
+    reasons: [],
+  },
+  'null section input summarizes safely'
+);
+
+const reportSizeSections = [
+  { id: 'summary', fields: fields(2) },
+  { id: 'events', table: rows(REPORT_SIZE_THRESHOLDS.tableRows.medium) },
+  { id: 'notes', raw: 'short' },
+];
+assert.deepEqual(
+  getReportSizeMetrics(reportSizeSections),
+  { sections: 3, tableRows: REPORT_SIZE_THRESHOLDS.tableRows.medium, fields: 2, rawCharacters: 5, chartItems: 0 },
+  'report size metrics aggregate section metrics'
+);
+assert.equal(summarizeReportSize([]).level, REPORT_SIZE_LEVELS.empty, 'empty report summarizes as empty');
+assert.equal(summarizeReportSize(rows(REPORT_SIZE_THRESHOLDS.sections.medium).map((row) => ({ id: String(row.frame) }))).level, REPORT_SIZE_LEVELS.medium, 'reports at medium section-count threshold summarize as medium');
+assert.equal(
+  summarizeReportSize([
+    { id: 'one', table: rows(300) },
+    { id: 'two', table: rows(200) },
+  ]).level,
+  REPORT_SIZE_LEVELS.large,
+  'large reports can be identified by aggregate table row count'
+);
+assert.equal(
+  summarizeReportSize([{ id: 'large-section', table: rows(REPORT_SIZE_THRESHOLDS.tableRows.large) }]).sectionLargeCount,
+  1,
+  'report summaries count large sections'
+);
+assert.equal(isLargeReport([{ id: 'large-section', table: rows(REPORT_SIZE_THRESHOLDS.tableRows.large) }]), true, 'isLargeReport flags reports containing a large section');
+assert.equal(isLargeReport([{ id: 'small-section', table: rows(1) }]), false, 'isLargeReport does not flag small reports');
+assert.equal(isLargeReport(null), false, 'isLargeReport handles malformed report input');
 
 function sectionById(sections, id) {
   return sections.find((section) => section.id === id);
@@ -267,6 +437,175 @@ assert.equal(
 );
 assert.equal(isLargeKextTable({ id: 'loaded-kexts', table: sixtyProcessRows }), true, 'large kext tables collapse by default');
 
+const plainTableRows = rows(3);
+assert.deepEqual(
+  getTableView({ id: 'plain-table', table: plainTableRows }),
+  {
+    mode: TABLE_VIEW_MODES.plain,
+    rows: plainTableRows,
+    totalRows: 3,
+    shownRows: 3,
+    summary: '3 of 3 rows shown',
+    allShown: true,
+    compact: false,
+    expanded: true,
+    collapsed: false,
+    groups: [],
+    tableColumns: null,
+  },
+  'table view models plain tables as all rows visible'
+);
+assert.equal(
+  getTableView(sectionById(fullIpsSections, 'binary-images')).mode,
+  TABLE_VIEW_MODES.compact,
+  'table view models binary images as compact tables'
+);
+assert.equal(
+  getTableView(sectionById(fullIpsSections, 'binary-images')).shownRows,
+  sectionById(fullIpsSections, 'binary-images').table.length,
+  'compact binary image table view keeps all rows visible'
+);
+assert.deepEqual(
+  getTableView({ id: 'process-table', table: sixtyProcessRows }),
+  {
+    mode: TABLE_VIEW_MODES.limited,
+    rows: sixtyProcessRows.slice(0, 50),
+    totalRows: 60,
+    shownRows: 50,
+    summary: '50 of 60 rows shown',
+    allShown: false,
+    compact: false,
+    expanded: true,
+    collapsed: false,
+    groups: [],
+    tableColumns: null,
+    limit: 50,
+    nextLimit: 60,
+    canShowMore: true,
+    canShowAll: true,
+  },
+  'table view models process-table default row limit'
+);
+assert.equal(
+  getTableView(
+    { id: 'process-table', table: sixtyProcessRows },
+    { denseTableState: { rowLimits: { 'process-table': 25 } } }
+  ).shownRows,
+  25,
+  'table view models custom process-table row limits from dense state'
+);
+assert.deepEqual(
+  getTableView({ id: 'process-table', table: sixtyProcessRows }, { forceExpanded: true }),
+  {
+    mode: TABLE_VIEW_MODES.limited,
+    rows: sixtyProcessRows,
+    totalRows: 60,
+    shownRows: 60,
+    summary: '60 of 60 rows shown',
+    allShown: true,
+    compact: false,
+    expanded: true,
+    collapsed: false,
+    groups: [],
+    tableColumns: null,
+    limit: 50,
+    nextLimit: 60,
+    canShowMore: false,
+    canShowAll: false,
+  },
+  'table view forceExpanded returns all process-table rows'
+);
+assert.deepEqual(
+  getTableView({ id: 'loaded-kexts', table: sixtyProcessRows }),
+  {
+    mode: TABLE_VIEW_MODES.collapsed,
+    rows: [],
+    totalRows: 60,
+    shownRows: 0,
+    summary: '0 of 60 rows shown',
+    allShown: false,
+    compact: false,
+    expanded: false,
+    collapsed: true,
+    groups: [],
+    tableColumns: null,
+    canToggle: true,
+  },
+  'table view models large loaded kext tables as collapsed by default'
+);
+assert.equal(
+  getTableView(
+    { id: 'loaded-kexts', table: sixtyProcessRows },
+    { denseTableState: { expandedTables: { 'loaded-kexts': true } } }
+  ).shownRows,
+  60,
+  'table view models expanded loaded kext tables'
+);
+assert.equal(
+  getTableView({ id: 'loaded-kexts', table: sixtyProcessRows }, { forceExpanded: true }).shownRows,
+  60,
+  'table view forceExpanded returns all loaded kext rows'
+);
+const defaultThreadView = getTableView(sectionById(fullIpsSections, 'all-threads'), { allSections: fullIpsSections });
+assert.equal(defaultThreadView.mode, TABLE_VIEW_MODES.grouped, 'table view models all-threads as grouped');
+assert.deepEqual(
+  defaultThreadView.groups.map((group) => ({ thread: group.thread, expanded: group.expanded, frameCount: group.frameCount })),
+  [
+    { thread: 'Thread 0', expanded: true, frameCount: 2 },
+    { thread: 'Thread 1', expanded: false, frameCount: 1 },
+  ],
+  'table view expands crashed thread by default'
+);
+assert.deepEqual(
+  defaultThreadView.rows.map((row) => row.thread),
+  ['Thread 0', 'Thread 0'],
+  'grouped table view returns rows for expanded thread groups'
+);
+assert.deepEqual(
+  getTableView(sectionById(fullIpsSections, 'all-threads'), {
+    allSections: fullIpsSections,
+    denseTableState: {
+      expandedThreadGroups: {
+        'all-threads:Thread 0': false,
+        'all-threads:Thread 1': true,
+      },
+    },
+  }).rows.map((row) => row.thread),
+  ['Thread 1'],
+  'table view respects explicit all-threads expansion state'
+);
+assert.equal(
+  getTableView(sectionById(fullIpsSections, 'all-threads'), {
+    allSections: fullIpsSections,
+    denseTableState: { expandedThreadGroups: { 'all-threads:Thread 1': false } },
+    forceExpanded: true,
+  }).shownRows,
+  3,
+  'table view forceExpanded expands all thread groups'
+);
+assert.deepEqual(
+  getTableView(null),
+  {
+    mode: TABLE_VIEW_MODES.plain,
+    rows: [],
+    totalRows: 0,
+    shownRows: 0,
+    summary: '0 of 0 rows shown',
+    allShown: true,
+    compact: false,
+    expanded: true,
+    collapsed: false,
+    groups: [],
+    tableColumns: null,
+  },
+  'table view handles null section input without throwing'
+);
+assert.equal(
+  getTableView({ id: 'malformed', table: 'not rows' }).shownRows,
+  0,
+  'table view handles malformed table input without throwing'
+);
+
 const uikitSearch = filterSectionsByQuery(fullIpsSections, 'UIKitCore');
 assert.equal(uikitSearch.active, true, 'search is active for non-empty queries');
 assert.ok(uikitSearch.totalMatches >= 1, 'search reports a visible match count');
@@ -334,6 +673,52 @@ assert.equal(
   ].join('\n'),
   'copy serialization includes title, fields, TSV tables, raw text, and chart data'
 );
+assert.match(
+  visibleSectionSource,
+  /getTableView/,
+  'copy visibility path delegates table row decisions to the shared table-view helper'
+);
+assert.match(
+  renderSectionSource,
+  /getTableView/,
+  'render path delegates table row decisions to the shared table-view helper'
+);
+assert.match(
+  renderSectionSource,
+  /TABLE_VIEW_MODES/,
+  'render path dispatches table rendering from shared table-view modes'
+);
+assert.equal(
+  /getLimitedRows|groupRowsByThread|findCrashedThreadName|isLargeKextTable/.test(renderSectionSource),
+  false,
+  'render path no longer duplicates dense-table row decision helpers'
+);
+const plainCopySection = {
+  id: 'plain-copy',
+  title: 'Plain Copy',
+  tableColumns: [{ key: 'frame', label: 'Frame' }],
+  table: plainTableRows,
+};
+assert.deepEqual(
+  getVisibleSectionForCopy(plainCopySection),
+  plainCopySection,
+  'copy leaves plain tables unchanged'
+);
+assert.deepEqual(
+  getVisibleSectionForCopy(sectionById(fullIpsSections, 'binary-images')),
+  sectionById(fullIpsSections, 'binary-images'),
+  'copy leaves compact binary image tables unchanged'
+);
+assert.equal(
+  getVisibleSectionForCopy({
+    id: 'process-table',
+    title: 'Process Table',
+    tableColumns: [{ key: 'process', label: 'Process' }],
+    table: sixtyProcessRows,
+  }).table.length,
+  50,
+  'copy applies the default Jetsam process-table row limit'
+);
 assert.equal(
   serializeSectionForCopy(
     getVisibleSectionForCopy(
@@ -348,6 +733,30 @@ assert.equal(
   ).split('\n').filter((line) => /^Process \d+$/.test(line)).length,
   50,
   'copy respects Jetsam row limits'
+);
+assert.equal(
+  getVisibleSectionForCopy(
+    {
+      id: 'process-table',
+      title: 'Process Table',
+      tableColumns: [{ key: 'process', label: 'Process' }],
+      table: sixtyProcessRows,
+    },
+    { denseTableState: { rowLimits: { 'process-table': 25 } } }
+  ).table.length,
+  25,
+  'copy respects custom Jetsam process-table row limits'
+);
+assert.deepEqual(
+  getVisibleSectionForCopy({
+    id: 'process-table',
+    title: 'Process Table',
+    forceExpanded: true,
+    tableColumns: [{ key: 'process', label: 'Process' }],
+    table: sixtyProcessRows,
+  }).table,
+  getTableView({ id: 'process-table', forceExpanded: true, table: sixtyProcessRows }).rows,
+  'copy forceExpanded process tables use shared table-view visible rows'
 );
 assert.deepEqual(
   getVisibleSectionForCopy(
@@ -373,6 +782,22 @@ assert.deepEqual(
 );
 assert.equal(
   getVisibleSectionForCopy(
+    { ...sectionById(fullIpsSections, 'all-threads'), forceExpanded: true },
+    {
+      denseTableState: {
+        expandedThreadGroups: {
+          'all-threads:Thread 0': false,
+          'all-threads:Thread 1': false,
+        },
+      },
+      allSections: fullIpsSections,
+    }
+  ).table.length,
+  sectionById(fullIpsSections, 'all-threads').table.length,
+  'copy forceExpanded all-threads includes all currently visible search rows'
+);
+assert.equal(
+  getVisibleSectionForCopy(
     { id: 'loaded-kexts', title: 'Loaded Kexts', table: sixtyProcessRows },
     { denseTableState: { expandedTables: {} } }
   ).table.length,
@@ -386,6 +811,14 @@ assert.equal(
   ).table.length,
   60,
   'copy respects expanded panic kext tables'
+);
+assert.equal(
+  getVisibleSectionForCopy(
+    { id: 'loaded-kexts', title: 'Loaded Kexts', forceExpanded: true, table: sixtyProcessRows },
+    { denseTableState: { expandedTables: {} } }
+  ).table.length,
+  60,
+  'copy forceExpanded loaded kext tables includes all currently visible search rows'
 );
 
 assert.deepEqual(
