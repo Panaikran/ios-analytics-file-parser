@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated after `v0.4.1-alpha` hotfix release for `v0.5.0-alpha` planning
+Status: updated for `v0.5.0-alpha` release hardening
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -14,7 +14,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | CoreAnalytics Patch | Complete | `v0.3.1-alpha` | Initial `.ips.ca.synced` CoreAnalytics detection, parser, privacy handling, capped rows, fixtures, tests |
 | Phase 4: PWA and Release | Complete | `v0.4.0-alpha` | Manifest/install identity, service worker app shell, offline examples, update UX, mobile Safari hardening, release docs |
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
-| Large Report Usability and Performance | Planned | `v0.5.0-alpha` | Large report guardrails, table controls, CoreAnalytics viewer improvements, search/copy scale, mobile Safari polish |
+| Large Report Usability and Performance | Release-ready | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 
 ## Project Constraints
 
@@ -139,71 +139,49 @@ Delivered:
 
 No parser behavior, caching strategy, privacy model, backend, analytics, cloud storage, or package metadata changed.
 
-## Active Roadmap: v0.5.0-alpha
+### v0.5.0-alpha: Large Report Usability And Performance
 
-`v0.5.0-alpha` is planned, not implemented.
+Release-ready after Slice 6.
 
 Primary theme: Large Report Usability and Performance, with CoreAnalytics as the proving ground.
 
 Primary goal: make large diagnostic reports easier to inspect without changing the local-first privacy model, parser behavior, or PWA cache boundaries.
 
-### Planned v0.5.0-alpha Slices
+Delivered:
 
-#### Slice 1: Large Report Baseline And Guardrails
+- Slice 0 release-state cleanup for `v0.4.1-alpha` and `v0.5.0-alpha` planning.
+- Slice 1 large report baseline helpers in `src/models/reportSize.js`.
+- Slice 2A shared table-view helper in `src/ui/tableView.js`.
+- Slice 2B copy path alignment with shared table-view decisions.
+- Slice 2C render path alignment with shared table-view decisions.
+- Slice 3A CoreAnalytics viewer model helper in `src/ui/coreAnalyticsView.js`.
+- Slice 3B minimal CoreAnalytics overview UI in `src/ui/renderCoreAnalyticsOverview.js`.
+- Slice 4A search/copy metadata helpers in `src/search/searchMetadata.js` and `src/clipboard/copyMetadata.js`.
+- Slice 4B search/copy UI wording for rendered capped rows and visible rows.
+- Slice 5 mobile Safari polish for narrow-width containment, CoreAnalytics chips, search/copy feedback wrapping, and touch targets.
+- Slice 6 release hardening and documentation alignment.
 
-Planned:
+Not changed:
 
-- Establish consistent large-section and large-table thresholds.
-- Add pure helpers and tests for report/table size summaries.
-- Document manual QA patterns for large CoreAnalytics, large Jetsam, large panic kext, and large thread reports.
-- Avoid visible UI redesign in the first slice.
+- Parser support and parser output remained stable.
+- The PWA service worker cache strategy remained unchanged.
+- No runtime caching, backend, authentication, analytics, cloud storage, or report persistence was added.
+- No package metadata change was made.
 
-#### Slice 2: Generalized Table View Controls
+## Active Roadmap: v0.6.0-alpha Or Later
 
-Planned:
+The next milestone has not been approved yet. Candidate work should stay incremental and preserve the local-first privacy model.
 
-- Generalize existing dense-table behavior beyond the current special cases.
-- Preserve search-collapse precedence.
-- Preserve copy-visible-content semantics.
-- Keep table scroll contained inside cards.
+Candidate areas:
 
-#### Slice 3: CoreAnalytics Viewer Upgrade
+- AccessoryCrash or other new parser formats.
+- Virtualization or incremental rendering for very large visible tables.
+- Deeper CoreAnalytics drill-down using parsed/capped data without rendering full raw JSON bodies by default.
+- Export improvements beyond visible-section copy.
+- CSP/header hardening on a host that supports custom response headers.
+- Optional automated browser/mobile smoke tests.
 
-Planned:
-
-- Improve CoreAnalytics grouping and filtering affordances.
-- Consider facets for message, name, aggregation period, and sampling.
-- Keep grouped/sample rows capped unless an approved large-table strategy changes that behavior.
-- Do not render full raw JSON bodies by default.
-
-#### Slice 4: Search/Copy For Large Reports
-
-Planned:
-
-- Clarify search counts when source rows exceed rendered rows.
-- Keep search over parsed data, not rendered DOM.
-- Keep copy output tied to visible content.
-- Consider visible-table TSV/Markdown copy only if privacy-mode behavior stays clear.
-
-#### Slice 5: Mobile Safari Polish
-
-Planned:
-
-- Verify large-report controls at 320, 375, 414, and 768 px widths.
-- Avoid page-level horizontal overflow.
-- Keep touch targets at least 44 px.
-- Avoid nested scroll traps where possible.
-
-#### Slice 6: Release Hardening
-
-Planned:
-
-- Update docs for completed v0.5 work.
-- Run Node/assert tests and focused syntax checks.
-- Run GitHub Pages, installed PWA, offline, update-ready, iPhone, and iPad QA.
-- Preserve service worker cache boundaries.
-
-### v0.5.0-alpha Should Not Add
+### Still Out Of Scope Unless Explicitly Approved
 
 - Backend services.
 - Authentication.
@@ -220,7 +198,7 @@ Planned:
 - AI-style diagnosis or confident root-cause claims.
 - Framework or build-system migration.
 
-### Testing Direction For v0.5.0-alpha
+### Testing Direction
 
 - Preserve existing Node/assert regression tests.
 - Add focused pure-helper tests for table sizing, row limits, search/copy visibility, and CoreAnalytics grouping.
@@ -231,7 +209,7 @@ Planned:
 
 ## Post-v0.5.0-alpha Or Parallel Hardening
 
-These items are intentionally outside the planned `v0.5.0-alpha` scope unless explicitly approved later.
+These items remain outside the `v0.5.0-alpha` release unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -267,14 +245,13 @@ These ideas are intentionally out of scope for `v0.5.0-alpha` unless explicitly 
 
 ## Next Planning Step
 
-Before implementing `v0.5.0-alpha` Slice 1:
+Before starting the next milestone:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect `v0.4.1-alpha`.
-- Confirm the `v0.5.0-alpha` theme and slice plan.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect `v0.5.0-alpha`.
+- Confirm the next milestone theme and slice plan.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`
   - `node --check service-worker.js`
-  - `node --check src\fileValidation.js`
-- Start with large report baseline helpers and tests.
+  - touched JavaScript modules
 - Preserve existing parser behavior and PWA privacy boundaries.

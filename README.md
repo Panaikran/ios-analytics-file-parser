@@ -21,9 +21,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Current release | `v0.4.1-alpha` |
-| Current tags | Through `v0.4.1-alpha` |
-| Upcoming milestone | `v0.5.0-alpha` planned |
+| Current release target | `v0.5.0-alpha` |
+| Current released tag | `v0.4.1-alpha` |
+| Upcoming release | `v0.5.0-alpha` release-ready pending tag/release approval |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -34,6 +34,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Phase 4 Slice 3 | Implemented: offline/install/update UX polish and mobile Safari hardening |
 | Phase 4 Slice 4 | Complete: release documentation and deployment readiness |
 | PWA update hotfix | Complete in `v0.4.1-alpha` |
+| v0.5.0-alpha | Release-ready: Large Report Usability and Performance |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -87,7 +88,7 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 
 ## Feature Support
 
-| Feature | v0.4.1-alpha |
+| Feature | v0.5.0-alpha |
 | --- | --- |
 | Static browser app | Supported |
 | Browser-native ES modules | Supported |
@@ -114,6 +115,10 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 | Memory chart | Supported, simple Canvas chart |
 | Generic analytics fallback parser | Supported |
 | CoreAnalytics `.ips.ca.synced` line-delimited JSON | Supported, capped rendered rows |
+| Large-report size helpers | Supported |
+| Shared table-view model | Supported |
+| CoreAnalytics overview panel | Supported |
+| Search/copy scope wording for capped rows | Supported |
 | Web App Manifest | Supported |
 | Install guidance | Supported |
 | Service worker app shell | Supported |
@@ -148,6 +153,8 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 - CoreAnalytics `.ips.ca.synced` summary, configuration, record overview, event type grouping, capped sample records, and parser notes.
 - Section-specific table columns.
 - Simple Jetsam memory bar chart.
+- Large-report size helpers centralize section and report size summaries for future scale work.
+- Shared table-view helpers centralize dense table visibility decisions for rendering and copy.
 
 ### Navigation And Inspection
 
@@ -158,6 +165,7 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 - Copy buttons on each section.
 - Copy output uses plain text and reflects currently visible content.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
+- Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
 
 ### CoreAnalytics Sections
 
@@ -169,6 +177,8 @@ Initial CoreAnalytics `.ips.ca.synced` support renders these sections:
 - `coreanalytics-event-types`
 - `coreanalytics-sample-records`
 - `coreanalytics-parser-notes`
+
+The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the existing parser sections. It summarizes visible totals, capped table status, rendered-row-only facets, and parser notes without adding raw JSON rendering or changing parser output.
 
 ### Dense Table Controls
 
@@ -203,6 +213,7 @@ Initial CoreAnalytics `.ips.ca.synced` support renders these sections:
 - Mobile layout supports horizontally scrollable section navigation and tables.
 - Panic/raw diagnostic text wraps inside cards on mobile Safari.
 - Page padding accounts for mobile Safari safe-area and bottom toolbar behavior.
+- v0.5 mobile polish improves narrow-width containment, CoreAnalytics chip wrapping, search/copy feedback wrapping, and practical touch targets for dense-table controls.
 
 ## Running Locally
 
@@ -264,12 +275,15 @@ The project is a static, local-first browser app.
 - `service-worker.js` precaches only the explicit app shell and sanitized fictional examples.
 - `src/main.js` coordinates input, parsing, search, privacy mode, copy, dense table state, service worker registration, and rendering.
 - `src/fileValidation.js` validates local file selections before reading.
+- `src/models/reportSize.js` summarizes large report and large section size signals.
 - `src/parsers/` detects and parses supported report formats.
 - `src/privacy/sanitize.js` applies default sanitization.
 - `src/models/sectionModel.js` documents the shared section shape.
-- `src/ui/` renders sections, tables, charts, dense table controls, and navigation.
+- `src/ui/` renders sections, tables, charts, dense table controls, navigation, shared table views, and the CoreAnalytics overview.
 - `src/search/` filters parsed section data without scanning the DOM.
+- `src/search/searchMetadata.js` describes search scope for capped/large rendered output.
 - `src/clipboard/` serializes visible section content for copy actions.
+- `src/clipboard/copyMetadata.js` describes copy scope for visible rows and capped tables.
 - `examples/` contains sanitized fictional examples for production UI use.
 - `icons/` contains PWA, favicon, maskable, and Apple touch icons.
 - `tests/fixtures/` contains sanitized test-only fixtures.
@@ -357,9 +371,11 @@ index.html -> manifest.webmanifest
 |   |-- appState.js
 |   |-- fileValidation.js
 |   |-- clipboard/
+|   |   |-- copyMetadata.js
 |   |   |-- serializeSection.js
 |   |   `-- visibleSection.js
 |   |-- models/
+|   |   |-- reportSize.js
 |   |   `-- sectionModel.js
 |   |-- parsers/
 |   |   |-- detect.js
@@ -376,12 +392,16 @@ index.html -> manifest.webmanifest
 |   |-- privacy/
 |   |   `-- sanitize.js
 |   |-- search/
-|   |   `-- filterSections.js
+|   |   |-- filterSections.js
+|   |   `-- searchMetadata.js
 |   `-- ui/
+|       |-- coreAnalyticsView.js
 |       |-- denseTables.js
 |       |-- renderApp.js
+|       |-- renderCoreAnalyticsOverview.js
 |       |-- renderSection.js
-|       `-- renderSectionNav.js
+|       |-- renderSectionNav.js
+|       `-- tableView.js
 |-- styles/
 |   `-- main.css
 `-- tests/
@@ -447,12 +467,13 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 2 Summary](PHASE_2_SUMMARY.md)
 - [Phase 3 Summary](PHASE_3_SUMMARY.md)
 - [Phase 4 Summary](PHASE_4_SUMMARY.md)
+- [Phase 5 Summary](PHASE_5_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
 ## Known Limitations
 
-- CSP/header hardening is deferred beyond `v0.4.1-alpha`.
+- CSP/header hardening is deferred beyond `v0.5.0-alpha`.
 - GitHub Pages does not provide custom security headers; stronger header CSP may require a future hosting option such as Cloudflare Pages.
 - No Cloudflare/header CSP deployment is configured yet.
 - No report persistence, recent files, or history.
@@ -460,6 +481,7 @@ After first successful service worker setup, these fictional examples are availa
 - Offline support covers the app shell and fictional examples after first successful load; it does not make user reports persistent.
 - Clipboard behavior depends on browser permissions and secure-context rules.
 - Very large visible search results can still require substantial DOM rerendering.
+- Large tables are capped, grouped, or collapsed, but true virtualization is not implemented.
 - Search is simple substring matching; there is no regex, tokenization, or highlighting.
 - CoreAnalytics does not render full raw JSON bodies.
 - CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
@@ -485,11 +507,12 @@ After first successful service worker setup, these fictional examples are availa
 | v0.3.1-alpha | Complete | Initial CoreAnalytics `.ips.ca.synced` line-delimited JSON detection and parser support |
 | v0.4.0-alpha | Complete | PWA identity, offline app shell, offline examples, update UX, mobile Safari hardening, release docs |
 | v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
+| v0.5.0-alpha | Release-ready | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | Phase 4 Slice 1 | Implemented | PWA identity, manifest, icons, Apple meta tags, install guidance |
 | Phase 4 Slice 2 | Implemented | Service worker, offline app shell, offline fictional examples |
 | Phase 4 Slice 3 | Implemented | Offline/install/update UX polish, safe file intake, mobile Safari fixes |
 | Phase 4 Slice 4 | Complete | Release docs, deployment readiness, manual QA checklist, CSP decision |
-| v0.5.0-alpha | Planned | Large Report Usability and Performance, with CoreAnalytics as the proving ground |
+| v0.6.0-alpha | Planned | Next parser and scale work, pending approval |
 
 Phase 4 keeps the same constraints:
 
@@ -503,9 +526,9 @@ Phase 4 keeps the same constraints:
 - no framework dependencies unless explicitly approved
 - sanitized output remains default
 
-CSP/header hardening is intentionally deferred beyond the `v0.4.1-alpha` release unless approved as a focused follow-up.
+CSP/header hardening is intentionally deferred beyond the `v0.5.0-alpha` release unless approved as a focused follow-up.
 
-The planned `v0.5.0-alpha` milestone is not implemented yet. Its proposed direction is Large Report Usability and Performance:
+The `v0.5.0-alpha` milestone is release-ready pending tag/release approval. It delivered Large Report Usability and Performance work:
 
 - large report baseline and guardrails
 - generalized table view controls
@@ -513,6 +536,14 @@ The planned `v0.5.0-alpha` milestone is not implemented yet. Its proposed direct
 - search and copy behavior for large reports
 - mobile Safari polish for dense data views
 - release hardening
+
+Possible `v0.6.0-alpha` work, subject to approval:
+
+- AccessoryCrash or other new parser formats
+- virtualization or incremental rendering for very large visible tables
+- deeper CoreAnalytics drill-down without raw JSON dumping
+- CSP/header hardening on a host that supports response headers
+- export improvements beyond visible-section copy
 
 ## Screenshots / Demo
 

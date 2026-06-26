@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.5.0-alpha
+
+Large Report Usability and Performance release.
+
+### Added
+
+- Reusable large-report size helpers in `src/models/reportSize.js`.
+- Shared table-view helper in `src/ui/tableView.js`.
+- CoreAnalytics viewer model helper in `src/ui/coreAnalyticsView.js`.
+- Minimal CoreAnalytics overview UI above existing CoreAnalytics parser sections.
+- Search metadata helper for describing parsed output versus rendered capped rows.
+- Copy metadata helper for describing visible rows, collapsed rows, and capped CoreAnalytics tables.
+- Static regression coverage for large-report helpers, table-view decisions, CoreAnalytics overview behavior, search/copy scope metadata, and mobile Safari layout guardrails.
+
+### Improved
+
+- Copy and render paths now share the same table visibility decisions.
+- All Threads, Jetsam process tables, panic loaded-kext tables, Binary Images, and plain tables now use centralized table-view logic.
+- Search/copy UI wording now clarifies when results operate on rendered capped rows rather than every source record.
+- CoreAnalytics overview summarizes rendered counts, capped-table status, rendered-row-only facets, and parser notes without rendering full raw JSON bodies.
+- Mobile Safari/narrow-width layout polish for page-level containment, CoreAnalytics chips, search/copy feedback wrapping, dense table controls, section nav chips, and practical touch targets.
+- Service worker cache version was bumped for precached CSS/JS updates during the milestone.
+
+### Notes
+
+- No parser support changed in this release.
+- No AccessoryCrash support was added.
+- No virtualization was added.
+- No backend, authentication, analytics, cloud storage, runtime caching, report persistence, or framework dependency was added.
+- `package.json` remains unchanged and may still show the legacy `0.1.0` value; release state is tracked by tags and documentation.
+
 ## v0.4.1-alpha
 
 PWA update activation hotfix.

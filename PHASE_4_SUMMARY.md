@@ -18,7 +18,7 @@ GitHub Pages is the deployment target.
 | Slice 4 | Complete | Release documentation alignment, deployment readiness, manual QA checklist, CSP decision |
 | v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
 
-Next planned milestone: `v0.5.0-alpha`, focused on Large Report Usability and Performance. See `ROADMAP.md` for the current v0.5 slice plan.
+Follow-up milestone: `v0.5.0-alpha` focused on Large Report Usability and Performance after Phase 4. See `PHASE_5_SUMMARY.md` for the current v0.5 release summary and `ROADMAP.md` for future direction.
 
 ## Slices Completed
 
