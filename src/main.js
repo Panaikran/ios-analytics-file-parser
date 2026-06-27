@@ -9,7 +9,7 @@ import {
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import { serializeSectionForCopy } from './clipboard/serializeSection.js';
 import { validateReportFile } from './fileValidation.js';
-import { detectFileType } from './parsers/detect.js';
+import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from './parsers/classifyDiagnostic.js';
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
@@ -97,10 +97,15 @@ function renderPrivacyControls(hasParsedSections) {
 
 function showParsedReport(text, sourceLabel) {
   const sourceText = String(text ?? '');
-  const detectedType = detectFileType(sourceText);
+  const classification = classifyDiagnostic(sourceText);
+  const detectedType = classification.legacyType;
   const nextReportState = startNewReportState(appState);
 
   if (detectedType === 'unknown') {
+    const unsupportedMessage =
+      getUnsupportedDiagnosticMessage(classification) ??
+      'Unsupported or unknown report format. Try a .ips, .crash, panic-full, JetsamEvent, or analytics text file.';
+
     appState = withStatus(
       {
         ...createInitialAppState(),
@@ -109,7 +114,7 @@ function showParsedReport(text, sourceLabel) {
         detectedType,
       },
       {
-        message: 'Unsupported or unknown report format. Try a .ips, .crash, panic-full, JetsamEvent, or analytics text file.',
+        message: unsupportedMessage,
         tone: 'error',
         clearSections: true,
       }

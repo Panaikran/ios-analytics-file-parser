@@ -17,7 +17,7 @@ import {
   withStatus,
 } from '../src/appState.js';
 import { detectFileType } from '../src/parsers/detect.js';
-import { classifyDiagnostic } from '../src/parsers/classifyDiagnostic.js';
+import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -84,15 +84,23 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.5\.1-alpha-file-size-validation-hotfix-2026-06-27/, 'service worker cache version reflects the current file-size validation hotfix');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice1d-unsupported-diagnostics-2026-06-28/, 'service worker cache version reflects Slice 1D unsupported diagnostic messaging');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'service worker precaches the diagnostic classification helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
+assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
+assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
+assert.match(
+  mainScriptText,
+  /Unsupported or unknown report format\. Try a \.ips, \.crash, panic-full, JetsamEvent, or analytics text file\./,
+  'main app keeps the generic unknown-format fallback message'
+);
 assert.match(serviceWorkerText, /\.\/src\/clipboard\/copyMetadata\.js/, 'service worker precaches the copy metadata helper');
 assert.match(serviceWorkerText, /\.\/src\/models\/reportSize\.js/, 'service worker precaches report-size helper dependencies');
 assert.match(serviceWorkerText, /\.\/src\/ui\/tableView\.js/, 'service worker precaches shared table-view helper dependencies');
@@ -552,6 +560,59 @@ const diskWritesClassificationFixture = [
   JSON.stringify({ bug_type: '142', incident_id: 'FICTIONAL-DISK-INCIDENT' }),
   JSON.stringify({ bug_type: '142', diskWrites: { logicalWrites: 12345 }, process: 'DemoProcess' }),
 ].join('\n');
+
+const unsupportedDiagnosticMessageCases = [
+  [
+    accessoryCrashClassificationFixture,
+    'Recognized Accessory Crash diagnostic, but this parser is not supported yet.',
+    'AccessoryCrash',
+  ],
+  [
+    cpuResourceClassificationFixture,
+    'Recognized CPU Resource diagnostic, but this parser is not supported yet.',
+    'CPU resource',
+  ],
+  [
+    diskWritesClassificationFixture,
+    'Recognized Disk Writes Resource diagnostic, but this parser is not supported yet.',
+    'Disk Writes resource',
+  ],
+  [
+    stackshotClassificationFixture,
+    'Recognized Stackshot Resource diagnostic, but this parser is not supported yet.',
+    'Stackshot resource',
+  ],
+  [
+    appUsageClassificationFixture,
+    'Recognized App Usage Metrics diagnostic, but this parser is not supported yet.',
+    'App Usage Metrics',
+  ],
+  [
+    wifiClassificationFixture,
+    'Recognized Wi-Fi Connectivity diagnostic, but this parser is not supported yet.',
+    'Wi-Fi Connectivity',
+  ],
+  [
+    diagnosticRequestClassificationFixture,
+    'Recognized Diagnostic Request report, but this parser is not supported yet.',
+    'Diagnostic Request',
+  ],
+];
+
+for (const [fixture, expectedMessage, label] of unsupportedDiagnosticMessageCases) {
+  const message = getUnsupportedDiagnosticMessage(classifyDiagnostic(fixture));
+  assert.equal(message, expectedMessage, `${label} has the approved friendly unsupported message`);
+  assert.doesNotMatch(
+    message,
+    /FICTIONAL-|REQUEST-ID|private\/var|com\.example\.app|fictional-topic|WiFiConnectionQuality|12345|DemoProcess/,
+    `${label} unsupported message does not expose fixture identifiers or payload values`
+  );
+}
+assert.equal(
+  getUnsupportedDiagnosticMessage(classifyDiagnostic('{"not":"a diagnostic"}')),
+  null,
+  'unknown diagnostics do not receive a recognized-unsupported message'
+);
 
 assertClassification(
   accessoryCrashClassificationFixture,

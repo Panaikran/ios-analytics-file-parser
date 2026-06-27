@@ -11,6 +11,16 @@ const UNKNOWN_CLASSIFICATION = Object.freeze({
   bugType: '',
 });
 
+const UNSUPPORTED_DIAGNOSTIC_MESSAGES = Object.freeze({
+  'accessory-crash': 'Recognized Accessory Crash diagnostic, but this parser is not supported yet.',
+  'resource-cpu': 'Recognized CPU Resource diagnostic, but this parser is not supported yet.',
+  'resource-diskwrites': 'Recognized Disk Writes Resource diagnostic, but this parser is not supported yet.',
+  'resource-stackshot': 'Recognized Stackshot Resource diagnostic, but this parser is not supported yet.',
+  'app-usage-metrics': 'Recognized App Usage Metrics diagnostic, but this parser is not supported yet.',
+  'wifi-connectivity': 'Recognized Wi-Fi Connectivity diagnostic, but this parser is not supported yet.',
+  'diagnostic-request': 'Recognized Diagnostic Request report, but this parser is not supported yet.',
+});
+
 export function classifyDiagnostic(input) {
   const text = String(input ?? '').trim();
   if (!text) return { ...UNKNOWN_CLASSIFICATION, structure: 'empty' };
@@ -47,6 +57,14 @@ export function classifyDiagnostic(input) {
   }
 
   return { ...UNKNOWN_CLASSIFICATION, structure: parsed.structure, bugType: bugTypeOf(parsed.metadata) };
+}
+
+export function getUnsupportedDiagnosticMessage(classification) {
+  if (!classification || classification.supported !== false || classification.type === 'unknown') {
+    return null;
+  }
+
+  return UNSUPPORTED_DIAGNOSTIC_MESSAGES[classification.type] ?? null;
 }
 
 function classifyContainer(body, metadata, structure) {
