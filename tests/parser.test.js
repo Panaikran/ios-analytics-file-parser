@@ -17,6 +17,7 @@ import {
   withStatus,
 } from '../src/appState.js';
 import { detectFileType } from '../src/parsers/detect.js';
+import { classifyDiagnostic } from '../src/parsers/classifyDiagnostic.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -355,6 +356,23 @@ function fieldValue(section, label) {
   return section.fields.find((field) => field.label === label)?.value;
 }
 
+function assertClassification(input, expected, message) {
+  const classification = classifyDiagnostic(input);
+  assert.deepEqual(
+    {
+      type: classification.type,
+      family: classification.family,
+      subtype: classification.subtype,
+      supported: classification.supported,
+      parserType: classification.parserType,
+      legacyType: classification.legacyType,
+      bugType: classification.bugType,
+    },
+    expected,
+    message
+  );
+}
+
 assert.equal(detectFileType(ipsText), 'ips', 'detects a standard app crash IPS report');
 assert.equal(detectFileType(fullIpsText), 'ips', 'detects a full standard app crash IPS report');
 assert.equal(detectFileType(metadataIpsText), 'ips', 'detects a standard IPS report with metadata line');
@@ -379,6 +397,280 @@ assert.equal(
   detectFileType('{"not":"coreanalytics"}\n{"still":"not-coreanalytics"}'),
   'unknown',
   'malformed brace-starting JSON that is not CoreAnalytics remains unknown'
+);
+
+assertClassification(
+  ipsText,
+  {
+    type: 'app-crash',
+    family: 'crash',
+    subtype: 'app',
+    supported: true,
+    parserType: 'ips',
+    legacyType: 'ips',
+    bugType: '309',
+  },
+  'classifies a standard app crash IPS report'
+);
+assertClassification(
+  crashText,
+  {
+    type: 'crash-legacy',
+    family: 'crash',
+    subtype: 'legacy',
+    supported: true,
+    parserType: 'crash',
+    legacyType: 'crash',
+    bugType: '',
+  },
+  'classifies a legacy crash report'
+);
+assertClassification(
+  watchdogText,
+  {
+    type: 'watchdog',
+    family: 'watchdog',
+    subtype: 'stackshot',
+    supported: true,
+    parserType: 'ips-watchdog-stackshot',
+    legacyType: 'ips-watchdog-stackshot',
+    bugType: '509',
+  },
+  'classifies a watchdog stackshot report'
+);
+assertClassification(
+  realSchemaJetsamText,
+  {
+    type: 'jetsam',
+    family: 'resource',
+    subtype: 'memory',
+    supported: true,
+    parserType: 'jetsam',
+    legacyType: 'jetsam',
+    bugType: '298',
+  },
+  'classifies a JetsamEvent report'
+);
+assertClassification(
+  panicText,
+  {
+    type: 'panic-full',
+    family: 'panic',
+    subtype: 'full',
+    supported: true,
+    parserType: 'panic',
+    legacyType: 'panic',
+    bugType: '',
+  },
+  'classifies a panic-full text report'
+);
+assertClassification(
+  coreAnalyticsSmallText,
+  {
+    type: 'coreanalytics',
+    family: 'analytics',
+    subtype: 'coreanalytics',
+    supported: true,
+    parserType: 'coreanalytics',
+    legacyType: 'coreanalytics',
+    bugType: '211',
+  },
+  'classifies a CoreAnalytics report'
+);
+assertClassification(
+  analyticsText,
+  {
+    type: 'analytics-generic',
+    family: 'analytics',
+    subtype: 'generic',
+    supported: true,
+    parserType: 'analytics',
+    legacyType: 'analytics',
+    bugType: '',
+  },
+  'classifies generic analytics text'
+);
+
+const accessoryCrashClassificationFixture = [
+  JSON.stringify({ bug_type: '305', timestamp: '2026-06-28 10:00:00 +0000', os_version: 'iPhone OS 27.0', incident_id: 'FICTIONAL-ACCESSORY-INCIDENT' }),
+  JSON.stringify({
+    bug_type: '305',
+    accessory_type: 'audio',
+    accessory_os_version: '1A100',
+    crashlogs: [{ summary: 'fictional accessory reset' }],
+  }),
+].join('\n');
+const cpuResourceClassificationFixture = [
+  JSON.stringify({ bug_type: '202', timestamp: '2026-06-28 10:00:00 +0000', incident_id: 'FICTIONAL-CPU-INCIDENT' }),
+  'Date/Time: 2026-06-28 10:00:00 +0000',
+  'Action taken: none',
+  'CPU limit: 80%',
+].join('\n');
+const stackshotClassificationFixture = [
+  JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-INCIDENT' }),
+  JSON.stringify({
+    bug_type: '288',
+    exception: '0x00000020',
+    reason: 'fictional resource stackshot',
+    memoryStatus: { pageSize: 16384 },
+    processByPid: { 100: { procname: 'DemoProcess' } },
+  }),
+].join('\n');
+const appUsageClassificationFixture = [
+  JSON.stringify({ bug_type: '225', incident_id: 'FICTIONAL-USAGE-INCIDENT' }),
+  JSON.stringify([{ eventType: 'example', topic: 'fictional-topic', bundleId: 'com.example.app' }]),
+].join('\n');
+const wifiClassificationFixture = [
+  JSON.stringify({ bug_type: '233', incident_id: 'FICTIONAL-WIFI-INCIDENT' }),
+  '<GEOLogMsgEvent><WiFiConnectionQuality>fictional quality event</WiFiConnectionQuality></GEOLogMsgEvent>',
+].join('\n');
+const diagnosticRequestClassificationFixture = [
+  JSON.stringify({ bug_type: '312', incident_id: 'FICTIONAL-DIAGNOSTIC-INCIDENT' }),
+  JSON.stringify({
+    requestType: 'SubmitLogToContainer',
+    decisionServerDecision: 'Accepted',
+    requestID: 'FICTIONAL-REQUEST-ID',
+    logPath: '/private/var/mobile/fictional.log',
+    recordDictionary: { fileName: 'fictional.gz' },
+  }),
+].join('\n');
+const diskWritesClassificationFixture = [
+  JSON.stringify({ bug_type: '142', incident_id: 'FICTIONAL-DISK-INCIDENT' }),
+  JSON.stringify({ bug_type: '142', diskWrites: { logicalWrites: 12345 }, process: 'DemoProcess' }),
+].join('\n');
+
+assertClassification(
+  accessoryCrashClassificationFixture,
+  {
+    type: 'accessory-crash',
+    family: 'accessory',
+    subtype: 'crash',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '305',
+  },
+  'classifies unsupported AccessoryCrash diagnostics'
+);
+assertClassification(
+  cpuResourceClassificationFixture,
+  {
+    type: 'resource-cpu',
+    family: 'resource',
+    subtype: 'cpu',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '202',
+  },
+  'classifies unsupported CPU resource diagnostics'
+);
+assertClassification(
+  stackshotClassificationFixture,
+  {
+    type: 'resource-stackshot',
+    family: 'resource',
+    subtype: 'stackshot',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '288',
+  },
+  'classifies stackshot/resource diagnostics before app crash'
+);
+assert.notEqual(
+  classifyDiagnostic(stackshotClassificationFixture).type,
+  'app-crash',
+  'stackshot/resource diagnostics with bug_type and exception are not classified as app crashes'
+);
+assertClassification(
+  appUsageClassificationFixture,
+  {
+    type: 'app-usage-metrics',
+    family: 'metrics',
+    subtype: 'app-usage',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '225',
+  },
+  'classifies unsupported app usage metrics'
+);
+assertClassification(
+  wifiClassificationFixture,
+  {
+    type: 'wifi-connectivity',
+    family: 'connectivity',
+    subtype: 'wifi',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '233',
+  },
+  'classifies unsupported Wi-Fi connectivity diagnostics'
+);
+assertClassification(
+  diagnosticRequestClassificationFixture,
+  {
+    type: 'diagnostic-request',
+    family: 'diagnostic-request',
+    subtype: 'pipeline',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '312',
+  },
+  'classifies unsupported diagnostic request reports'
+);
+assertClassification(
+  diskWritesClassificationFixture,
+  {
+    type: 'resource-diskwrites',
+    family: 'resource',
+    subtype: 'diskwrites',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '142',
+  },
+  'classifies unsupported disk writes resource diagnostics'
+);
+assertClassification(
+  '',
+  {
+    type: 'unknown',
+    family: 'unknown',
+    subtype: 'unknown',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '',
+  },
+  'classifies empty input as unknown'
+);
+assertClassification(
+  '{"not":"a diagnostic"}',
+  {
+    type: 'unknown',
+    family: 'unknown',
+    subtype: 'unknown',
+    supported: false,
+    parserType: null,
+    legacyType: 'unknown',
+    bugType: '',
+  },
+  'classifies malformed or unsupported JSON as unknown'
+);
+
+const sensitiveClassificationText = JSON.stringify([
+  classifyDiagnostic(accessoryCrashClassificationFixture),
+  classifyDiagnostic(diagnosticRequestClassificationFixture),
+  classifyDiagnostic(appUsageClassificationFixture),
+]);
+assert.doesNotMatch(
+  sensitiveClassificationText,
+  /FICTIONAL-|REQUEST-ID|private\/var|com\.example\.app|fictional-topic/,
+  'classification output does not expose raw incident IDs, request IDs, paths, or app usage details'
 );
 
 const ipsSections = parseInput(ipsText);
