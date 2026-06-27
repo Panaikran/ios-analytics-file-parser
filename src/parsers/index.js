@@ -1,4 +1,4 @@
-import { detectFileType } from './detect.js';
+import { classifyDiagnostic } from './classifyDiagnostic.js';
 import { parseAnalytics } from './parseAnalytics.js';
 import { parseCoreAnalytics } from './parseCoreAnalytics.js';
 import { parseCrash } from './parseCrash.js';
@@ -9,7 +9,8 @@ import { parseJetsam } from './parseJetsam.js';
 import { parsePanic } from './parsePanic.js';
 
 export function parseInput(input, { sanitize = true } = {}) {
-  const type = detectFileType(input);
+  const classification = classifyDiagnostic(input);
+  const type = classification.parserType;
   const options = { sanitize };
 
   if (type === 'ips') {

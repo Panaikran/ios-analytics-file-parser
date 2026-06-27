@@ -55,6 +55,7 @@ const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata
 const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
+const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -89,6 +90,9 @@ assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
+assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
+assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
+assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
 assert.match(serviceWorkerText, /\.\/src\/clipboard\/copyMetadata\.js/, 'service worker precaches the copy metadata helper');
 assert.match(serviceWorkerText, /\.\/src\/models\/reportSize\.js/, 'service worker precaches report-size helper dependencies');
 assert.match(serviceWorkerText, /\.\/src\/ui\/tableView\.js/, 'service worker precaches shared table-view helper dependencies');
