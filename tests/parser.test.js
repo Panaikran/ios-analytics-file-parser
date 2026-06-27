@@ -4,6 +4,7 @@ import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import {
   FILE_ERROR_TOO_LARGE,
   FILE_ERROR_UNSUPPORTED,
+  MAX_SAFE_FILE_SIZE_MB,
   MAX_SAFE_FILE_SIZE_BYTES,
   validateReportFile,
 } from '../src/fileValidation.js';
@@ -81,7 +82,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.5\.0-alpha-slice5-mobile-safari-polish-2026-06-27/, 'service worker cache version reflects the current mobile Safari CSS precache update');
+assert.match(serviceWorkerText, /v0\.5\.1-alpha-file-size-validation-hotfix-2026-06-27/, 'service worker cache version reflects the current file-size validation hotfix');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -174,15 +175,19 @@ assert.equal(validateReportFile(mockFile('voice.m4a', 'audio/mp4')).ok, false, '
 assert.equal(validateReportFile(mockFile('manual.pdf', 'application/pdf')).ok, false, 'file validation rejects PDFs before reading');
 assert.equal(validateReportFile(mockFile('archive.zip', 'application/zip')).ok, false, 'file validation rejects archives before reading');
 assert.equal(validateReportFile(mockFile('unknown.bin', 'application/octet-stream')).ok, false, 'file validation rejects octet-stream without a known safe extension');
+assert.equal(MAX_SAFE_FILE_SIZE_MB, 20, 'file validation uses the official 20 MB safety limit');
+assert.equal(MAX_SAFE_FILE_SIZE_BYTES, 20 * 1024 * 1024, 'file validation byte limit matches 20 MB');
+assert.equal(FILE_ERROR_TOO_LARGE, 'This file exceeds the 20 MB safety limit and was not opened.', 'file validation too-large message is exact');
+assert.doesNotMatch(FILE_ERROR_TOO_LARGE, /\$\{/, 'file validation too-large message does not expose an uninterpolated template placeholder');
 assert.deepEqual(
-  validateReportFile(mockFile('huge.ips', 'text/plain', MAX_SAFE_FILE_SIZE_BYTES + 1)),
+  validateReportFile(mockFile('huge.ips', 'text/plain', 21 * 1024 * 1024)),
   { ok: false, reason: 'too-large', message: FILE_ERROR_TOO_LARGE },
-  'file validation rejects oversized files before reading'
+  'file validation rejects 21 MB files before reading'
 );
 assert.equal(
-  validateReportFile(mockFile('limit.ips', 'text/plain', MAX_SAFE_FILE_SIZE_BYTES)).ok,
+  validateReportFile(mockFile('limit.ips', 'text/plain', 20 * 1024 * 1024)).ok,
   true,
-  'file validation allows files at the configured safe size limit'
+  'file validation allows files exactly at the 20 MB safety limit'
 );
 
 function rows(count) {

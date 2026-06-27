@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.1-alpha
+
+File-size validation hotfix.
+
+### Fixed
+
+- Restored the mobile Safari file safety limit to 20 MB.
+- Fixed the oversized-file error message so it shows `This file exceeds the 20 MB safety limit and was not opened.`
+- Bumped the service worker cache version so the corrected precached file validation module is fetched after deploy.
+
+### Notes
+
+- No parser behavior changed.
+- No search, copy, render, runtime caching, backend, analytics, cloud storage, report persistence, or package metadata changed.
+
 ## v0.5.0-alpha
 
 Large Report Usability and Performance release.
