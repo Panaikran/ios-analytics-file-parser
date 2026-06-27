@@ -8,6 +8,8 @@ The milestone improves how large parsed reports are modeled, rendered, searched,
 
 No backend, authentication, analytics, cloud storage, report persistence, framework dependency, runtime caching, or new parser format was added.
 
+Historical note: after Phase 5 and the `v0.5.1-alpha` file-size validation hotfix, `v0.6.0-alpha` work began with Diagnostic Classification Architecture. See [ROADMAP.md](ROADMAP.md) for current v0.6 status.
+
 ## Phase 5 Status
 
 | Slice | Status | Summary |
@@ -239,7 +241,9 @@ Record release evidence for:
 
 ## v0.6.0-alpha Starting Point
 
-Potential next milestone work, subject to approval:
+This was the starting point after Phase 5. Current v0.6 planning and slice status now lives in [ROADMAP.md](ROADMAP.md).
+
+Original potential milestone areas:
 
 - AccessoryCrash or another focused parser format
 - virtualization or incremental rendering for very large visible tables

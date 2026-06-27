@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.6.0-alpha - Unreleased
+
+Apple Diagnostics Expansion classification architecture.
+
+### Added
+
+- Diagnostic classifier in `src/parsers/classifyDiagnostic.js` for supported formats and recognized unsupported Apple diagnostic families.
+- Taxonomy metadata for `type`, `family`, `subtype`, `supported`, `parserType`, `legacyType`, `structure`, and `bugType`.
+- Recognition for unsupported Accessory Crash, CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request diagnostics.
+- Friendly safe unsupported diagnostic messages for recognized-but-unsupported families.
+- Taxonomy and privacy regression tests for supported and recognized unsupported diagnostics.
+
+### Changed
+
+- `detectFileType()` is now a compatibility wrapper over `classifyDiagnostic(input).legacyType`.
+- `parseInput()` now routes internally through `classifyDiagnostic(input).parserType` while preserving its public `SectionModel[]` return contract for supported files.
+
+### Notes
+
+- No new parser families are supported yet.
+- Recognized unsupported diagnostics do not emit sections and still fail safely if parsed directly.
+- No parser output shape, UI rendering model, service worker strategy, package metadata, backend, authentication, analytics, cloud storage, report persistence, or framework dependency changed.
+
 ## v0.5.1-alpha
 
 File-size validation hotfix.

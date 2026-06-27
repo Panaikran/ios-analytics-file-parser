@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for `v0.5.0-alpha` release hardening
+Status: updated for active `v0.6.0-alpha` diagnostic classification work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -14,7 +14,9 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | CoreAnalytics Patch | Complete | `v0.3.1-alpha` | Initial `.ips.ca.synced` CoreAnalytics detection, parser, privacy handling, capped rows, fixtures, tests |
 | Phase 4: PWA and Release | Complete | `v0.4.0-alpha` | Manifest/install identity, service worker app shell, offline examples, update UX, mobile Safari hardening, release docs |
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
-| Large Report Usability and Performance | Release-ready | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
+| Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
+| File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
+| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Phase 1 Diagnostic Classification Architecture |
 
 ## Project Constraints
 
@@ -141,7 +143,7 @@ No parser behavior, caching strategy, privacy model, backend, analytics, cloud s
 
 ### v0.5.0-alpha: Large Report Usability And Performance
 
-Release-ready after Slice 6.
+Completed in `v0.5.0-alpha`.
 
 Primary theme: Large Report Usability and Performance, with CoreAnalytics as the proving ground.
 
@@ -168,13 +170,45 @@ Not changed:
 - No runtime caching, backend, authentication, analytics, cloud storage, or report persistence was added.
 - No package metadata change was made.
 
-## Active Roadmap: v0.6.0-alpha Or Later
+## Active Roadmap: v0.6.0-alpha
 
-The next milestone has not been approved yet. Candidate work should stay incremental and preserve the local-first privacy model.
+Theme: Apple Diagnostics Expansion.
 
-Candidate areas:
+Phase 1 goal: Diagnostic Classification Architecture. The current work recognizes diagnostic families safely before parser implementation, while preserving the existing `parseInput(text, options) -> SectionModel[]` contract for supported files.
 
-- AccessoryCrash or other new parser formats.
+### Phase 1: Diagnostic Classification Architecture
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 1A | Complete | Added `classifyDiagnostic(input)` with compact `type`, `family`, `subtype`, `supported`, `parserType`, `legacyType`, `structure`, and `bugType` metadata |
+| Slice 1B | Complete | Made `detectFileType(input)` a compatibility wrapper over `classifyDiagnostic(input).legacyType` |
+| Slice 1C | Complete | Routed `parseInput()` through `classifyDiagnostic(input).parserType` while preserving public parser behavior |
+| Slice 1D | Complete | Added safe friendly messages for recognized-but-unsupported diagnostics |
+| Slice 1E | Documentation/cleanup | Align README, ROADMAP, CHANGELOG, and Phase 5 historical notes with classification architecture |
+
+Recognized but not parsed yet:
+
+- Accessory Crash
+- CPU Resource
+- Disk Writes Resource
+- Stackshot Resource
+- App Usage Metrics
+- Wi-Fi Connectivity
+- Diagnostic Request
+
+Recognition is not parser support. These families show safe unsupported messages and do not emit `SectionModel[]` yet.
+
+### Planned Later v0.6 Work
+
+- Phase 2: Accessory/Firmware parser work, starting with Accessory Crash if approved.
+- Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families.
+- App Usage Metrics parser work.
+- Wi-Fi Connectivity parser work.
+- Diagnostic Request parser work.
+- Documentation/release hardening after parser-family slices land.
+
+Future work beyond the classification/parser-family sequence:
+
 - Virtualization or incremental rendering for very large visible tables.
 - Deeper CoreAnalytics drill-down using parsed/capped data without rendering full raw JSON bodies by default.
 - Export improvements beyond visible-section copy.
@@ -209,7 +243,7 @@ Candidate areas:
 
 ## Post-v0.5.0-alpha Or Parallel Hardening
 
-These items remain outside the `v0.5.0-alpha` release unless explicitly approved later.
+These items remain outside current `v0.6.0-alpha` Phase 1 classification work unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -231,7 +265,7 @@ The current source of truth is:
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for `v0.5.0-alpha` unless explicitly approved later.
+These ideas are intentionally out of scope for current `v0.6.0-alpha` Phase 1 classification work unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |
@@ -245,10 +279,10 @@ These ideas are intentionally out of scope for `v0.5.0-alpha` unless explicitly 
 
 ## Next Planning Step
 
-Before starting the next milestone:
+Before starting the next implementation slice:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect `v0.5.0-alpha`.
-- Confirm the next milestone theme and slice plan.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect active unreleased `v0.6.0-alpha` work.
+- Confirm the next parser-family slice scope.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

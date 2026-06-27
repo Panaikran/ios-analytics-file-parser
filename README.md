@@ -21,9 +21,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Current release target | `v0.5.0-alpha` |
-| Current released tag | `v0.5.0-alpha` |
-| Upcoming release | `v0.5.0-alpha` release-ready pending tag/release approval |
+| Latest released version | `v0.5.1-alpha` |
+| Active unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
+| Current v0.6 focus | Phase 1: Diagnostic Classification Architecture |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -34,7 +34,10 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Phase 4 Slice 3 | Implemented: offline/install/update UX polish and mobile Safari hardening |
 | Phase 4 Slice 4 | Complete: release documentation and deployment readiness |
 | PWA update hotfix | Complete in `v0.4.1-alpha` |
-| v0.5.0-alpha | Release-ready: Large Report Usability and Performance |
+| v0.5.0-alpha | Released: Large Report Usability and Performance |
+| v0.5.1-alpha | Released: file-size validation hotfix |
+| v0.6.0-alpha Phase 1 Slices 1A-1D | Implemented but unreleased: classification architecture and safe unsupported messages |
+| v0.6.0-alpha Phase 1 Slice 1E | Documentation alignment |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -86,9 +89,23 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 | Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `coreanalytics` | Summary, Configuration, Record Overview, Event Types, Sample Records, Parser Notes |
 | Generic analytics text | `analytics` | Fallback summary and grouped text sections |
 
+### Recognized But Not Parsed Yet
+
+Active `v0.6.0-alpha` classification work can recognize some additional Apple diagnostic families and show safe unsupported messages. Recognized does not mean parsed: these files do not produce diagnostic sections yet, and direct parser calls still fail safely.
+
+| Diagnostic family | Classification type | Current support |
+| --- | --- | --- |
+| Accessory Crash | `accessory-crash` | Recognized for safe unsupported messaging only |
+| CPU Resource | `resource-cpu` | Recognized for safe unsupported messaging only |
+| Disk Writes Resource | `resource-diskwrites` | Recognized for safe unsupported messaging only |
+| Stackshot Resource | `resource-stackshot` | Recognized for safe unsupported messaging only |
+| App Usage Metrics | `app-usage-metrics` | Recognized for safe unsupported messaging only |
+| Wi-Fi Connectivity | `wifi-connectivity` | Recognized for safe unsupported messaging only |
+| Diagnostic Request | `diagnostic-request` | Recognized for safe unsupported messaging only |
+
 ## Feature Support
 
-| Feature | v0.5.0-alpha |
+| Feature | Current support |
 | --- | --- |
 | Static browser app | Supported |
 | Browser-native ES modules | Supported |
@@ -119,6 +136,8 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
 | Search/copy scope wording for capped rows | Supported |
+| Diagnostic classification layer | Implemented in active `v0.6.0-alpha` work |
+| Friendly messages for recognized unsupported diagnostics | Implemented in active `v0.6.0-alpha` work |
 | Web App Manifest | Supported |
 | Install guidance | Supported |
 | Service worker app shell | Supported |
@@ -151,6 +170,8 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 - Panic backtrace and loaded kext tables.
 - Generic analytics fallback grouping for unstructured analytics text.
 - CoreAnalytics `.ips.ca.synced` summary, configuration, record overview, event type grouping, capped sample records, and parser notes.
+- Diagnostic classification identifies supported formats and selected unsupported Apple diagnostic families before parser routing.
+- Recognized unsupported diagnostics show safe unsupported messages instead of being treated as generic unknown files.
 - Section-specific table columns.
 - Simple Jetsam memory bar chart.
 - Large-report size helpers centralize section and report size summaries for future scale work.
@@ -276,7 +297,10 @@ The project is a static, local-first browser app.
 - `src/main.js` coordinates input, parsing, search, privacy mode, copy, dense table state, service worker registration, and rendering.
 - `src/fileValidation.js` validates local file selections before reading.
 - `src/models/reportSize.js` summarizes large report and large section size signals.
-- `src/parsers/` detects and parses supported report formats.
+- `src/parsers/classifyDiagnostic.js` classifies supported formats and selected recognized-but-unsupported diagnostic families.
+- `src/parsers/detect.js` remains a compatibility wrapper around classifier legacy type names.
+- `src/parsers/index.js` routes `parseInput()` through `classification.parserType`.
+- `src/parsers/` parses supported report formats.
 - `src/privacy/sanitize.js` applies default sanitization.
 - `src/models/sectionModel.js` documents the shared section shape.
 - `src/ui/` renders sections, tables, charts, dense table controls, navigation, shared table views, and the CoreAnalytics overview.
@@ -301,8 +325,10 @@ User input
 src/main.js
   |
   |-- validateReportFile(file)
-  |-- detectFileType(text)
-  |-- parseInput(text, { sanitize })
+  |-- classifyDiagnostic(text)
+  |-- getUnsupportedDiagnosticMessage(classification)
+  |-- detectFileType(text) compatibility wrapper for legacy type strings
+  |-- parseInput(text, { sanitize }) routes with classification.parserType
   v
 src/parsers/*
   |
@@ -378,6 +404,7 @@ index.html -> manifest.webmanifest
 |   |   |-- reportSize.js
 |   |   `-- sectionModel.js
 |   |-- parsers/
+|   |   |-- classifyDiagnostic.js
 |   |   |-- detect.js
 |   |   |-- index.js
 |   |   |-- parseAnalytics.js
@@ -444,6 +471,14 @@ parseInput(text, { sanitize: false })
 
 Parser output is treated as immutable by search and UI controls. Search and dense table state are UI concerns layered on top of parsed sections.
 
+Internally, `parseInput()` uses `classifyDiagnostic(text)` and routes supported files with `classification.parserType`. `detectFileType(text)` remains available as a compatibility wrapper that returns legacy strings such as `ips`, `crash`, `jetsam`, `panic`, `coreanalytics`, `analytics`, or `unknown`.
+
+Recognized-but-unsupported diagnostics are classified for safe UI messaging only. They do not return `SectionModel[]`; direct unsupported parsing still throws:
+
+```text
+Unsupported or unrecognized file type.
+```
+
 ## Example Files
 
 Production UI examples live in `examples/`.
@@ -486,6 +521,8 @@ After first successful service worker setup, these fictional examples are availa
 - CoreAnalytics does not render full raw JSON bodies.
 - CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
+- Some additional Apple diagnostic families are recognized for safe unsupported messages only; they are not parsed into sections yet.
+- Accessory Crash, CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are not supported parsers yet.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
@@ -507,14 +544,11 @@ After first successful service worker setup, these fictional examples are availa
 | v0.3.1-alpha | Complete | Initial CoreAnalytics `.ips.ca.synced` line-delimited JSON detection and parser support |
 | v0.4.0-alpha | Complete | PWA identity, offline app shell, offline examples, update UX, mobile Safari hardening, release docs |
 | v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
-| v0.5.0-alpha | Release-ready | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
-| Phase 4 Slice 1 | Implemented | PWA identity, manifest, icons, Apple meta tags, install guidance |
-| Phase 4 Slice 2 | Implemented | Service worker, offline app shell, offline fictional examples |
-| Phase 4 Slice 3 | Implemented | Offline/install/update UX polish, safe file intake, mobile Safari fixes |
-| Phase 4 Slice 4 | Complete | Release docs, deployment readiness, manual QA checklist, CSP decision |
-| v0.6.0-alpha | Planned | Next parser and scale work, pending approval |
+| v0.5.0-alpha | Complete | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
+| v0.5.1-alpha | Complete | File-size validation hotfix restoring the 20 MB safety limit |
+| v0.6.0-alpha Phase 1 | Active, unreleased | Diagnostic Classification Architecture |
 
-Phase 4 keeps the same constraints:
+The project keeps the same constraints:
 
 - static browser app
 - browser-native ES modules
@@ -528,18 +562,19 @@ Phase 4 keeps the same constraints:
 
 CSP/header hardening is intentionally deferred beyond the `v0.5.0-alpha` release unless approved as a focused follow-up.
 
-The `v0.5.0-alpha` milestone is release-ready pending tag/release approval. It delivered Large Report Usability and Performance work:
+The `v0.6.0-alpha` Phase 1 work is classification-only so far:
 
-- large report baseline and guardrails
-- generalized table view controls
-- CoreAnalytics viewer improvements
-- search and copy behavior for large reports
-- mobile Safari polish for dense data views
-- release hardening
+- Slice 1A added `classifyDiagnostic(input)` and taxonomy/privacy tests.
+- Slice 1B made `detectFileType(input)` delegate to `classifyDiagnostic(input).legacyType`.
+- Slice 1C made `parseInput()` route through `classifyDiagnostic(input).parserType`.
+- Slice 1D added safe friendly messages for recognized-but-unsupported diagnostics.
+- Slice 1E aligns documentation and cleanup.
 
-Possible `v0.6.0-alpha` work, subject to approval:
+Upcoming `v0.6.0-alpha` work remains parser-family implementation and later hardening, subject to approval:
 
-- AccessoryCrash or other new parser formats
+- Accessory/Firmware parser work, starting with Accessory Crash if approved
+- Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families
+- Wi-Fi Connectivity and Diagnostic Request parser work
 - virtualization or incremental rendering for very large visible tables
 - deeper CoreAnalytics drill-down without raw JSON dumping
 - CSP/header hardening on a host that supports response headers
