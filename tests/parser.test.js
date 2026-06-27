@@ -373,6 +373,16 @@ function assertClassification(input, expected, message) {
   );
 }
 
+function assertUnsupportedFamilyDetection(input, expectedType, message) {
+  assert.equal(classifyDiagnostic(input).type, expectedType, `${message} classifier type`);
+  assert.equal(detectFileType(input), 'unknown', `${message} detectFileType compatibility result`);
+  assert.throws(
+    () => parseInput(input),
+    /Unsupported or unrecognized file type\./,
+    `${message} parseInput fails safely`
+  );
+}
+
 assert.equal(detectFileType(ipsText), 'ips', 'detects a standard app crash IPS report');
 assert.equal(detectFileType(fullIpsText), 'ips', 'detects a full standard app crash IPS report');
 assert.equal(detectFileType(metadataIpsText), 'ips', 'detects a standard IPS report with metadata line');
@@ -634,6 +644,46 @@ assertClassification(
     bugType: '142',
   },
   'classifies unsupported disk writes resource diagnostics'
+);
+assertUnsupportedFamilyDetection(
+  accessoryCrashClassificationFixture,
+  'accessory-crash',
+  'unsupported AccessoryCrash diagnostics'
+);
+assertUnsupportedFamilyDetection(
+  cpuResourceClassificationFixture,
+  'resource-cpu',
+  'unsupported CPU resource diagnostics'
+);
+assertUnsupportedFamilyDetection(
+  stackshotClassificationFixture,
+  'resource-stackshot',
+  'unsupported stackshot/resource diagnostics'
+);
+assert.notEqual(
+  detectFileType(stackshotClassificationFixture),
+  'ips',
+  'stackshot/resource diagnostics with bug_type and exception do not detect as app crash IPS'
+);
+assertUnsupportedFamilyDetection(
+  appUsageClassificationFixture,
+  'app-usage-metrics',
+  'unsupported app usage metrics diagnostics'
+);
+assertUnsupportedFamilyDetection(
+  wifiClassificationFixture,
+  'wifi-connectivity',
+  'unsupported Wi-Fi connectivity diagnostics'
+);
+assertUnsupportedFamilyDetection(
+  diagnosticRequestClassificationFixture,
+  'diagnostic-request',
+  'unsupported diagnostic request reports'
+);
+assertUnsupportedFamilyDetection(
+  diskWritesClassificationFixture,
+  'resource-diskwrites',
+  'unsupported disk writes resource diagnostics'
 );
 assertClassification(
   '',
