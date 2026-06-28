@@ -18,6 +18,7 @@ import {
 } from '../src/appState.js';
 import { detectFileType } from '../src/parsers/detect.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
+import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -522,6 +523,56 @@ const accessoryCrashClassificationFixture = [
     crashlogs: [{ summary: 'fictional accessory reset' }],
   }),
 ].join('\n');
+const accessoryCrashParserMetadata = {
+  bug_type: '305',
+  timestamp: '2026-06-28 10:00:00 +0000',
+  os_version: 'iPhone OS 27.0 (24A999)',
+  device_model: 'iPhone19,1',
+  incident_id: '11111111-2222-3333-4444-555555555555',
+};
+const accessoryCrashParserBody = {
+  bug_type: '305',
+  date: '2026-06-28 10:00:01 +0000',
+  accessory_type: 'AudioAccessory',
+  accessory_os_train: 'AccessoryOS 3A',
+  accessory_os_version: '3.1.0',
+  accessory_pid: 4242,
+  accessory_machine_config: 'Model=FictionalDock, Board=DemoBoard, Serial=FICTIONAL-SERIAL-12345',
+  'application-info': {
+    process: 'DemoHostApp',
+    bundleID: 'com.example.demo-host',
+    version: '1.2.3',
+    build: '123',
+    requestID: 'REQ-FICTIONAL-12345',
+    path: '/private/var/mobile/Containers/Bundle/Application/FICTIONAL-APP-UUID/DemoHostApp.app',
+  },
+  crashlogs: [
+    {
+      identifier: 'CRASHLOG-FICTIONAL-001',
+      uuid: 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+      process: 'AccessoryDaemon',
+      type: 'firmware-reset',
+      reason: 'Fictional accessory watchdog timeout',
+      timestamp: '2026-06-28 10:00:02 +0000',
+      frames: [{ symbol: 'AccessoryMain + 24' }, { symbol: 'TransportRunLoop + 88' }],
+    },
+    {
+      identifier: 'CRASHLOG-FICTIONAL-002',
+      process: 'AccessoryTransport',
+      type: 'assertion',
+      summary: 'Fictional transport assertion',
+      timestamp: '2026-06-28 10:00:03 +0000',
+      frames: [],
+    },
+  ],
+  panicString: 'panic: fictional accessory fault at 0xfffffff012345678',
+  faultReason: 'Fictional accessory watchdog timeout',
+  crashReporterKey: 'abcdef12-3456-7890-abcd-ef1234567890',
+};
+const accessoryCrashParserFixture = [
+  JSON.stringify(accessoryCrashParserMetadata),
+  JSON.stringify({ ...accessoryCrashParserBody, panicString: undefined }),
+].join('\n');
 const cpuResourceClassificationFixture = [
   JSON.stringify({ bug_type: '202', timestamp: '2026-06-28 10:00:00 +0000', incident_id: 'FICTIONAL-CPU-INCIDENT' }),
   'Date/Time: 2026-06-28 10:00:00 +0000',
@@ -749,6 +800,202 @@ assertUnsupportedFamilyDetection(
   diskWritesClassificationFixture,
   'resource-diskwrites',
   'unsupported disk writes resource diagnostics'
+);
+
+const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
+assert.deepEqual(
+  accessoryCrashSections.map((section) => section.id),
+  [
+    'accessory-crash-summary',
+    'accessory-information',
+    'accessory-application-information',
+    'accessory-crashlog-overview',
+    'accessory-panic-fault-notes',
+    'accessory-crash-parser-notes',
+  ],
+  'AccessoryCrash direct parser emits the expected section order'
+);
+assert.equal(fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Bug Type'), '305');
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Timestamp'),
+  '2026-06-28 10:00:00 +0000',
+  'AccessoryCrash summary prefers metadata timestamp'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'OS Version'),
+  'iPhone OS 27.0 (24A999)',
+  'AccessoryCrash summary populates OS version'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Device'),
+  'iPhone19,1',
+  'AccessoryCrash summary populates device'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'AccessoryCrash summary redacts incident IDs by default'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Crash Log Count'),
+  '2',
+  'AccessoryCrash summary counts crashlogs'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-summary'), 'Primary Reason'),
+  'Fictional accessory watchdog timeout',
+  'AccessoryCrash summary extracts a primary reason'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-information'), 'Accessory Type'),
+  'AudioAccessory',
+  'AccessoryCrash accessory type populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-information'), 'Accessory OS Train'),
+  'AccessoryOS 3A',
+  'AccessoryCrash accessory OS train populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-information'), 'Accessory OS Version'),
+  '3.1.0',
+  'AccessoryCrash accessory OS version populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-information'), 'Accessory PID'),
+  '4242',
+  'AccessoryCrash accessory PID populates'
+);
+assert.doesNotMatch(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-information'), 'Accessory Machine Config'),
+  /FICTIONAL-SERIAL-12345/,
+  'AccessoryCrash accessory machine config redacts serial-like values'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-application-information'), 'Process'),
+  'DemoHostApp',
+  'AccessoryCrash application process populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-application-information'), 'Bundle ID'),
+  'com.example.demo-host',
+  'AccessoryCrash application bundle ID populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-application-information'), 'Version'),
+  '1.2.3',
+  'AccessoryCrash application version populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-application-information'), 'Build'),
+  '123',
+  'AccessoryCrash application build populates'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-application-information'), 'Request ID'),
+  '[identifier redacted]',
+  'AccessoryCrash application request IDs redact by default'
+);
+const accessoryCrashlogRows = sectionById(accessoryCrashSections, 'accessory-crashlog-overview').table;
+assert.equal(accessoryCrashlogRows.length, 2, 'AccessoryCrash crashlog overview renders representative rows');
+assert.deepEqual(
+  accessoryCrashlogRows[0],
+  {
+    index: '1',
+    process: 'AccessoryDaemon',
+    type: 'firmware-reset',
+    reason: 'Fictional accessory watchdog timeout',
+    timestamp: '2026-06-28 10:00:02 +0000',
+    frames: '2',
+  },
+  'AccessoryCrash crashlog overview summarizes safe row fields'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-panic-fault-notes'), 'Fault Reason'),
+  'Fictional accessory watchdog timeout',
+  'AccessoryCrash fault notes extract fault reason'
+);
+assert.match(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-panic-fault-notes'), 'Panic String'),
+  /panic: fictional accessory fault/,
+  'AccessoryCrash fault notes extract concise panic string'
+);
+assert.equal(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-parser-notes'), 'Crashlogs'),
+  '2 summarized',
+  'AccessoryCrash parser notes summarize crashlog handling'
+);
+assert.match(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-parser-notes'), 'Privacy'),
+  /redacted or omitted/,
+  'AccessoryCrash parser notes describe privacy handling'
+);
+assert.match(
+  fieldValue(sectionById(accessoryCrashSections, 'accessory-crash-parser-notes'), 'Raw Payloads'),
+  /not rendered/,
+  'AccessoryCrash parser notes describe raw payload omission'
+);
+assert.doesNotMatch(
+  JSON.stringify(accessoryCrashSections),
+  /11111111-2222-3333-4444-555555555555|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|REQ-FICTIONAL-12345|\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
+  'AccessoryCrash sanitized output omits or redacts identifier-heavy values'
+);
+const rawAccessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawAccessoryCrashSections, 'accessory-crash-summary'), 'Incident ID'),
+  '11111111-2222-3333-4444-555555555555',
+  'AccessoryCrash raw mode can preserve approved scalar incident ID values'
+);
+assert.equal(
+  fieldValue(sectionById(rawAccessoryCrashSections, 'accessory-application-information'), 'Request ID'),
+  'REQ-FICTIONAL-12345',
+  'AccessoryCrash raw mode can preserve approved scalar request ID values'
+);
+assert.doesNotMatch(
+  JSON.stringify(rawAccessoryCrashSections),
+  /\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
+  'AccessoryCrash raw mode still avoids paths, nested crashlog identifiers, crashReporterKey, and serial-like values'
+);
+const accessoryCrashWithoutNotes = {
+  ...accessoryCrashParserBody,
+  panicString: '',
+  faultReason: '',
+  faultText: '',
+  reason: '',
+};
+assert.equal(
+  sectionById(parseAccessoryCrash(accessoryCrashWithoutNotes, accessoryCrashParserMetadata), 'accessory-panic-fault-notes'),
+  undefined,
+  'AccessoryCrash omits panic/fault notes when no concise notes exist'
+);
+assert.doesNotThrow(
+  () => parseAccessoryCrash({ bug_type: '305', crashlogs: { unexpected: true } }, accessoryCrashParserMetadata),
+  'AccessoryCrash parser tolerates malformed crashlogs'
+);
+const malformedAccessoryCrashSections = parseAccessoryCrash(
+  { bug_type: '305', crashlogs: { unexpected: true } },
+  accessoryCrashParserMetadata
+);
+assert.deepEqual(
+  malformedAccessoryCrashSections.map((section) => section.id),
+  ['accessory-crash-summary', 'accessory-crash-parser-notes'],
+  'AccessoryCrash malformed crashlogs still emit summary and parser notes'
+);
+assert.match(
+  fieldValue(sectionById(malformedAccessoryCrashSections, 'accessory-crash-parser-notes'), 'Crashlogs'),
+  /unavailable or malformed/,
+  'AccessoryCrash parser notes mention malformed crashlogs'
+);
+assert.equal(
+  classifyDiagnostic(accessoryCrashParserFixture).supported,
+  false,
+  'AccessoryCrash classification remains unsupported in Slice 2B'
+);
+assert.equal(detectFileType(accessoryCrashParserFixture), 'unknown', 'AccessoryCrash detectFileType compatibility remains unknown in Slice 2B');
+assert.throws(
+  () => parseInput(accessoryCrashParserFixture),
+  /Unsupported or unrecognized file type\./,
+  'AccessoryCrash parseInput route remains unavailable in Slice 2B'
 );
 assertClassification(
   '',
