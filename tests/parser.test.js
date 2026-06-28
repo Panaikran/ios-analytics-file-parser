@@ -19,6 +19,7 @@ import {
 import { detectFileType } from '../src/parsers/detect.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
 import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
+import { parseCpuResource } from '../src/parsers/parseCpuResource.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -635,6 +636,36 @@ const cpuResourceClassificationFixture = [
   'Action taken: none',
   'CPU limit: 80%',
 ].join('\n');
+const cpuResourceParserFixture = [
+  JSON.stringify({
+    bug_type: '202',
+    timestamp: '2026-06-28 10:00:00 +0000',
+    os_version: 'iPhone OS 27.0 (24A999)',
+    device_model: 'iPhone19,1',
+    incident_id: 'FICTIONAL-CPU-INCIDENT-001',
+  }),
+  [
+    'Date/Time: 2026-06-28 10:00:01 +0000',
+    'Process: DemoCPUApp [123]',
+    'Bundle ID: com.example.cpu',
+    'Path: /private/var/containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/DemoCPUApp.app/DemoCPUApp',
+    'Command: /private/var/mobile/Containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/DemoCPUApp.app/DemoCPUApp --foreground',
+    'Executable: /usr/bin/DemoCPUApp',
+    'Action taken: none',
+    'CPU limit: 80%',
+    'CPU used: 94%',
+    'CPU duration: 182 seconds',
+    'CPU time: 88.2 seconds',
+    'Wakeups: 1234',
+    'Thread Count: 12',
+    'Window: 60 seconds',
+    'Threshold: 80%',
+    'Limit Status: exceeded',
+    'Reason: CPU runaway requestID=REQ-CPU-FICTIONAL-123 uuid 11111111-2222-3333-4444-555555555555 address 0xfffffff012345678 serial FICTIONAL-SERIAL-CPU mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF',
+  ].join('\n'),
+].join('\n');
+const cpuResourceLeakPattern =
+  /FICTIONAL-CPU-INCIDENT-001|REQ-CPU-FICTIONAL-123|11111111-2222-3333-4444-555555555555|\/private\/var\/containers|\/private\/var\/mobile|\/usr\/bin\/DemoCPUApp|0xfffffff012345678|FICTIONAL-SERIAL-CPU|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF/;
 const stackshotClassificationFixture = [
   JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-INCIDENT' }),
   JSON.stringify({
@@ -854,6 +885,139 @@ assertUnsupportedFamilyDetection(
   diskWritesClassificationFixture,
   'resource-diskwrites',
   'unsupported disk writes resource diagnostics'
+);
+
+const cpuResourceSections = parseCpuResource(cpuResourceParserFixture);
+assert.deepEqual(
+  cpuResourceSections.map((section) => section.id),
+  [
+    'resource-cpu-summary',
+    'resource-cpu-process-info',
+    'resource-cpu-usage',
+    'resource-cpu-limits',
+    'resource-cpu-parser-notes',
+  ],
+  'CPU Resource direct parser emits the expected section order'
+);
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Bug Type'), '202');
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Timestamp'),
+  '2026-06-28 10:00:00 +0000',
+  'CPU Resource summary prefers metadata timestamp'
+);
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'OS Version'),
+  'iPhone OS 27.0 (24A999)',
+  'CPU Resource summary populates OS version'
+);
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Device'), 'iPhone19,1');
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'CPU Resource summary redacts incident IDs by default'
+);
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Report Type'), 'CPU Resource');
+assert.match(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Primary Reason'),
+  /CPU runaway/,
+  'CPU Resource summary extracts primary reason text'
+);
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-summary'), 'Action Taken'), 'none');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'Process'), 'DemoCPUApp');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'PID'), '123');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'Bundle ID'), 'com.example.cpu');
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'Path'),
+  '[path redacted]',
+  'CPU Resource path field redacts in sanitized mode'
+);
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'Command'),
+  '[path redacted]',
+  'CPU Resource command paths redact in sanitized mode'
+);
+assert.equal(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-process-info'), 'Executable'),
+  '[path redacted]',
+  'CPU Resource executable paths redact in sanitized mode'
+);
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'CPU Used'), '94%');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'CPU Limit'), '80%');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'CPU Duration'), '182 seconds');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'CPU Time'), '88.2 seconds');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'Wakeups'), '1234');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-usage'), 'Thread Count'), '12');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-limits'), 'CPU Limit'), '80%');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-limits'), 'Window'), '60 seconds');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-limits'), 'Threshold'), '80%');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-limits'), 'Action Taken'), 'none');
+assert.equal(fieldValue(sectionById(cpuResourceSections, 'resource-cpu-limits'), 'Limit Status'), 'exceeded');
+assert.match(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-parser-notes'), 'Sources'),
+  /metadata and text/,
+  'CPU Resource parser notes describe extraction sources'
+);
+assert.match(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-parser-notes'), 'Privacy'),
+  /redacted or omitted/,
+  'CPU Resource parser notes describe privacy handling'
+);
+assert.match(
+  fieldValue(sectionById(cpuResourceSections, 'resource-cpu-parser-notes'), 'Raw Body'),
+  /not rendered/,
+  'CPU Resource parser notes describe raw body omission'
+);
+assert.doesNotMatch(
+  JSON.stringify(cpuResourceSections),
+  cpuResourceLeakPattern,
+  'CPU Resource sanitized output redacts identifiers, paths, raw addresses, serials, MACs, and ECID values'
+);
+assert.doesNotThrow(
+  () => parseCpuResource('Malformed CPU resource text without key value lines'),
+  'CPU Resource parser tolerates malformed text'
+);
+assert.deepEqual(
+  parseCpuResource('Malformed CPU resource text without key value lines').map((section) => section.id),
+  ['resource-cpu-summary', 'resource-cpu-parser-notes'],
+  'CPU Resource malformed input still emits summary and parser notes'
+);
+const minimalCpuResourceSections = parseCpuResource('CPU limit: 70%');
+assert.deepEqual(
+  minimalCpuResourceSections.map((section) => section.id),
+  ['resource-cpu-summary', 'resource-cpu-usage', 'resource-cpu-limits', 'resource-cpu-parser-notes'],
+  'CPU Resource minimal input omits missing optional process fields'
+);
+assert.equal(
+  fieldValue(sectionById(minimalCpuResourceSections, 'resource-cpu-usage'), 'CPU Limit'),
+  '70%',
+  'CPU Resource minimal input extracts available metrics'
+);
+const rawCpuResourceSections = parseCpuResource(cpuResourceParserFixture, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawCpuResourceSections, 'resource-cpu-process-info'), 'Process'),
+  'DemoCPUApp',
+  'CPU Resource raw mode preserves safe scalar process values'
+);
+assert.equal(
+  fieldValue(sectionById(rawCpuResourceSections, 'resource-cpu-usage'), 'CPU Used'),
+  '94%',
+  'CPU Resource raw mode preserves safe scalar metric values'
+);
+assert.doesNotMatch(
+  JSON.stringify(rawCpuResourceSections),
+  cpuResourceLeakPattern,
+  'CPU Resource raw mode remains bounded and avoids paths, identifiers, raw addresses, serials, MACs, and ECID values'
+);
+assert.equal(
+  classifyDiagnostic(cpuResourceParserFixture).supported,
+  false,
+  'CPU Resource classification remains unsupported in Slice 3B'
+);
+assert.equal(detectFileType(cpuResourceParserFixture), 'unknown', 'CPU Resource detectFileType remains unknown in Slice 3B');
+assert.throws(
+  () => parseInput(cpuResourceParserFixture),
+  /Unsupported or unrecognized file type\./,
+  'CPU Resource parseInput route remains unsupported in Slice 3B'
 );
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
