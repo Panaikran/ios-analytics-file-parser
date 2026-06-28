@@ -1,11 +1,38 @@
 import { createSection } from '../models/sectionModel.js';
 import { createSanitizer } from '../privacy/sanitize.js';
 
-const SENSITIVE_KEY_PATTERN = /(uuid|identifier|serial|request|key|token|deviceid|incident|crashreporter)/i;
-const PATH_PATTERN = /(?:\/private\/var\/|\/Users\/|C:\\Users\\)/i;
+const SENSITIVE_KEY_PARTS = [
+  'uuid',
+  'identifier',
+  'serial',
+  'request',
+  'key',
+  'token',
+  'deviceid',
+  'incident',
+  'crashreporter',
+  'accessoryid',
+  'accessoryidentifier',
+  'ecid',
+  'uniquechipid',
+  'chipid',
+  'imei',
+  'meid',
+  'mac',
+  'bluetoothaddress',
+  'wifiaddress',
+  'hardwareaddress',
+];
+const RAW_ALLOWED_KEY_PARTS = ['incident', 'request'];
+const PATH_DETECTION_PATTERN = /(?:\/private\/var\/|\/var\/mobile\/|\/var\/root\/|file:\/\/\/|\/Users\/|C:\\Users\\|C:\\ProgramData\\)/i;
+const PATH_VALUE_PATTERN = /(?:file:\/\/\/[^\s,;]+|\/private\/var\/[^\s,;]+|\/var\/mobile\/[^\s,;]+|\/var\/root\/[^\s,;]+|\/Users\/[^\s,;]+|C:\\Users\\[^\s,;]+|C:\\ProgramData\\[^\s,;]+)/gi;
 const SERIAL_ASSIGNMENT_PATTERN = /\b(serial(?:\s*(?:number|no))?\s*[=:]\s*)([^,\s;]+)/gi;
 const SERIAL_VALUE_PATTERN = /\b(?:FICTIONAL-)?SERIAL-[A-Z0-9-]+\b/i;
 const UUID_PATTERN = /\b[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\b/i;
+const MAC_ADDRESS_PATTERN = /\b[0-9A-F]{2}(?::[0-9A-F]{2}){5}\b/gi;
+const REQUEST_OR_CRASHLOG_ID_PATTERN = /\b(?:REQ|CRASHLOG|ACCESSORY-ID|DEVICE-ID)-[A-Z0-9-]+\b/gi;
+const SENSITIVE_LABEL_VALUE_PATTERN =
+  /\b(AccessoryIdentifier|accessory_id|DeviceID|device_id|ECID|UniqueChipID|ChipID|IMEI|MEID|MAC|BluetoothAddress|WiFiAddress|HardwareAddress|CrashReporterKey|crashReporterKey|RequestID|requestID|uuid|identifier|token|key)\b\s*(?:is|:|=)?\s*([A-Z0-9][A-Z0-9-]{7,}|0x[0-9A-F]{8,}|[0-9A-F]{2}(?::[0-9A-F]{2}){5})/gi;
 
 export function parseAccessoryCrash(report, metadata = {}, options = {}) {
   const sanitizeText = createSanitizer(options);
@@ -127,11 +154,11 @@ function normalizeApplicationInfo(info, sanitizeText, options) {
   if (!isPlainObject(info)) return [];
 
   return compactFields([
-    toField('Process', firstValue(info.process, info.processName, info.name), sanitizeText, options, 'process'),
-    toField('Bundle ID', firstValue(info.bundleID, info.bundleId, info.bundle_id), sanitizeText, options, 'bundle_id'),
-    toField('Version', firstValue(info.version, info.appVersion), sanitizeText, options, 'version'),
-    toField('Build', firstValue(info.build, info.buildVersion), sanitizeText, options, 'build'),
-    toField('Request ID', firstValue(info.requestID, info.requestId, info.request_id), sanitizeText, options, 'requestID'),
+    toField('Process', valueByKeys(info, ['process', 'processName', 'name']), sanitizeText, options, 'process'),
+    toField('Bundle ID', valueByKeys(info, ['bundleID', 'bundleId', 'bundle_id']), sanitizeText, options, 'bundle_id'),
+    toField('Version', valueByKeys(info, ['version', 'appVersion']), sanitizeText, options, 'version'),
+    toField('Build', valueByKeys(info, ['build', 'buildVersion']), sanitizeText, options, 'build'),
+    toField('Request ID', valueByKeys(info, ['requestID', 'requestId', 'request_id']), sanitizeText, options, 'requestID'),
   ]);
 }
 
@@ -179,24 +206,66 @@ function sanitizeByKey(key, value, sanitizeText, options) {
   const stringValue = safeString(value);
   if (!stringValue) return '';
 
-  if (PATH_PATTERN.test(stringValue)) return options.sanitize === false ? '' : '[path redacted]';
-
-  if (options.sanitize !== false) {
-    if (isSensitiveKey(key) || UUID_PATTERN.test(stringValue) || SERIAL_VALUE_PATTERN.test(stringValue)) {
-      return '[identifier redacted]';
-    }
-    return sanitizeSerialAssignments(sanitizeText(stringValue));
+  if (PATH_DETECTION_PATTERN.test(stringValue) && stringValue.trim().match(PATH_DETECTION_PATTERN)?.[0] === stringValue.trim()) {
+    return options.sanitize === false ? '' : '[path redacted]';
   }
 
-  return sanitizeSerialAssignments(stringValue);
+  if (options.sanitize !== false) {
+    if (isSensitiveKey(key)) {
+      return '[identifier redacted]';
+    }
+    return redactSensitiveValuePatterns(sanitizeText(stringValue), { redactPaths: true });
+  }
+
+  if (isSensitiveKey(key) && !isRawAllowedKey(key)) {
+    return '[identifier redacted]';
+  }
+
+  if (isRawAllowedKey(key)) {
+    return redactRawAllowedScalar(stringValue);
+  }
+
+  return redactSensitiveValuePatterns(stringValue, { redactPaths: true });
 }
 
-function sanitizeSerialAssignments(value) {
-  return String(value ?? '').replace(SERIAL_ASSIGNMENT_PATTERN, '$1[identifier redacted]');
+function redactRawAllowedScalar(value) {
+  return String(value ?? '')
+    .replace(PATH_VALUE_PATTERN, '[path redacted]')
+    .replace(SENSITIVE_LABEL_VALUE_PATTERN, '$1 [identifier redacted]')
+    .replace(SERIAL_ASSIGNMENT_PATTERN, '$1[identifier redacted]')
+    .replace(MAC_ADDRESS_PATTERN, '[identifier redacted]')
+    .replace(SERIAL_VALUE_PATTERN, '[identifier redacted]');
+}
+
+function redactSensitiveValuePatterns(value, { redactPaths }) {
+  let nextValue = String(value ?? '');
+  if (!nextValue) return '';
+
+  if (redactPaths) {
+    nextValue = nextValue.replace(PATH_VALUE_PATTERN, '[path redacted]');
+  }
+
+  return nextValue
+    .replace(SENSITIVE_LABEL_VALUE_PATTERN, '$1 [identifier redacted]')
+    .replace(SERIAL_ASSIGNMENT_PATTERN, '$1[identifier redacted]')
+    .replace(UUID_PATTERN, '[identifier redacted]')
+    .replace(MAC_ADDRESS_PATTERN, '[identifier redacted]')
+    .replace(REQUEST_OR_CRASHLOG_ID_PATTERN, '[identifier redacted]')
+    .replace(SERIAL_VALUE_PATTERN, '[identifier redacted]');
 }
 
 function isSensitiveKey(key) {
-  return SENSITIVE_KEY_PATTERN.test(String(key ?? ''));
+  const normalized = normalizeKey(key);
+  return SENSITIVE_KEY_PARTS.some((part) => normalized.includes(part));
+}
+
+function isRawAllowedKey(key) {
+  const normalized = normalizeKey(key);
+  return RAW_ALLOWED_KEY_PARTS.some((part) => normalized.includes(part));
+}
+
+function normalizeKey(key) {
+  return String(key ?? '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 }
 
 function frameCount(crashlog) {
@@ -208,6 +277,21 @@ function frameCount(crashlog) {
 
 function firstValue(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== '');
+}
+
+function valueByKeys(object, keys) {
+  for (const key of keys) {
+    if (object[key] !== undefined && object[key] !== null && object[key] !== '') return object[key];
+  }
+
+  const entries = Object.entries(object);
+  for (const key of keys) {
+    const normalizedKey = normalizeKey(key);
+    const match = entries.find(([entryKey, entryValue]) => normalizeKey(entryKey) === normalizedKey && entryValue !== undefined && entryValue !== null && entryValue !== '');
+    if (match) return match[1];
+  }
+
+  return undefined;
 }
 
 function safeString(value) {

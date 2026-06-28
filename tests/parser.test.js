@@ -85,7 +85,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2c-accessory-crash-routing-2026-06-28/, 'service worker cache version reflects Slice 2C AccessoryCrash routing');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2d-accessory-crash-privacy-2026-06-28/, 'service worker cache version reflects Slice 2D AccessoryCrash privacy hardening');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -576,6 +576,59 @@ const accessoryCrashParserFixture = [
   JSON.stringify(accessoryCrashParserMetadata),
   JSON.stringify(accessoryCrashParserBody),
 ].join('\n');
+const accessoryCrashPrivacyBody = {
+  ...accessoryCrashParserBody,
+  accessory_machine_config:
+    'Model=FictionalDock, MAC=AA:BB:CC:DD:EE:FF, BluetoothAddress=11:22:33:44:55:66, WiFiAddress=22:33:44:55:66:77, HardwareAddress=33:44:55:66:77:88, ECID=0x1234567890ABCDEF, UniqueChipID=0xABCDEF1234567890, ChipID=0xDEADBEEF12345678, Serial=FICTIONAL-SERIAL-12345',
+  AccessoryIdentifier: 'ACCESSORY-ID-FICTIONAL-999',
+  DeviceID: 'DEVICE-ID-FICTIONAL-999',
+  device_id: 'DEVICE-ID-FICTIONAL-LOWER',
+  'application-info': {
+    process: 'DemoHostApp',
+    bundleID: 'com.example.demo-host',
+    version: '1.2.3',
+    build: '123',
+    RequestID: 'REQ-MIXED-67890',
+    CrashReporterKey: 'CRASHKEY-MIXED-12345',
+    path: '/var/mobile/Containers/Bundle/Application/FICTIONAL-APP-UUID/DemoHostApp.app',
+    fileUrl: 'file:///private/var/root/secret.log',
+    windowsPath: 'C:\\ProgramData\\Apple\\Diagnostics\\secret.log',
+  },
+  crashlogs: [
+    {
+      identifier: 'CRASHLOG-FICTIONAL-001',
+      uuid: 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+      process: 'AccessoryDaemon',
+      type: 'firmware-reset',
+      reason: 'Fictional reason UUID 99999999-8888-7777-6666-555555555555 MAC AA:BB:CC:DD:EE:FF',
+      timestamp: '2026-06-28 10:00:02 +0000',
+      frames: [
+        { address: '0xfffffff012345678', symbol: 'AccessoryMain + 24' },
+        { address: '0xfffffff087654321', symbol: 'TransportRunLoop + 88' },
+      ],
+      metadata: {
+        uuid: 'BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF',
+        path: '/var/root/private.log',
+      },
+      unexpectedArray: ['SHOULD-NOT-LEAK'],
+    },
+    'PRIMITIVE-CRASHLOG-SHOULD-NOT-LEAK',
+  ],
+  panicString:
+    'panic: fictional accessory fault file:///private/var/root/secret.log UUID 99999999-8888-7777-6666-555555555555 MAC AA:BB:CC:DD:EE:FF',
+  faultReason: 'Fault ECID 0x1234567890ABCDEF UniqueChipID 0xABCDEF1234567890',
+  faultText: ['ARRAY-FAULT-SHOULD-NOT-LEAK'],
+  CrashReporterKey: 'abcdef12-3456-7890-abcd-ef1234567890',
+  serial: 'FICTIONAL-SERIAL-99999',
+};
+const accessoryCrashPrivacyFixture = [
+  JSON.stringify(accessoryCrashParserMetadata),
+  JSON.stringify(accessoryCrashPrivacyBody),
+].join('\n');
+const accessoryCrashPrivacyLeakPattern =
+  /AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|99999999-8888-7777-6666-555555555555|REQ-MIXED-67890|CRASHKEY-MIXED-12345|\/var\/mobile|\/var\/root|file:\/\/\/|C:\\ProgramData|CRASHLOG-FICTIONAL-001|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345|FICTIONAL-SERIAL-99999|AA:BB:CC:DD:EE:FF|11:22:33:44:55:66|22:33:44:55:66:77|33:44:55:66:77:88|0x1234567890ABCDEF|0xABCDEF1234567890|0xDEADBEEF12345678|ACCESSORY-ID-FICTIONAL-999|DEVICE-ID-FICTIONAL-999|DEVICE-ID-FICTIONAL-LOWER|PRIMITIVE-CRASHLOG-SHOULD-NOT-LEAK|SHOULD-NOT-LEAK|0xfffffff012345678|0xfffffff087654321/;
+const accessoryCrashRawLeakPattern =
+  /AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|99999999-8888-7777-6666-555555555555|CRASHKEY-MIXED-12345|\/var\/mobile|\/var\/root|file:\/\/\/|C:\\ProgramData|CRASHLOG-FICTIONAL-001|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345|FICTIONAL-SERIAL-99999|AA:BB:CC:DD:EE:FF|11:22:33:44:55:66|22:33:44:55:66:77|33:44:55:66:77:88|0x1234567890ABCDEF|0xABCDEF1234567890|0xDEADBEEF12345678|ACCESSORY-ID-FICTIONAL-999|DEVICE-ID-FICTIONAL-999|DEVICE-ID-FICTIONAL-LOWER|PRIMITIVE-CRASHLOG-SHOULD-NOT-LEAK|SHOULD-NOT-LEAK|0xfffffff012345678|0xfffffff087654321/;
 const cpuResourceClassificationFixture = [
   JSON.stringify({ bug_type: '202', timestamp: '2026-06-28 10:00:00 +0000', incident_id: 'FICTIONAL-CPU-INCIDENT' }),
   'Date/Time: 2026-06-28 10:00:00 +0000',
@@ -956,6 +1009,57 @@ assert.doesNotMatch(
   JSON.stringify(rawAccessoryCrashSections),
   /\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
   'AccessoryCrash raw mode still avoids paths, nested crashlog identifiers, crashReporterKey, and serial-like values'
+);
+const hardenedAccessoryCrashSections = parseAccessoryCrash(accessoryCrashPrivacyBody, accessoryCrashParserMetadata);
+const hardenedAccessoryCrashText = JSON.stringify(hardenedAccessoryCrashSections);
+assert.doesNotMatch(
+  hardenedAccessoryCrashText,
+  accessoryCrashPrivacyLeakPattern,
+  'AccessoryCrash sanitized mode redacts mixed-case keys, identifiers, paths, MACs, ECIDs, chip IDs, nested values, and frame addresses'
+);
+assert.equal(
+  fieldValue(sectionById(hardenedAccessoryCrashSections, 'accessory-application-information'), 'Request ID'),
+  '[identifier redacted]',
+  'AccessoryCrash mixed-case RequestID redacts by default'
+);
+assert.equal(
+  sectionById(hardenedAccessoryCrashSections, 'accessory-crashlog-overview').table[0].frames,
+  '2',
+  'AccessoryCrash crashlog frames stay count-only'
+);
+assert.equal(
+  sectionById(hardenedAccessoryCrashSections, 'accessory-crashlog-overview').table[1].process,
+  '',
+  'AccessoryCrash primitive crashlog entries do not render raw primitive values'
+);
+const hardenedRawAccessoryCrashSections = parseAccessoryCrash(accessoryCrashPrivacyBody, accessoryCrashParserMetadata, {
+  sanitize: false,
+});
+assert.equal(
+  fieldValue(sectionById(hardenedRawAccessoryCrashSections, 'accessory-application-information'), 'Request ID'),
+  'REQ-MIXED-67890',
+  'AccessoryCrash raw mode can preserve approved scalar mixed-case request IDs'
+);
+assert.doesNotMatch(
+  JSON.stringify(hardenedRawAccessoryCrashSections),
+  accessoryCrashRawLeakPattern,
+  'AccessoryCrash raw mode still redacts paths, crashlog identifiers, crashReporterKey, serials, MACs, ECIDs, device/accessory IDs, nested identifiers, and frame addresses'
+);
+const parsedHardenedAccessoryCrashSections = parseInput(accessoryCrashPrivacyFixture);
+assert.doesNotMatch(
+  JSON.stringify(parsedHardenedAccessoryCrashSections),
+  accessoryCrashPrivacyLeakPattern,
+  'AccessoryCrash parseInput sanitized output preserves the same hardened privacy boundary'
+);
+assert.equal(
+  filterSectionsByQuery(parsedHardenedAccessoryCrashSections, 'AA:BB:CC:DD:EE:FF').totalMatches,
+  0,
+  'AccessoryCrash search sees only parsed sanitized values, not source MAC addresses'
+);
+assert.doesNotMatch(
+  parsedHardenedAccessoryCrashSections.map((section) => serializeSectionForCopy(section)).join('\n'),
+  accessoryCrashPrivacyLeakPattern,
+  'AccessoryCrash copy serialization sees only parsed sanitized values'
 );
 const accessoryCrashWithoutNotes = {
   ...accessoryCrashParserBody,
