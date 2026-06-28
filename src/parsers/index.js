@@ -3,6 +3,7 @@ import { parseAnalytics } from './parseAnalytics.js';
 import { parseAccessoryCrash } from './parseAccessoryCrash.js';
 import { parseCoreAnalytics } from './parseCoreAnalytics.js';
 import { parseCrash } from './parseCrash.js';
+import { parseCpuResource } from './parseCpuResource.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 import { parseIps } from './parseIps.js';
 import { parseIpsWatchdogStackshot } from './parseIpsWatchdogStackshot.js';
@@ -48,6 +49,10 @@ export function parseInput(input, { sanitize = true } = {}) {
   if (type === 'accessory-crash') {
     const parsed = parseIpsContainer(input);
     return parseAccessoryCrash(parsed.body, parsed.metadata, options);
+  }
+
+  if (type === 'resource-cpu') {
+    return parseCpuResource(input, options);
   }
 
   throw new Error('Unsupported or unrecognized file type.');

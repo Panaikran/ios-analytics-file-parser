@@ -86,19 +86,22 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2d-accessory-crash-address-hotfix-2026-06-28/, 'service worker cache version reflects Slice 2D AccessoryCrash address privacy hotfix');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3c-cpu-resource-routing-2026-06-28/, 'service worker cache version reflects Slice 3C CPU Resource routing');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'service worker precaches the diagnostic classification helper');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'service worker precaches the AccessoryCrash parser');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'service worker precaches the CPU Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.match(parserIndexSource, /import \{ parseAccessoryCrash \} from '\.\/parseAccessoryCrash\.js';/, 'parseInput imports the AccessoryCrash parser');
+assert.match(parserIndexSource, /import \{ parseCpuResource \} from '\.\/parseCpuResource\.js';/, 'parseInput imports the CPU Resource parser');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
 assert.match(parserIndexSource, /type === 'accessory-crash'[^]*parseAccessoryCrash\(parsed\.body, parsed\.metadata, options\)/, 'parseInput routes AccessoryCrash containers through the AccessoryCrash parser');
+assert.match(parserIndexSource, /type === 'resource-cpu'[^]*parseCpuResource\(input, options\)/, 'parseInput routes CPU Resource input through the CPU Resource parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(
@@ -646,6 +649,7 @@ const cpuResourceParserFixture = [
   }),
   [
     'Date/Time: 2026-06-28 10:00:01 +0000',
+    'OS Version: iPhone OS 27.0 (24A999)',
     'Process: DemoCPUApp [123]',
     'Bundle ID: com.example.cpu',
     'Path: /private/var/containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/DemoCPUApp.app/DemoCPUApp',
@@ -666,6 +670,47 @@ const cpuResourceParserFixture = [
 ].join('\n');
 const cpuResourceLeakPattern =
   /FICTIONAL-CPU-INCIDENT-001|REQ-CPU-FICTIONAL-123|11111111-2222-3333-4444-555555555555|\/private\/var\/containers|\/private\/var\/mobile|\/usr\/bin\/DemoCPUApp|0xfffffff012345678|FICTIONAL-SERIAL-CPU|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF/;
+const cpuResourceJsonFixture = [
+  JSON.stringify({
+    bug_type: '202',
+    timestamp: '2026-06-28 11:00:00 +0000',
+    os_version: 'iPhone OS 27.0 (24A999)',
+    device_model: 'iPhone19,2',
+    incident_id: 'FICTIONAL-CPU-JSON-INCIDENT',
+  }),
+  JSON.stringify({
+    bug_type: '202',
+    process: 'JsonCPUApp',
+    pid: 456,
+    bundleID: 'com.example.json-cpu',
+    actionTaken: 'terminated',
+    cpuLimit: '90%',
+    cpuUsed: '97%',
+    cpuDuration: '240 seconds',
+    cpuTime: '220 seconds',
+    reason: 'CPU usage exceeded requestID=REQ-CPU-JSON-123 uuid 22222222-3333-4444-5555-666666666666',
+  }),
+].join('\n');
+const cpuResourceFullJsonFixture = JSON.stringify({
+  bug_type: '202',
+  timestamp: '2026-06-28 11:30:00 +0000',
+  process: 'FullJsonCPUApp',
+  pid: 789,
+  bundle_id: 'com.example.full-json-cpu',
+  action_taken: 'none',
+  cpu_limit: '85%',
+  cpu_used: '91%',
+  cpu_duration: '120 seconds',
+  reason: 'CPU limit exceeded',
+});
+const crashWithCpuWordingText = [
+  'Incident Identifier: 99999999-8888-7777-6666-555555555555',
+  'CrashReporter Key: abcdef12-3456-7890-abcd-ef1234567890',
+  'Date/Time: 2026-06-28 12:00:00 +0000',
+  'OS Version: iPhone OS 27.0 (24A999)',
+  'Exception Type: EXC_CRASH (SIGABRT)',
+  'Application Specific Information: CPU usage was observed before this crash.',
+].join('\n');
 const stackshotClassificationFixture = [
   JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-INCIDENT' }),
   JSON.stringify({
@@ -700,11 +745,6 @@ const diskWritesClassificationFixture = [
 ].join('\n');
 
 const unsupportedDiagnosticMessageCases = [
-  [
-    cpuResourceClassificationFixture,
-    'Recognized CPU Resource diagnostic, but this parser is not supported yet.',
-    'CPU resource',
-  ],
   [
     diskWritesClassificationFixture,
     'Recognized Disk Writes Resource diagnostic, but this parser is not supported yet.',
@@ -771,12 +811,12 @@ assertClassification(
     type: 'resource-cpu',
     family: 'resource',
     subtype: 'cpu',
-    supported: false,
-    parserType: null,
-    legacyType: 'unknown',
+    supported: true,
+    parserType: 'resource-cpu',
+    legacyType: 'resource-cpu',
     bugType: '202',
   },
-  'classifies unsupported CPU resource diagnostics'
+  'classifies supported CPU resource diagnostics'
 );
 assertClassification(
   stackshotClassificationFixture,
@@ -851,10 +891,31 @@ assertClassification(
 assert.equal(detectFileType(accessoryCrashClassificationFixture), 'accessory-crash', 'detectFileType returns routable AccessoryCrash type');
 assert.equal(classifyDiagnostic(accessoryCrashParserFixture).type, 'accessory-crash', 'AccessoryCrash with panicString remains AccessoryCrash');
 assert.notEqual(classifyDiagnostic(accessoryCrashParserFixture).type, 'panic-full', 'AccessoryCrash with panicString does not classify as panic-full');
-assertUnsupportedFamilyDetection(
-  cpuResourceClassificationFixture,
+assert.equal(detectFileType(cpuResourceClassificationFixture), 'resource-cpu', 'detectFileType returns routable CPU Resource type');
+assert.equal(
+  getUnsupportedDiagnosticMessage(classifyDiagnostic(cpuResourceClassificationFixture)),
+  null,
+  'supported CPU Resource diagnostics do not receive a recognized-unsupported message'
+);
+assert.equal(
+  classifyDiagnostic(cpuResourceParserFixture).type,
   'resource-cpu',
-  'unsupported CPU resource diagnostics'
+  'CPU Resource reports with crash-like Date/Time and OS Version markers classify as CPU Resource'
+);
+assert.notEqual(
+  classifyDiagnostic(cpuResourceParserFixture).type,
+  'crash-legacy',
+  'CPU Resource reports with strong CPU markers do not classify as legacy crash'
+);
+assert.equal(
+  classifyDiagnostic(crashWithCpuWordingText).type,
+  'crash-legacy',
+  'legacy crash reports with harmless CPU wording still classify as legacy crash'
+);
+assert.equal(
+  detectFileType(crashWithCpuWordingText),
+  'crash',
+  'legacy crash reports with harmless CPU wording still detect as crash'
 );
 assertUnsupportedFamilyDetection(
   stackshotClassificationFixture,
@@ -1008,17 +1069,71 @@ assert.doesNotMatch(
   cpuResourceLeakPattern,
   'CPU Resource raw mode remains bounded and avoids paths, identifiers, raw addresses, serials, MACs, and ECID values'
 );
+assert.deepEqual(
+  parseInput(cpuResourceParserFixture),
+  parseCpuResource(cpuResourceParserFixture),
+  'CPU Resource parseInput route matches direct parser output in sanitized mode'
+);
+assert.deepEqual(
+  parseInput(cpuResourceParserFixture, { sanitize: false }),
+  parseCpuResource(cpuResourceParserFixture, { sanitize: false }),
+  'CPU Resource parseInput route matches direct parser output in raw mode'
+);
 assert.equal(
   classifyDiagnostic(cpuResourceParserFixture).supported,
-  false,
-  'CPU Resource classification remains unsupported in Slice 3B'
+  true,
+  'CPU Resource classification is supported in Slice 3C'
 );
-assert.equal(detectFileType(cpuResourceParserFixture), 'unknown', 'CPU Resource detectFileType remains unknown in Slice 3B');
-assert.throws(
-  () => parseInput(cpuResourceParserFixture),
-  /Unsupported or unrecognized file type\./,
-  'CPU Resource parseInput route remains unsupported in Slice 3B'
+assert.equal(classifyDiagnostic(cpuResourceParserFixture).parserType, 'resource-cpu', 'CPU Resource classification exposes parserType for routing');
+assert.equal(classifyDiagnostic(cpuResourceParserFixture).legacyType, 'resource-cpu', 'CPU Resource classification exposes legacyType for detectFileType compatibility');
+assert.equal(detectFileType(cpuResourceParserFixture), 'resource-cpu', 'CPU Resource detectFileType compatibility returns routable type in Slice 3C');
+assert.deepEqual(
+  parseInput(cpuResourceParserFixture).map((section) => section.id),
+  [
+    'resource-cpu-summary',
+    'resource-cpu-process-info',
+    'resource-cpu-usage',
+    'resource-cpu-limits',
+    'resource-cpu-parser-notes',
+  ],
+  'CPU Resource parseInput route returns expected sections'
 );
+assert.doesNotMatch(
+  JSON.stringify(parseInput(cpuResourceParserFixture)),
+  cpuResourceLeakPattern,
+  'CPU Resource parseInput sanitized output preserves the same privacy boundary'
+);
+assert.doesNotMatch(
+  JSON.stringify(parseInput(cpuResourceParserFixture, { sanitize: false })),
+  cpuResourceLeakPattern,
+  'CPU Resource parseInput raw mode remains bounded'
+);
+assert.equal(classifyDiagnostic(cpuResourceJsonFixture).supported, true, 'JSON CPU Resource classification is supported');
+assert.equal(detectFileType(cpuResourceJsonFixture), 'resource-cpu', 'JSON CPU Resource detectFileType returns routable type');
+const parsedJsonCpuSections = parseInput(cpuResourceJsonFixture);
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-summary'), 'Bug Type'), '202');
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-process-info'), 'Process'), 'JsonCPUApp');
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-process-info'), 'PID'), '456');
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-process-info'), 'Bundle ID'), 'com.example.json-cpu');
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-usage'), 'CPU Used'), '97%');
+assert.equal(fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-usage'), 'CPU Limit'), '90%');
+assert.equal(
+  fieldValue(sectionById(parsedJsonCpuSections, 'resource-cpu-summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'JSON CPU Resource summary redacts incident IDs by default'
+);
+assert.doesNotMatch(
+  JSON.stringify(parsedJsonCpuSections),
+  /FICTIONAL-CPU-JSON-INCIDENT|REQ-CPU-JSON-123|22222222-3333-4444-5555-666666666666/,
+  'JSON CPU Resource sanitized output redacts identifiers'
+);
+assert.equal(classifyDiagnostic(cpuResourceFullJsonFixture).supported, true, 'full JSON CPU Resource classification is supported');
+assert.equal(detectFileType(cpuResourceFullJsonFixture), 'resource-cpu', 'full JSON CPU Resource detectFileType returns routable type');
+const parsedFullJsonCpuSections = parseInput(cpuResourceFullJsonFixture);
+assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-process-info'), 'Process'), 'FullJsonCPUApp');
+assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-process-info'), 'PID'), '789');
+assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-usage'), 'CPU Used'), '91%');
+assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-usage'), 'CPU Limit'), '85%');
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
 assert.deepEqual(

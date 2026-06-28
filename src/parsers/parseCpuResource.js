@@ -141,11 +141,14 @@ function normalizeCpuInput(input) {
   const firstLine = firstLineBreak >= 0 ? text.slice(0, firstLineBreak).trim() : text.trim();
   const parsedMetadata = parseJsonObject(firstLine);
   const bodyText = parsedMetadata && firstLineBreak >= 0 ? text.slice(firstLineBreak + 1) : text;
+  const parsedBody = parseJsonObject(bodyText) ?? (parsedMetadata && firstLineBreak < 0 ? parsedMetadata : null);
+  const metadata = parsedMetadata && firstLineBreak >= 0 ? parsedMetadata : {};
+  const fields = parsedBody ? fieldsFromJsonBody(parsedBody) : parseKeyValueFields(bodyText);
 
   return {
-    metadata: parsedMetadata ?? {},
+    metadata,
     bodyText,
-    fields: parseKeyValueFields(bodyText),
+    fields,
   };
 }
 
@@ -169,6 +172,30 @@ function parseKeyValueFields(text) {
     fields.set(key, match[2]);
   }
   return fields;
+}
+
+function fieldsFromJsonBody(body) {
+  const fields = new Map();
+  addJsonField(fields, 'bug type', body.bug_type);
+  addJsonField(fields, 'date/time', firstValue(body.timestamp, body.date));
+  addJsonField(fields, 'os version', firstValue(body.os_version, body.osVersion));
+  addJsonField(fields, 'device', firstValue(body.device_model, body.product));
+  addJsonField(fields, 'incident id', firstValue(body.incident_id, body.incident));
+  addJsonField(fields, 'process', firstValue(body.process, body.procname, body.processName));
+  addJsonField(fields, 'pid', body.pid);
+  addJsonField(fields, 'bundle id', firstValue(body.bundleID, body.bundleId, body.bundle_id));
+  addJsonField(fields, 'action taken', firstValue(body.actionTaken, body.action_taken));
+  addJsonField(fields, 'cpu limit', firstValue(body.cpuLimit, body.cpu_limit));
+  addJsonField(fields, 'cpu used', firstValue(body.cpuUsed, body.cpu_used));
+  addJsonField(fields, 'cpu duration', firstValue(body.cpuDuration, body.cpu_duration));
+  addJsonField(fields, 'cpu time', firstValue(body.cpuTime, body.cpu_time));
+  addJsonField(fields, 'reason', body.reason);
+  return fields;
+}
+
+function addJsonField(fields, label, value) {
+  const stringValue = safeString(value);
+  if (stringValue) fields.set(normalizeLabel(label), stringValue);
 }
 
 function parseProcessLine(value) {

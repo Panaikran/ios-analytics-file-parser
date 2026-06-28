@@ -36,16 +36,16 @@ export function classifyDiagnostic(input) {
     return supported('coreanalytics', 'analytics', 'coreanalytics', 'coreanalytics', parsed.structure, bugTypeOf(metadata));
   }
 
+  if (isCpuResourceText(text, parsed.metadata)) {
+    return supported('resource-cpu', 'resource', 'cpu', 'resource-cpu', parsed.structure, bugTypeOf(parsed.metadata));
+  }
+
   if (isPanicText(text)) {
     return supported('panic-full', 'panic', 'full', 'panic', parsed.structure, bugTypeOf(parsed.metadata));
   }
 
   if (isLegacyCrashText(text)) {
     return supported('crash-legacy', 'crash', 'legacy', 'crash', 'text', bugTypeOf(parsed.metadata));
-  }
-
-  if (isCpuResourceText(text, parsed.metadata)) {
-    return unsupported('resource-cpu', 'resource', 'cpu', parsed.structure, bugTypeOf(parsed.metadata));
   }
 
   if (isWifiConnectivityText(text, parsed.metadata)) {
@@ -77,7 +77,7 @@ function classifyContainer(body, metadata, structure) {
   if (isJetsam(body)) return supported('jetsam', 'resource', 'memory', 'jetsam', structure, bugType);
 
   if (isDiagnosticRequest(body, metadata)) return unsupported('diagnostic-request', 'diagnostic-request', 'pipeline', structure, bugType);
-  if (isCpuResourceContainer(body, metadata)) return unsupported('resource-cpu', 'resource', 'cpu', structure, bugType);
+  if (isCpuResourceContainer(body, metadata)) return supported('resource-cpu', 'resource', 'cpu', 'resource-cpu', structure, bugType);
   if (isDiskWritesResource(body, metadata)) return unsupported('resource-diskwrites', 'resource', 'diskwrites', structure, bugType);
   if (isAppUsageMetrics(body, metadata)) return unsupported('app-usage-metrics', 'metrics', 'app-usage', structure, bugType);
   if (isWifiConnectivity(body, metadata)) return unsupported('wifi-connectivity', 'connectivity', 'wifi', structure, bugType);
@@ -219,7 +219,16 @@ function isDiagnosticRequest(body, metadata) {
 }
 
 function isCpuResourceText(text, metadata) {
-  return Boolean(hasBugType('202', metadata) || (/CPU limit:/i.test(text) && /Action taken:/i.test(text)));
+  const value = String(text ?? '');
+  return Boolean(hasBugType('202', metadata) || (hasCpuMetricMarker(value) && hasCpuActionMarker(value)));
+}
+
+function hasCpuMetricMarker(text) {
+  return /(?:\bCPU\s+limit\b|\bCPU\s+used\b|\bCPU\s+duration\b|\bCPU\s+time\b|\bElapsed\s+total\s+CPU\s+time\b)/i.test(text);
+}
+
+function hasCpuActionMarker(text) {
+  return /(?:\bAction\s+taken\b|\bCPU\s+usage\s+exceeded\b|\bexceeded\s+CPU\b|\blimit\s+exceeded\b|\bCPU\s+limit\s+exceeded\b)/i.test(text);
 }
 
 function isWifiConnectivityText(text, metadata) {
