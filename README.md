@@ -23,7 +23,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | --- | --- |
 | Latest released version | `v0.5.1-alpha` |
 | Active unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
-| Current v0.6 focus | Phase 1: Diagnostic Classification Architecture |
+| Current v0.6 focus | Phase 2: AccessoryCrash support and QA cleanup |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -36,8 +36,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | PWA update hotfix | Complete in `v0.4.1-alpha` |
 | v0.5.0-alpha | Released: Large Report Usability and Performance |
 | v0.5.1-alpha | Released: file-size validation hotfix |
-| v0.6.0-alpha Phase 1 Slices 1A-1D | Implemented but unreleased: classification architecture and safe unsupported messages |
-| v0.6.0-alpha Phase 1 Slice 1E | Documentation alignment |
+| v0.6.0-alpha Phase 1 | Implemented but unreleased: classification architecture and safe unsupported messages |
+| v0.6.0-alpha Phase 2 | Implemented but unreleased: narrow AccessoryCrash `bug_type: 305` support |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -87,6 +87,7 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 | JetsamEvent `.ips` | `jetsam` | Summary, Victim / Likely Culprit, Process Table, System Memory, Limits, memory chart |
 | Panic-full text or JSON-wrapped `.ips` | `panic` | Panic String, Panic Flags, Kernel Backtrace, Loaded Kexts, System Info |
 | Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `coreanalytics` | Summary, Configuration, Record Overview, Event Types, Sample Records, Parser Notes |
+| AccessoryCrash `.ips` with `bug_type: 305` | `accessory-crash` | Summary, Accessory Information, Application Information, Crash Log Overview, Panic / Fault Notes, Parser Notes |
 | Generic analytics text | `analytics` | Fallback summary and grouped text sections |
 
 ### Recognized But Not Parsed Yet
@@ -95,13 +96,14 @@ Active `v0.6.0-alpha` classification work can recognize some additional Apple di
 
 | Diagnostic family | Classification type | Current support |
 | --- | --- | --- |
-| Accessory Crash | `accessory-crash` | Recognized for safe unsupported messaging only |
 | CPU Resource | `resource-cpu` | Recognized for safe unsupported messaging only |
 | Disk Writes Resource | `resource-diskwrites` | Recognized for safe unsupported messaging only |
 | Stackshot Resource | `resource-stackshot` | Recognized for safe unsupported messaging only |
 | App Usage Metrics | `app-usage-metrics` | Recognized for safe unsupported messaging only |
 | Wi-Fi Connectivity | `wifi-connectivity` | Recognized for safe unsupported messaging only |
 | Diagnostic Request | `diagnostic-request` | Recognized for safe unsupported messaging only |
+
+AccessoryCrash support is intentionally narrow. It covers AccessoryCrash `.ips` reports with `bug_type: 305`; it does not claim broad Accessory/Firmware diagnostic support.
 
 ## Feature Support
 
@@ -132,6 +134,7 @@ Active `v0.6.0-alpha` classification work can recognize some additional Apple di
 | Memory chart | Supported, simple Canvas chart |
 | Generic analytics fallback parser | Supported |
 | CoreAnalytics `.ips.ca.synced` line-delimited JSON | Supported, capped rendered rows |
+| AccessoryCrash `bug_type: 305` parser | Supported, narrow v0.6 work |
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
@@ -170,6 +173,9 @@ Active `v0.6.0-alpha` classification work can recognize some additional Apple di
 - Panic backtrace and loaded kext tables.
 - Generic analytics fallback grouping for unstructured analytics text.
 - CoreAnalytics `.ips.ca.synced` summary, configuration, record overview, event type grouping, capped sample records, and parser notes.
+- AccessoryCrash `bug_type: 305` summary, accessory information, application information, crashlog overview, panic/fault notes, and parser notes.
+- AccessoryCrash crashlogs are summarized; raw nested crashlog bodies are not rendered.
+- AccessoryCrash sanitized mode redacts or omits identifier-heavy fields by default.
 - Diagnostic classification identifies supported formats and selected unsupported Apple diagnostic families before parser routing.
 - Recognized unsupported diagnostics show safe unsupported messages instead of being treated as generic unknown files.
 - Section-specific table columns.
@@ -407,6 +413,7 @@ index.html -> manifest.webmanifest
 |   |   |-- classifyDiagnostic.js
 |   |   |-- detect.js
 |   |   |-- index.js
+|   |   |-- parseAccessoryCrash.js
 |   |   |-- parseAnalytics.js
 |   |   |-- parseCoreAnalytics.js
 |   |   |-- parseCrash.js
@@ -521,8 +528,11 @@ After first successful service worker setup, these fictional examples are availa
 - CoreAnalytics does not render full raw JSON bodies.
 - CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
+- AccessoryCrash support is limited to `.ips` reports with `bug_type: 305`.
+- Broad Accessory/Firmware diagnostics are not supported.
+- AccessoryCrash raw nested crashlog bodies are not rendered; crashlogs are summarized.
 - Some additional Apple diagnostic families are recognized for safe unsupported messages only; they are not parsed into sections yet.
-- Accessory Crash, CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are not supported parsers yet.
+- CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are not supported parsers yet.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
@@ -546,7 +556,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
 | v0.5.0-alpha | Complete | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | v0.5.1-alpha | Complete | File-size validation hotfix restoring the 20 MB safety limit |
-| v0.6.0-alpha Phase 1 | Active, unreleased | Diagnostic Classification Architecture |
+| v0.6.0-alpha Phase 1 | Complete, unreleased | Diagnostic Classification Architecture |
+| v0.6.0-alpha Phase 2 | Active, unreleased | AccessoryCrash `bug_type: 305` support and QA cleanup |
 
 The project keeps the same constraints:
 
@@ -562,7 +573,7 @@ The project keeps the same constraints:
 
 CSP/header hardening is intentionally deferred beyond the `v0.5.0-alpha` release unless approved as a focused follow-up.
 
-The `v0.6.0-alpha` Phase 1 work is classification-only so far:
+The `v0.6.0-alpha` Phase 1 work delivered diagnostic classification architecture:
 
 - Slice 1A added `classifyDiagnostic(input)` and taxonomy/privacy tests.
 - Slice 1B made `detectFileType(input)` delegate to `classifyDiagnostic(input).legacyType`.
@@ -570,9 +581,17 @@ The `v0.6.0-alpha` Phase 1 work is classification-only so far:
 - Slice 1D added safe friendly messages for recognized-but-unsupported diagnostics.
 - Slice 1E aligns documentation and cleanup.
 
-Upcoming `v0.6.0-alpha` work remains parser-family implementation and later hardening, subject to approval:
+The `v0.6.0-alpha` Phase 2 AccessoryCrash work is narrow:
 
-- Accessory/Firmware parser work, starting with Accessory Crash if approved
+- Slice 2A designed the AccessoryCrash parser and fictional fixture shape.
+- Slice 2B added direct `parseAccessoryCrash()` parser tests.
+- Slice 2C routed AccessoryCrash through `parseInput()`.
+- Slice 2D hardened AccessoryCrash privacy handling.
+- Slice 2E aligns documentation and QA cleanup.
+
+Upcoming `v0.6.0-alpha` or later work remains parser-family implementation and later hardening, subject to approval:
+
+- broader Accessory/Firmware diagnostics, if explicitly planned
 - Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families
 - Wi-Fi Connectivity and Diagnostic Request parser work
 - virtualization or incremental rendering for very large visible tables

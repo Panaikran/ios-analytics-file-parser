@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.6.0-alpha` diagnostic classification work
+Status: updated for active `v0.6.0-alpha` AccessoryCrash QA and documentation work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -16,7 +16,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
 | Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
-| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Phase 1 Diagnostic Classification Architecture |
+| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Diagnostic classification plus narrow AccessoryCrash `bug_type: 305` support |
 
 ## Project Constraints
 
@@ -174,7 +174,7 @@ Not changed:
 
 Theme: Apple Diagnostics Expansion.
 
-Phase 1 goal: Diagnostic Classification Architecture. The current work recognizes diagnostic families safely before parser implementation, while preserving the existing `parseInput(text, options) -> SectionModel[]` contract for supported files.
+Phase 1 goal: Diagnostic Classification Architecture. This work recognizes diagnostic families safely before parser implementation, while preserving the existing `parseInput(text, options) -> SectionModel[]` contract for supported files.
 
 ### Phase 1: Diagnostic Classification Architecture
 
@@ -184,11 +184,22 @@ Phase 1 goal: Diagnostic Classification Architecture. The current work recognize
 | Slice 1B | Complete | Made `detectFileType(input)` a compatibility wrapper over `classifyDiagnostic(input).legacyType` |
 | Slice 1C | Complete | Routed `parseInput()` through `classifyDiagnostic(input).parserType` while preserving public parser behavior |
 | Slice 1D | Complete | Added safe friendly messages for recognized-but-unsupported diagnostics |
-| Slice 1E | Documentation/cleanup | Align README, ROADMAP, CHANGELOG, and Phase 5 historical notes with classification architecture |
+| Slice 1E | Complete | Aligned README, ROADMAP, CHANGELOG, and Phase 5 historical notes with classification architecture |
+
+### Phase 2: AccessoryCrash `bug_type: 305`
+
+Phase 2 goal: add narrow AccessoryCrash support without claiming broad Accessory/Firmware diagnostics support.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 2A | Complete | Designed the AccessoryCrash parser, section model, fictional fixture shape, and privacy policy |
+| Slice 2B | Complete | Added `parseAccessoryCrash()` and direct parser tests against fictional sanitized data |
+| Slice 2C | Complete | Flipped AccessoryCrash classification/routing support and routed `parseInput()` through the parser |
+| Slice 2D | Complete | Hardened AccessoryCrash privacy handling for identifiers, paths, serials, MACs, ECIDs/chip IDs, crashlog IDs, nested values, and raw mode |
+| Slice 2E | Documentation/QA cleanup | Align docs and define final QA checklist for narrow AccessoryCrash support |
 
 Recognized but not parsed yet:
 
-- Accessory Crash
 - CPU Resource
 - Disk Writes Resource
 - Stackshot Resource
@@ -198,9 +209,15 @@ Recognized but not parsed yet:
 
 Recognition is not parser support. These families show safe unsupported messages and do not emit `SectionModel[]` yet.
 
+Supported in active unreleased v0.6 work:
+
+- AccessoryCrash `.ips` reports with `bug_type: 305`.
+
+AccessoryCrash support summarizes crashlogs and does not render raw nested crashlog bodies. Broad Accessory/Firmware diagnostics remain future work unless explicitly planned.
+
 ### Planned Later v0.6 Work
 
-- Phase 2: Accessory/Firmware parser work, starting with Accessory Crash if approved.
+- Broader Accessory/Firmware diagnostics, if explicitly planned.
 - Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families.
 - App Usage Metrics parser work.
 - Wi-Fi Connectivity parser work.
@@ -243,7 +260,7 @@ Future work beyond the classification/parser-family sequence:
 
 ## Post-v0.5.0-alpha Or Parallel Hardening
 
-These items remain outside current `v0.6.0-alpha` Phase 1 classification work unless explicitly approved later.
+These items remain outside current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -265,7 +282,7 @@ The current source of truth is:
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for current `v0.6.0-alpha` Phase 1 classification work unless explicitly approved later.
+These ideas are intentionally out of scope for current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |

@@ -2,26 +2,32 @@
 
 ## v0.6.0-alpha - Unreleased
 
-Apple Diagnostics Expansion classification architecture.
+Apple Diagnostics Expansion classification architecture and narrow AccessoryCrash support.
 
 ### Added
 
 - Diagnostic classifier in `src/parsers/classifyDiagnostic.js` for supported formats and recognized unsupported Apple diagnostic families.
 - Taxonomy metadata for `type`, `family`, `subtype`, `supported`, `parserType`, `legacyType`, `structure`, and `bugType`.
-- Recognition for unsupported Accessory Crash, CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request diagnostics.
+- Recognition for unsupported CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request diagnostics.
 - Friendly safe unsupported diagnostic messages for recognized-but-unsupported families.
 - Taxonomy and privacy regression tests for supported and recognized unsupported diagnostics.
+- AccessoryCrash parser support for `.ips` reports with `bug_type: 305`.
+- AccessoryCrash sections: Summary, Accessory Information, Application Information, Crash Log Overview, Panic / Fault Notes, and Parser Notes.
+- AccessoryCrash privacy hardening for incident IDs, UUIDs, request IDs, paths, serials, MAC addresses, ECIDs/chip identifiers, crashlog IDs, nested values, and raw-mode output.
 
 ### Changed
 
 - `detectFileType()` is now a compatibility wrapper over `classifyDiagnostic(input).legacyType`.
 - `parseInput()` now routes internally through `classifyDiagnostic(input).parserType` while preserving its public `SectionModel[]` return contract for supported files.
+- AccessoryCrash is now classified and routed through `parseInput()` as `accessory-crash`.
 
 ### Notes
 
-- No new parser families are supported yet.
+- AccessoryCrash support is intentionally narrow and limited to `bug_type: 305`; broad Accessory/Firmware diagnostics are not supported.
+- No CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, or Diagnostic Request parser support was added.
+- No real diagnostic fixtures were committed.
 - Recognized unsupported diagnostics do not emit sections and still fail safely if parsed directly.
-- No parser output shape, UI rendering model, service worker strategy, package metadata, backend, authentication, analytics, cloud storage, report persistence, or framework dependency changed.
+- No UI rendering model, service worker strategy, package metadata, backend, authentication, analytics, cloud storage, report persistence, or framework dependency changed.
 
 ## v0.5.1-alpha
 

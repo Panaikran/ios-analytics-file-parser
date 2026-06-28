@@ -226,7 +226,7 @@ Record release evidence for:
 ## Known Limitations
 
 - No new parser formats were added in Phase 5.
-- AccessoryCrash is not supported.
+- AccessoryCrash was not supported in Phase 5 / `v0.5.x`; current v0.6 status lives in [ROADMAP.md](ROADMAP.md).
 - True virtualization is not implemented.
 - CoreAnalytics grouped event rows and sample record rows remain capped at 100 rendered rows.
 - CoreAnalytics full raw JSON bodies are not rendered by default.
