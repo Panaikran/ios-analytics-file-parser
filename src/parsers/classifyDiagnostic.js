@@ -70,12 +70,12 @@ export function getUnsupportedDiagnosticMessage(classification) {
 function classifyContainer(body, metadata, structure) {
   const bugType = bugTypeOf(body, metadata);
 
+  if (isAccessoryCrash(body, metadata)) return supported('accessory-crash', 'accessory', 'crash', 'accessory-crash', structure, bugType);
   if (isPanicContainer(body)) return supported('panic-full', 'panic', 'full', 'panic', structure, bugType);
   if (isWatchdogStackshot(body)) return supported('watchdog', 'watchdog', 'stackshot', 'ips-watchdog-stackshot', structure, bugType);
   if (isStackshotResource(body, metadata)) return unsupported('resource-stackshot', 'resource', 'stackshot', structure, bugType);
   if (isJetsam(body)) return supported('jetsam', 'resource', 'memory', 'jetsam', structure, bugType);
 
-  if (isAccessoryCrash(body, metadata)) return unsupported('accessory-crash', 'accessory', 'crash', structure, bugType);
   if (isDiagnosticRequest(body, metadata)) return unsupported('diagnostic-request', 'diagnostic-request', 'pipeline', structure, bugType);
   if (isCpuResourceContainer(body, metadata)) return unsupported('resource-cpu', 'resource', 'cpu', structure, bugType);
   if (isDiskWritesResource(body, metadata)) return unsupported('resource-diskwrites', 'resource', 'diskwrites', structure, bugType);

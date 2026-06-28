@@ -85,16 +85,19 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice1d-unsupported-diagnostics-2026-06-28/, 'service worker cache version reflects Slice 1D unsupported diagnostic messaging');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2c-accessory-crash-routing-2026-06-28/, 'service worker cache version reflects Slice 2C AccessoryCrash routing');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'service worker precaches the diagnostic classification helper');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'service worker precaches the AccessoryCrash parser');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
+assert.match(parserIndexSource, /import \{ parseAccessoryCrash \} from '\.\/parseAccessoryCrash\.js';/, 'parseInput imports the AccessoryCrash parser');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
+assert.match(parserIndexSource, /type === 'accessory-crash'[^]*parseAccessoryCrash\(parsed\.body, parsed\.metadata, options\)/, 'parseInput routes AccessoryCrash containers through the AccessoryCrash parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(
@@ -571,7 +574,7 @@ const accessoryCrashParserBody = {
 };
 const accessoryCrashParserFixture = [
   JSON.stringify(accessoryCrashParserMetadata),
-  JSON.stringify({ ...accessoryCrashParserBody, panicString: undefined }),
+  JSON.stringify(accessoryCrashParserBody),
 ].join('\n');
 const cpuResourceClassificationFixture = [
   JSON.stringify({ bug_type: '202', timestamp: '2026-06-28 10:00:00 +0000', incident_id: 'FICTIONAL-CPU-INCIDENT' }),
@@ -614,11 +617,6 @@ const diskWritesClassificationFixture = [
 
 const unsupportedDiagnosticMessageCases = [
   [
-    accessoryCrashClassificationFixture,
-    'Recognized Accessory Crash diagnostic, but this parser is not supported yet.',
-    'AccessoryCrash',
-  ],
-  [
     cpuResourceClassificationFixture,
     'Recognized CPU Resource diagnostic, but this parser is not supported yet.',
     'CPU resource',
@@ -660,6 +658,11 @@ for (const [fixture, expectedMessage, label] of unsupportedDiagnosticMessageCase
   );
 }
 assert.equal(
+  getUnsupportedDiagnosticMessage(classifyDiagnostic(accessoryCrashParserFixture)),
+  null,
+  'supported AccessoryCrash diagnostics do not receive a recognized-unsupported message'
+);
+assert.equal(
   getUnsupportedDiagnosticMessage(classifyDiagnostic('{"not":"a diagnostic"}')),
   null,
   'unknown diagnostics do not receive a recognized-unsupported message'
@@ -671,12 +674,12 @@ assertClassification(
     type: 'accessory-crash',
     family: 'accessory',
     subtype: 'crash',
-    supported: false,
-    parserType: null,
-    legacyType: 'unknown',
+    supported: true,
+    parserType: 'accessory-crash',
+    legacyType: 'accessory-crash',
     bugType: '305',
   },
-  'classifies unsupported AccessoryCrash diagnostics'
+  'classifies supported AccessoryCrash diagnostics'
 );
 assertClassification(
   cpuResourceClassificationFixture,
@@ -761,11 +764,9 @@ assertClassification(
   },
   'classifies unsupported disk writes resource diagnostics'
 );
-assertUnsupportedFamilyDetection(
-  accessoryCrashClassificationFixture,
-  'accessory-crash',
-  'unsupported AccessoryCrash diagnostics'
-);
+assert.equal(detectFileType(accessoryCrashClassificationFixture), 'accessory-crash', 'detectFileType returns routable AccessoryCrash type');
+assert.equal(classifyDiagnostic(accessoryCrashParserFixture).type, 'accessory-crash', 'AccessoryCrash with panicString remains AccessoryCrash');
+assert.notEqual(classifyDiagnostic(accessoryCrashParserFixture).type, 'panic-full', 'AccessoryCrash with panicString does not classify as panic-full');
 assertUnsupportedFamilyDetection(
   cpuResourceClassificationFixture,
   'resource-cpu',
@@ -988,14 +989,48 @@ assert.match(
 );
 assert.equal(
   classifyDiagnostic(accessoryCrashParserFixture).supported,
-  false,
-  'AccessoryCrash classification remains unsupported in Slice 2B'
+  true,
+  'AccessoryCrash classification is supported in Slice 2C'
 );
-assert.equal(detectFileType(accessoryCrashParserFixture), 'unknown', 'AccessoryCrash detectFileType compatibility remains unknown in Slice 2B');
-assert.throws(
-  () => parseInput(accessoryCrashParserFixture),
-  /Unsupported or unrecognized file type\./,
-  'AccessoryCrash parseInput route remains unavailable in Slice 2B'
+assert.equal(
+  classifyDiagnostic(accessoryCrashParserFixture).parserType,
+  'accessory-crash',
+  'AccessoryCrash classification exposes parserType for routing'
+);
+assert.equal(
+  classifyDiagnostic(accessoryCrashParserFixture).legacyType,
+  'accessory-crash',
+  'AccessoryCrash classification exposes legacyType for detectFileType compatibility'
+);
+assert.equal(detectFileType(accessoryCrashParserFixture), 'accessory-crash', 'AccessoryCrash detectFileType compatibility returns routable type in Slice 2C');
+const parsedAccessoryCrashSections = parseInput(accessoryCrashParserFixture);
+assert.deepEqual(
+  parsedAccessoryCrashSections.map((section) => section.id),
+  [
+    'accessory-crash-summary',
+    'accessory-information',
+    'accessory-application-information',
+    'accessory-crashlog-overview',
+    'accessory-panic-fault-notes',
+    'accessory-crash-parser-notes',
+  ],
+  'AccessoryCrash parseInput route returns expected sections'
+);
+assert.doesNotMatch(
+  JSON.stringify(parsedAccessoryCrashSections),
+  /11111111-2222-3333-4444-555555555555|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|REQ-FICTIONAL-12345|\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
+  'AccessoryCrash parseInput sanitized output omits or redacts identifier-heavy values'
+);
+const rawParsedAccessoryCrashSections = parseInput(accessoryCrashParserFixture, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawParsedAccessoryCrashSections, 'accessory-crash-summary'), 'Incident ID'),
+  '11111111-2222-3333-4444-555555555555',
+  'AccessoryCrash parseInput raw mode preserves approved scalar incident ID values'
+);
+assert.equal(
+  fieldValue(sectionById(rawParsedAccessoryCrashSections, 'accessory-application-information'), 'Request ID'),
+  'REQ-FICTIONAL-12345',
+  'AccessoryCrash parseInput raw mode preserves approved scalar request ID values'
 );
 assertClassification(
   '',

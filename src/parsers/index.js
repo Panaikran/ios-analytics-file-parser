@@ -1,5 +1,6 @@
 import { classifyDiagnostic } from './classifyDiagnostic.js';
 import { parseAnalytics } from './parseAnalytics.js';
+import { parseAccessoryCrash } from './parseAccessoryCrash.js';
 import { parseCoreAnalytics } from './parseCoreAnalytics.js';
 import { parseCrash } from './parseCrash.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
@@ -42,6 +43,11 @@ export function parseInput(input, { sanitize = true } = {}) {
 
   if (type === 'coreanalytics') {
     return parseCoreAnalytics(input, options);
+  }
+
+  if (type === 'accessory-crash') {
+    const parsed = parseIpsContainer(input);
+    return parseAccessoryCrash(parsed.body, parsed.metadata, options);
   }
 
   throw new Error('Unsupported or unrecognized file type.');
