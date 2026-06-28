@@ -30,6 +30,7 @@ const SERIAL_ASSIGNMENT_PATTERN = /\b(serial(?:\s*(?:number|no))?\s*[=:]\s*)([^,
 const SERIAL_VALUE_PATTERN = /\b(?:FICTIONAL-)?SERIAL-[A-Z0-9-]+\b/i;
 const UUID_PATTERN = /\b[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\b/i;
 const MAC_ADDRESS_PATTERN = /\b[0-9A-F]{2}(?::[0-9A-F]{2}){5}\b/gi;
+const ADDRESS_VALUE_PATTERN = /\b0x[0-9A-F]{8,}\b/gi;
 const REQUEST_OR_CRASHLOG_ID_PATTERN = /\b(?:REQ|CRASHLOG|ACCESSORY-ID|DEVICE-ID)-[A-Z0-9-]+\b/gi;
 const SENSITIVE_LABEL_VALUE_PATTERN =
   /\b(AccessoryIdentifier|accessory_id|DeviceID|device_id|ECID|UniqueChipID|ChipID|IMEI|MEID|MAC|BluetoothAddress|WiFiAddress|HardwareAddress|CrashReporterKey|crashReporterKey|RequestID|requestID|uuid|identifier|token|key)\b\s*(?:is|:|=)?\s*([A-Z0-9][A-Z0-9-]{7,}|0x[0-9A-F]{8,}|[0-9A-F]{2}(?::[0-9A-F]{2}){5})/gi;
@@ -214,7 +215,7 @@ function sanitizeByKey(key, value, sanitizeText, options) {
     if (isSensitiveKey(key)) {
       return '[identifier redacted]';
     }
-    return redactSensitiveValuePatterns(sanitizeText(stringValue), { redactPaths: true });
+    return redactSensitiveValuePatterns(sanitizeText(stringValue), { redactPaths: true, redactAddresses: true });
   }
 
   if (isSensitiveKey(key) && !isRawAllowedKey(key)) {
@@ -237,12 +238,16 @@ function redactRawAllowedScalar(value) {
     .replace(SERIAL_VALUE_PATTERN, '[identifier redacted]');
 }
 
-function redactSensitiveValuePatterns(value, { redactPaths }) {
+function redactSensitiveValuePatterns(value, { redactPaths, redactAddresses = false }) {
   let nextValue = String(value ?? '');
   if (!nextValue) return '';
 
   if (redactPaths) {
     nextValue = nextValue.replace(PATH_VALUE_PATTERN, '[path redacted]');
+  }
+
+  if (redactAddresses) {
+    nextValue = nextValue.replace(ADDRESS_VALUE_PATTERN, '[address redacted]');
   }
 
   return nextValue

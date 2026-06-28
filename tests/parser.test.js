@@ -85,7 +85,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2d-accessory-crash-privacy-2026-06-28/, 'service worker cache version reflects Slice 2D AccessoryCrash privacy hardening');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice2d-accessory-crash-address-hotfix-2026-06-28/, 'service worker cache version reflects Slice 2D AccessoryCrash address privacy hotfix');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -1009,6 +1009,38 @@ assert.doesNotMatch(
   JSON.stringify(rawAccessoryCrashSections),
   /\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
   'AccessoryCrash raw mode still avoids paths, nested crashlog identifiers, crashReporterKey, and serial-like values'
+);
+const accessoryCrashAddressBody = {
+  ...accessoryCrashParserBody,
+  panicString: 'panic: fictional accessory fault at 0xfffffff012345678 and 0x12345678',
+  faultReason: 'Fault near pointer 0xfffffff087654321 and register 0xABCDEF12',
+  faultText: 'Concise note references 0x87654321',
+};
+const accessoryCrashAddressSections = parseAccessoryCrash(accessoryCrashAddressBody, accessoryCrashParserMetadata);
+const accessoryCrashAddressText = JSON.stringify(accessoryCrashAddressSections);
+assert.doesNotMatch(
+  accessoryCrashAddressText,
+  /0xfffffff012345678|0x12345678|0xfffffff087654321|0xABCDEF12|0x87654321/i,
+  'AccessoryCrash sanitized panic/fault notes redact address-like hex values'
+);
+assert.match(
+  accessoryCrashAddressText,
+  /\[address redacted\]/,
+  'AccessoryCrash sanitized panic/fault notes retain context with address placeholders'
+);
+const rawAccessoryCrashAddressText = JSON.stringify(
+  parseAccessoryCrash(accessoryCrashAddressBody, accessoryCrashParserMetadata, { sanitize: false })
+);
+assert.match(rawAccessoryCrashAddressText, /0xfffffff012345678/, 'AccessoryCrash raw mode still preserves panic addresses');
+assert.match(rawAccessoryCrashAddressText, /0x12345678/, 'AccessoryCrash raw mode still preserves short address-like values');
+const accessoryCrashAddressFixture = [
+  JSON.stringify(accessoryCrashParserMetadata),
+  JSON.stringify(accessoryCrashAddressBody),
+].join('\n');
+assert.doesNotMatch(
+  JSON.stringify(parseInput(accessoryCrashAddressFixture)),
+  /0xfffffff012345678|0x12345678|0xfffffff087654321|0xABCDEF12|0x87654321/i,
+  'AccessoryCrash parseInput sanitized output redacts panic/fault address-like values'
 );
 const hardenedAccessoryCrashSections = parseAccessoryCrash(accessoryCrashPrivacyBody, accessoryCrashParserMetadata);
 const hardenedAccessoryCrashText = JSON.stringify(hardenedAccessoryCrashSections);
