@@ -20,6 +20,7 @@ import { detectFileType } from '../src/parsers/detect.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
 import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
 import { parseCpuResource } from '../src/parsers/parseCpuResource.js';
+import { parseDiskWritesResource } from '../src/parsers/parseDiskWritesResource.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -86,7 +87,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3c-cpu-resource-routing-2026-06-28/, 'service worker cache version reflects Slice 3C CPU Resource routing');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3d-diskwrites-resource-routing-2026-06-28/, 'service worker cache version reflects Slice 3D Disk Writes Resource routing');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -94,14 +95,17 @@ assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service w
 assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'service worker precaches the diagnostic classification helper');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'service worker precaches the AccessoryCrash parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'service worker precaches the CPU Resource parser');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/, 'service worker precaches the Disk Writes Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.match(parserIndexSource, /import \{ parseAccessoryCrash \} from '\.\/parseAccessoryCrash\.js';/, 'parseInput imports the AccessoryCrash parser');
 assert.match(parserIndexSource, /import \{ parseCpuResource \} from '\.\/parseCpuResource\.js';/, 'parseInput imports the CPU Resource parser');
+assert.match(parserIndexSource, /import \{ parseDiskWritesResource \} from '\.\/parseDiskWritesResource\.js';/, 'parseInput imports the Disk Writes Resource parser');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
 assert.match(parserIndexSource, /type === 'accessory-crash'[^]*parseAccessoryCrash\(parsed\.body, parsed\.metadata, options\)/, 'parseInput routes AccessoryCrash containers through the AccessoryCrash parser');
 assert.match(parserIndexSource, /type === 'resource-cpu'[^]*parseCpuResource\(input, options\)/, 'parseInput routes CPU Resource input through the CPU Resource parser');
+assert.match(parserIndexSource, /type === 'resource-diskwrites'[^]*parseDiskWritesResource\(input, options\)/, 'parseInput routes Disk Writes Resource input through the Disk Writes Resource parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(
@@ -743,13 +747,77 @@ const diskWritesClassificationFixture = [
   JSON.stringify({ bug_type: '142', incident_id: 'FICTIONAL-DISK-INCIDENT' }),
   JSON.stringify({ bug_type: '142', diskWrites: { logicalWrites: 12345 }, process: 'DemoProcess' }),
 ].join('\n');
+const diskWritesParserFixture = [
+  JSON.stringify({
+    bug_type: '142',
+    timestamp: '2026-06-28 13:00:00 +0000',
+    os_version: 'iPhone OS 27.0 (24A999)',
+    device_model: 'iPhone19,3',
+    incident_id: 'FICTIONAL-DISK-INCIDENT-001',
+  }),
+  JSON.stringify({
+    bug_type: '142',
+    process: 'DemoDiskApp [321]',
+    pid: 321,
+    bundleID: 'com.example.disk',
+    command: '/private/var/mobile/Containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/DemoDiskApp.app/DemoDiskApp --write',
+    executable: '/private/var/containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/DemoDiskApp.app/DemoDiskApp',
+    path: '/private/var/mobile/Containers/Data/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/Documents/demo.db',
+    actionTaken: 'none',
+    reason:
+      'Disk write limit exceeded requestID=REQ-DISK-FICTIONAL-123 uuid 33333333-4444-5555-6666-777777777777 address 0xfffffff012345678 serial FICTIONAL-SERIAL-DISK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF volume VOLUME-FICTIONAL-001',
+    diskWrites: {
+      logicalWrites: '1024 MB',
+      physicalWrites: '768 MB',
+      bytesWritten: '805306368',
+      writeCount: '4096',
+      diskWriteDuration: '300 seconds',
+      writeRate: '2.5 MB/s',
+      paths: [
+        '/private/var/mobile/Containers/Data/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/Documents/demo.db',
+        '/var/mobile/Library/Caches/com.example.disk/cache.sqlite',
+      ],
+      nestedPayload: {
+        sentinel: 'NESTED-DISK-SENTINEL',
+        path: '/private/var/root/hidden.db',
+      },
+    },
+    limits: {
+      logicalWriteLimit: '500 MB',
+      physicalWriteLimit: '400 MB',
+      window: '24 hours',
+      threshold: '500 MB',
+      status: 'exceeded',
+      volumeUUID: '44444444-5555-6666-7777-888888888888',
+    },
+  }),
+].join('\n');
+const diskWritesFullJsonFixture = JSON.stringify({
+  bug_type: '142',
+  timestamp: '2026-06-28 13:30:00 +0000',
+  process: 'FullJsonDiskApp',
+  pid: 654,
+  bundle_id: 'com.example.full-json-disk',
+  action_taken: 'terminated',
+  logicalWrites: '700 MB',
+  physicalWrites: '650 MB',
+  bytesWritten: '681574400',
+  writeCount: '2048',
+  diskWriteDuration: '180 seconds',
+  writeLimit: '500 MB',
+  reason: 'logical write limit exceeded',
+});
+const diskWritesLeakPattern =
+  /FICTIONAL-DISK-INCIDENT-001|REQ-DISK-FICTIONAL-123|33333333-4444-5555-6666-777777777777|44444444-5555-6666-7777-888888888888|\/private\/var\/mobile|\/private\/var\/containers|\/var\/mobile|\/private\/var\/root|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|0xfffffff012345678|FICTIONAL-SERIAL-DISK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|VOLUME-FICTIONAL-001|NESTED-DISK-SENTINEL/;
+const genericWritesJsonFixture = JSON.stringify({
+  bug_type: '109',
+  process: 'DemoCrashLikeApp',
+  writes: 'generic note only',
+  exception: { type: 'EXC_BAD_ACCESS' },
+  threads: [],
+});
 
 const unsupportedDiagnosticMessageCases = [
-  [
-    diskWritesClassificationFixture,
-    'Recognized Disk Writes Resource diagnostic, but this parser is not supported yet.',
-    'Disk Writes resource',
-  ],
   [
     stackshotClassificationFixture,
     'Recognized Stackshot Resource diagnostic, but this parser is not supported yet.',
@@ -881,12 +949,12 @@ assertClassification(
     type: 'resource-diskwrites',
     family: 'resource',
     subtype: 'diskwrites',
-    supported: false,
-    parserType: null,
-    legacyType: 'unknown',
+    supported: true,
+    parserType: 'resource-diskwrites',
+    legacyType: 'resource-diskwrites',
     bugType: '142',
   },
-  'classifies unsupported disk writes resource diagnostics'
+  'classifies supported disk writes resource diagnostics'
 );
 assert.equal(detectFileType(accessoryCrashClassificationFixture), 'accessory-crash', 'detectFileType returns routable AccessoryCrash type');
 assert.equal(classifyDiagnostic(accessoryCrashParserFixture).type, 'accessory-crash', 'AccessoryCrash with panicString remains AccessoryCrash');
@@ -896,6 +964,11 @@ assert.equal(
   getUnsupportedDiagnosticMessage(classifyDiagnostic(cpuResourceClassificationFixture)),
   null,
   'supported CPU Resource diagnostics do not receive a recognized-unsupported message'
+);
+assert.equal(
+  getUnsupportedDiagnosticMessage(classifyDiagnostic(diskWritesClassificationFixture)),
+  null,
+  'supported Disk Writes Resource diagnostics do not receive a recognized-unsupported message'
 );
 assert.equal(
   classifyDiagnostic(cpuResourceParserFixture).type,
@@ -916,6 +989,12 @@ assert.equal(
   detectFileType(crashWithCpuWordingText),
   'crash',
   'legacy crash reports with harmless CPU wording still detect as crash'
+);
+assert.equal(detectFileType(diskWritesClassificationFixture), 'resource-diskwrites', 'detectFileType returns routable Disk Writes Resource type');
+assert.equal(
+  classifyDiagnostic(genericWritesJsonFixture).type,
+  'app-crash',
+  'generic writes keys without strong Disk Writes evidence do not classify as Disk Writes Resource'
 );
 assertUnsupportedFamilyDetection(
   stackshotClassificationFixture,
@@ -941,11 +1020,6 @@ assertUnsupportedFamilyDetection(
   diagnosticRequestClassificationFixture,
   'diagnostic-request',
   'unsupported diagnostic request reports'
-);
-assertUnsupportedFamilyDetection(
-  diskWritesClassificationFixture,
-  'resource-diskwrites',
-  'unsupported disk writes resource diagnostics'
 );
 
 const cpuResourceSections = parseCpuResource(cpuResourceParserFixture);
@@ -1134,6 +1208,190 @@ assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-pro
 assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-process-info'), 'PID'), '789');
 assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-usage'), 'CPU Used'), '91%');
 assert.equal(fieldValue(sectionById(parsedFullJsonCpuSections, 'resource-cpu-usage'), 'CPU Limit'), '85%');
+
+const diskWritesSections = parseDiskWritesResource(diskWritesParserFixture);
+assert.deepEqual(
+  diskWritesSections.map((section) => section.id),
+  [
+    'resource-diskwrites-summary',
+    'resource-diskwrites-process-info',
+    'resource-diskwrites-usage',
+    'resource-diskwrites-limits',
+    'resource-diskwrites-parser-notes',
+  ],
+  'Disk Writes Resource direct parser emits the expected section order'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Bug Type'), '142');
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Timestamp'),
+  '2026-06-28 13:00:00 +0000',
+  'Disk Writes Resource summary prefers metadata timestamp'
+);
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'OS Version'),
+  'iPhone OS 27.0 (24A999)',
+  'Disk Writes Resource summary populates OS version'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Device'), 'iPhone19,3');
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'Disk Writes Resource summary redacts incident IDs by default'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Report Type'), 'Disk Writes Resource');
+assert.match(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Primary Reason'),
+  /Disk write limit exceeded/,
+  'Disk Writes Resource summary extracts primary reason text'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-summary'), 'Action Taken'), 'none');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'Process'), 'DemoDiskApp');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'PID'), '321');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'Bundle ID'), 'com.example.disk');
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'Path'),
+  '[path redacted]',
+  'Disk Writes Resource path field redacts in sanitized mode'
+);
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'Command'),
+  '[path redacted]',
+  'Disk Writes Resource command paths redact in sanitized mode'
+);
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-process-info'), 'Executable'),
+  '[path redacted]',
+  'Disk Writes Resource executable paths redact in sanitized mode'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Logical Writes'), '1024 MB');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Physical Writes'), '768 MB');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Bytes Written'), '805306368');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Write Count'), '4096');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Duration'), '300 seconds');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Write Rate'), '2.5 MB/s');
+assert.equal(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-usage'), 'Path Entry Count'),
+  '6',
+  'Disk Writes Resource summarizes path-heavy entries by count'
+);
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Logical Write Limit'), '500 MB');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Physical Write Limit'), '400 MB');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Window'), '24 hours');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Threshold'), '500 MB');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Action Taken'), 'none');
+assert.equal(fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-limits'), 'Limit Status'), 'exceeded');
+assert.match(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-parser-notes'), 'Sources'),
+  /metadata and body/,
+  'Disk Writes Resource parser notes describe extraction sources'
+);
+assert.match(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-parser-notes'), 'Privacy'),
+  /redacted or omitted/,
+  'Disk Writes Resource parser notes describe privacy handling'
+);
+assert.match(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-parser-notes'), 'Raw Body'),
+  /not rendered/,
+  'Disk Writes Resource parser notes describe raw body omission'
+);
+assert.match(
+  fieldValue(sectionById(diskWritesSections, 'resource-diskwrites-parser-notes'), 'Path Data'),
+  /summarized by count only/,
+  'Disk Writes Resource parser notes describe path-heavy data summarization'
+);
+assert.doesNotMatch(
+  JSON.stringify(diskWritesSections),
+  diskWritesLeakPattern,
+  'Disk Writes Resource sanitized output redacts identifiers, paths, volume IDs, raw addresses, serials, MACs, ECIDs, and nested sentinels'
+);
+assert.doesNotThrow(
+  () => parseDiskWritesResource('Malformed Disk Writes resource text without key value lines'),
+  'Disk Writes Resource parser tolerates malformed text'
+);
+assert.deepEqual(
+  parseDiskWritesResource('Malformed Disk Writes resource text without key value lines').map((section) => section.id),
+  ['resource-diskwrites-summary', 'resource-diskwrites-parser-notes'],
+  'Disk Writes Resource malformed input still emits summary and parser notes'
+);
+const minimalDiskWritesSections = parseDiskWritesResource('Logical Writes: 10 MB');
+assert.deepEqual(
+  minimalDiskWritesSections.map((section) => section.id),
+  ['resource-diskwrites-summary', 'resource-diskwrites-usage', 'resource-diskwrites-parser-notes'],
+  'Disk Writes Resource minimal input omits missing optional process and limit fields'
+);
+assert.equal(
+  fieldValue(sectionById(minimalDiskWritesSections, 'resource-diskwrites-usage'), 'Logical Writes'),
+  '10 MB',
+  'Disk Writes Resource minimal input extracts available metrics'
+);
+assert.doesNotThrow(
+  () => parseDiskWritesResource(JSON.stringify({ bug_type: '142', diskWrites: 'malformed', limits: ['unexpected'] })),
+  'Disk Writes Resource parser tolerates malformed diskWrites and limits values'
+);
+const rawDiskWritesSections = parseDiskWritesResource(diskWritesParserFixture, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawDiskWritesSections, 'resource-diskwrites-process-info'), 'Process'),
+  'DemoDiskApp',
+  'Disk Writes Resource raw mode preserves safe scalar process values'
+);
+assert.equal(
+  fieldValue(sectionById(rawDiskWritesSections, 'resource-diskwrites-usage'), 'Logical Writes'),
+  '1024 MB',
+  'Disk Writes Resource raw mode preserves safe scalar metric values'
+);
+assert.doesNotMatch(
+  JSON.stringify(rawDiskWritesSections),
+  diskWritesLeakPattern,
+  'Disk Writes Resource raw mode remains bounded and avoids paths, identifiers, volume IDs, nested payloads, serials, MACs, and ECID values'
+);
+assert.deepEqual(
+  parseInput(diskWritesParserFixture),
+  parseDiskWritesResource(diskWritesParserFixture),
+  'Disk Writes Resource parseInput route matches direct parser output in sanitized mode'
+);
+assert.deepEqual(
+  parseInput(diskWritesParserFixture, { sanitize: false }),
+  parseDiskWritesResource(diskWritesParserFixture, { sanitize: false }),
+  'Disk Writes Resource parseInput route matches direct parser output in raw mode'
+);
+assert.equal(
+  classifyDiagnostic(diskWritesParserFixture).supported,
+  true,
+  'Disk Writes Resource classification is supported in Slice 3D'
+);
+assert.equal(classifyDiagnostic(diskWritesParserFixture).parserType, 'resource-diskwrites', 'Disk Writes Resource classification exposes parserType for routing');
+assert.equal(classifyDiagnostic(diskWritesParserFixture).legacyType, 'resource-diskwrites', 'Disk Writes Resource classification exposes legacyType for detectFileType compatibility');
+assert.equal(detectFileType(diskWritesParserFixture), 'resource-diskwrites', 'Disk Writes Resource detectFileType compatibility returns routable type in Slice 3D');
+assert.deepEqual(
+  parseInput(diskWritesParserFixture).map((section) => section.id),
+  [
+    'resource-diskwrites-summary',
+    'resource-diskwrites-process-info',
+    'resource-diskwrites-usage',
+    'resource-diskwrites-limits',
+    'resource-diskwrites-parser-notes',
+  ],
+  'Disk Writes Resource parseInput route returns expected sections'
+);
+assert.doesNotMatch(
+  JSON.stringify(parseInput(diskWritesParserFixture)),
+  diskWritesLeakPattern,
+  'Disk Writes Resource parseInput sanitized output preserves the same privacy boundary'
+);
+assert.doesNotMatch(
+  JSON.stringify(parseInput(diskWritesParserFixture, { sanitize: false })),
+  diskWritesLeakPattern,
+  'Disk Writes Resource parseInput raw mode remains bounded'
+);
+assert.equal(classifyDiagnostic(diskWritesFullJsonFixture).supported, true, 'full JSON Disk Writes Resource classification is supported');
+assert.equal(detectFileType(diskWritesFullJsonFixture), 'resource-diskwrites', 'full JSON Disk Writes Resource detectFileType returns routable type');
+const parsedFullJsonDiskWritesSections = parseInput(diskWritesFullJsonFixture);
+assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-process-info'), 'Process'), 'FullJsonDiskApp');
+assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-process-info'), 'PID'), '654');
+assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-usage'), 'Logical Writes'), '700 MB');
+assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-usage'), 'Physical Writes'), '650 MB');
+assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-limits'), 'Logical Write Limit'), '500 MB');
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
 assert.deepEqual(

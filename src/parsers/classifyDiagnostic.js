@@ -78,7 +78,7 @@ function classifyContainer(body, metadata, structure) {
 
   if (isDiagnosticRequest(body, metadata)) return unsupported('diagnostic-request', 'diagnostic-request', 'pipeline', structure, bugType);
   if (isCpuResourceContainer(body, metadata)) return supported('resource-cpu', 'resource', 'cpu', 'resource-cpu', structure, bugType);
-  if (isDiskWritesResource(body, metadata)) return unsupported('resource-diskwrites', 'resource', 'diskwrites', structure, bugType);
+  if (isDiskWritesResource(body, metadata)) return supported('resource-diskwrites', 'resource', 'diskwrites', 'resource-diskwrites', structure, bugType);
   if (isAppUsageMetrics(body, metadata)) return unsupported('app-usage-metrics', 'metrics', 'app-usage', structure, bugType);
   if (isWifiConnectivity(body, metadata)) return unsupported('wifi-connectivity', 'connectivity', 'wifi', structure, bugType);
 
@@ -186,7 +186,26 @@ function isCpuResourceContainer(body, metadata) {
 }
 
 function isDiskWritesResource(body, metadata) {
-  return Boolean(hasBugType('142', body, metadata) || (isPlainObject(body) && hasAnyKey(body, ['writes', 'diskWrites', 'logicalWrites'])));
+  return Boolean(hasBugType('142', body, metadata) || (isPlainObject(body) && hasStrongDiskWritesEvidence(body)));
+}
+
+function hasStrongDiskWritesEvidence(body) {
+  if (isPlainObject(body.diskWrites)) return true;
+
+  return countPresentKeys(body, [
+    'logicalWrites',
+    'logical_writes',
+    'physicalWrites',
+    'physical_writes',
+    'bytesWritten',
+    'bytes_written',
+    'writeCount',
+    'write_count',
+    'writeLimit',
+    'write_limit',
+    'diskWriteDuration',
+    'disk_write_duration',
+  ]) >= 2;
 }
 
 function isStackshotResource(body, metadata) {
@@ -295,6 +314,10 @@ function bugTypeOf(...sources) {
 
 function hasAnyKey(value, keys) {
   return keys.some((key) => Object.prototype.hasOwnProperty.call(value, key));
+}
+
+function countPresentKeys(value, keys) {
+  return keys.filter((key) => Object.prototype.hasOwnProperty.call(value, key)).length;
 }
 
 function isPlainObject(value) {

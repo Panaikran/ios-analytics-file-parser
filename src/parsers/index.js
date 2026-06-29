@@ -4,6 +4,7 @@ import { parseAccessoryCrash } from './parseAccessoryCrash.js';
 import { parseCoreAnalytics } from './parseCoreAnalytics.js';
 import { parseCrash } from './parseCrash.js';
 import { parseCpuResource } from './parseCpuResource.js';
+import { parseDiskWritesResource } from './parseDiskWritesResource.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 import { parseIps } from './parseIps.js';
 import { parseIpsWatchdogStackshot } from './parseIpsWatchdogStackshot.js';
@@ -53,6 +54,10 @@ export function parseInput(input, { sanitize = true } = {}) {
 
   if (type === 'resource-cpu') {
     return parseCpuResource(input, options);
+  }
+
+  if (type === 'resource-diskwrites') {
+    return parseDiskWritesResource(input, options);
   }
 
   throw new Error('Unsupported or unrecognized file type.');
