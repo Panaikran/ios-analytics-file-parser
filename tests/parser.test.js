@@ -21,6 +21,7 @@ import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/pars
 import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
 import { parseCpuResource } from '../src/parsers/parseCpuResource.js';
 import { parseDiskWritesResource } from '../src/parsers/parseDiskWritesResource.js';
+import { parseResourceStackshot } from '../src/parsers/parseResourceStackshot.js';
 import { parseInput } from '../src/parsers/index.js';
 import {
   REPORT_SIZE_LEVELS,
@@ -725,6 +726,112 @@ const stackshotClassificationFixture = [
     processByPid: { 100: { procname: 'DemoProcess' } },
   }),
 ].join('\n');
+const stackshotParserFixture = [
+  JSON.stringify({
+    bug_type: '288',
+    timestamp: '2026-06-28 14:00:00 +0000',
+    os_version: 'iPhone OS 27.0 (24A999)',
+    device_model: 'iPhone19,4',
+    incident_id: 'FICTIONAL-STACKSHOT-INCIDENT-001',
+  }),
+  JSON.stringify({
+    bug_type: '288',
+    exception: '0x00000020',
+    reason:
+      'fictional resource stackshot requestID=REQ-STACK-FICTIONAL-123 uuid 55555555-6666-7777-8888-999999999999 address 0xfffffff012345678 serial FICTIONAL-SERIAL-STACK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF',
+    targetPid: 100,
+    triggeredProcess: 'TriggeredStackApp',
+    notes: 'Collected near /private/var/mobile/stackshot.log with symbol _sensitiveFrameSymbol',
+    memoryStatus: {
+      pageSize: 16384,
+      compressorSize: 1234,
+      memoryPages: 50000,
+    },
+    processByPid: {
+      100: {
+        procname: 'TriggeredStackApp',
+        pid: 100,
+        bundleID: 'com.example.triggered-stack',
+        role: 'Foreground',
+        state: 'running',
+        cpuPercent: '15%',
+        rpages: 100,
+        reason: 'triggered process near 0xfffffff011111111',
+        uuid: 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+        path: '/private/var/mobile/Containers/Bundle/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/TriggeredStackApp.app/TriggeredStackApp',
+        threads: [
+          {
+            frames: [
+              { symbol: '_sensitiveFrameSymbol', address: '0xfffffff012345678', slice_uuid: 'BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF' },
+              { symbol: '_anotherSensitiveSymbol', address: '0xABCDEF12' },
+            ],
+          },
+          {
+            frames: [{ symbol: '_thirdSensitiveSymbol', address: '0xfffffff087654321' }],
+          },
+        ],
+      },
+      200: {
+        procname: 'HighCPUStackApp',
+        pid: 200,
+        bundleID: 'com.example.high-cpu',
+        cpuPercent: '95%',
+        footprintMB: 20,
+        threadCount: 3,
+        frameCount: 7,
+      },
+      300: {
+        procname: 'HighMemoryStackApp',
+        pid: 300,
+        bundleID: 'com.example.high-memory',
+        physicalPages: 2000,
+        reason: 'high memory participant',
+      },
+      400: {
+        procname: 'SourceOrderStackApp',
+        pid: 400,
+        bundleID: 'com.example.source-order',
+      },
+    },
+    nestedPayload: {
+      sentinel: 'NESTED-STACKSHOT-SENTINEL',
+      path: '/var/mobile/Library/Logs/stackshot.raw',
+    },
+  }),
+].join('\n');
+const minimalStackshotFixture = [
+  JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-MINIMAL' }),
+  JSON.stringify({ bug_type: '288', reason: 'minimal stackshot resource report' }),
+].join('\n');
+const malformedStackshotFixture = [
+  JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-MALFORMED' }),
+  JSON.stringify({ bug_type: '288', processByPid: 'malformed', memoryStatus: { pageSize: 16384 } }),
+].join('\n');
+const largeStackshotFixture = [
+  JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-LARGE' }),
+  JSON.stringify({
+    bug_type: '288',
+    reason: 'large fictional stackshot resource',
+    memoryStatus: { pageSize: 16384 },
+    processByPid: Object.fromEntries(
+      Array.from({ length: 150 }, (_, index) => {
+        const pid = 1000 + index;
+        return [
+          String(pid),
+          {
+            procname: `LargeStackProcess${index}`,
+            pid,
+            bundleID: `com.example.large-stack-${index}`,
+            cpuPercent: `${index}%`,
+            physicalPages: 150 - index,
+          },
+        ];
+      })
+    ),
+  }),
+].join('\n');
+const stackshotLeakPattern =
+  /FICTIONAL-STACKSHOT-INCIDENT-001|REQ-STACK-FICTIONAL-123|55555555-6666-7777-8888-999999999999|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF|\/private\/var\/mobile|\/var\/mobile|0xfffffff012345678|0xfffffff011111111|0xABCDEF12|0xfffffff087654321|FICTIONAL-SERIAL-STACK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|NESTED-STACKSHOT-SENTINEL|_sensitiveFrameSymbol|_anotherSensitiveSymbol|_thirdSensitiveSymbol/;
 const appUsageClassificationFixture = [
   JSON.stringify({ bug_type: '225', incident_id: 'FICTIONAL-USAGE-INCIDENT' }),
   JSON.stringify([{ eventType: 'example', topic: 'fictional-topic', bundleId: 'com.example.app' }]),
@@ -1392,6 +1499,148 @@ assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-
 assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-usage'), 'Logical Writes'), '700 MB');
 assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-usage'), 'Physical Writes'), '650 MB');
 assert.equal(fieldValue(sectionById(parsedFullJsonDiskWritesSections, 'resource-diskwrites-limits'), 'Logical Write Limit'), '500 MB');
+
+const stackshotSections = parseResourceStackshot(stackshotParserFixture);
+assert.deepEqual(
+  stackshotSections.map((section) => section.id),
+  [
+    'resource-stackshot-summary',
+    'resource-stackshot-trigger-reason',
+    'resource-stackshot-process-overview',
+    'resource-stackshot-top-processes',
+    'resource-stackshot-parser-notes',
+  ],
+  'Stackshot Resource direct parser emits the expected section order'
+);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Bug Type'), '288');
+assert.equal(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Timestamp'),
+  '2026-06-28 14:00:00 +0000',
+  'Stackshot Resource summary prefers metadata timestamp'
+);
+assert.equal(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'OS Version'),
+  'iPhone OS 27.0 (24A999)',
+  'Stackshot Resource summary populates OS version'
+);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Device'), 'iPhone19,4');
+assert.equal(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Incident ID'),
+  '[identifier redacted]',
+  'Stackshot Resource summary redacts incident IDs by default'
+);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Report Type'), 'Stackshot Resource');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Process Count'), '4');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Rendered Process Rows'), '4');
+assert.match(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-summary'), 'Primary Reason'),
+  /fictional resource stackshot/,
+  'Stackshot Resource summary extracts primary reason text'
+);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Exception'), '[address redacted]');
+assert.match(fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Reason'), /fictional resource stackshot/);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Triggered Process'), 'TriggeredStackApp');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Triggered PID'), '100');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Selection'), 'Matched trigger process');
+assert.match(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Notes'),
+  /\[path redacted\]/,
+  'Stackshot Resource trigger notes redact paths'
+);
+assert.doesNotMatch(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-trigger-reason'), 'Notes'),
+  /_sensitiveFrameSymbol/,
+  'Stackshot Resource trigger notes redact frame-like symbols'
+);
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Total Processes'), '4');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Processes With CPU'), '2');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Processes With Memory'), '3');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Processes With Threads'), '2');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Processes With Reasons'), '2');
+assert.equal(fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Page Size'), '16384');
+assert.equal(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-process-overview'), 'Memory Status'),
+  '3 memory status fields summarized',
+  'Stackshot Resource process overview summarizes memoryStatus safely'
+);
+const stackshotProcessTable = sectionById(stackshotSections, 'resource-stackshot-top-processes');
+assert.deepEqual(
+  stackshotProcessTable.tableColumns.map((column) => column.label),
+  ['Process', 'PID', 'Bundle ID', 'CPU', 'Footprint / Pages', 'Role / State', 'Reason', 'Threads', 'Frames'],
+  'Stackshot Resource top process table exposes the expected columns'
+);
+assert.equal(stackshotProcessTable.table.length, 4, 'Stackshot Resource top process table renders normalized process rows');
+assert.equal(stackshotProcessTable.tableSummary, '4 of 4 processes shown');
+assert.equal(stackshotProcessTable.table[0].process, 'TriggeredStackApp', 'Stackshot Resource sorts explicit trigger process first');
+assert.equal(stackshotProcessTable.table[1].process, 'HighCPUStackApp', 'Stackshot Resource sorts CPU values after trigger process');
+assert.equal(stackshotProcessTable.table[2].process, 'HighMemoryStackApp', 'Stackshot Resource sorts memory/page fallback after CPU values');
+assert.equal(stackshotProcessTable.table[3].process, 'SourceOrderStackApp', 'Stackshot Resource preserves source order when no CPU or memory values exist');
+assert.equal(stackshotProcessTable.table[0].footprintPages, '1.6 MB');
+assert.equal(stackshotProcessTable.table[0].threads, '2');
+assert.equal(stackshotProcessTable.table[0].frames, '3');
+assert.equal(stackshotProcessTable.table[1].frames, '7');
+assert.match(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-parser-notes'), 'Row Cap'),
+  /100 rows/,
+  'Stackshot Resource parser notes describe row cap'
+);
+assert.match(
+  fieldValue(sectionById(stackshotSections, 'resource-stackshot-parser-notes'), 'Stack Frames'),
+  /counted only/,
+  'Stackshot Resource parser notes describe frame summarization'
+);
+assert.doesNotMatch(
+  JSON.stringify(stackshotSections),
+  stackshotLeakPattern,
+  'Stackshot Resource sanitized output redacts identifiers, paths, frame symbols, frame addresses, serials, MACs, ECIDs, and nested sentinels'
+);
+const rawStackshotSections = parseResourceStackshot(stackshotParserFixture, { sanitize: false });
+assert.equal(
+  fieldValue(sectionById(rawStackshotSections, 'resource-stackshot-top-processes'), 'Process'),
+  undefined,
+  'Stackshot Resource raw mode does not change table serialization shape'
+);
+assert.equal(
+  sectionById(rawStackshotSections, 'resource-stackshot-top-processes').table[0].process,
+  'TriggeredStackApp',
+  'Stackshot Resource raw mode preserves safe scalar process values'
+);
+assert.doesNotMatch(
+  JSON.stringify(rawStackshotSections),
+  stackshotLeakPattern,
+  'Stackshot Resource raw mode remains bounded and avoids paths, nested payloads, frame symbols, frame addresses, UUIDs, serials, MACs, and ECID values'
+);
+const minimalStackshotSections = parseResourceStackshot(minimalStackshotFixture);
+assert.deepEqual(
+  minimalStackshotSections.map((section) => section.id),
+  ['resource-stackshot-summary', 'resource-stackshot-trigger-reason', 'resource-stackshot-parser-notes'],
+  'Stackshot Resource minimal input emits summary, trigger/reason, and parser notes'
+);
+assert.doesNotThrow(
+  () => parseResourceStackshot(malformedStackshotFixture),
+  'Stackshot Resource parser tolerates malformed processByPid'
+);
+assert.deepEqual(
+  parseResourceStackshot(malformedStackshotFixture).map((section) => section.id),
+  ['resource-stackshot-summary', 'resource-stackshot-process-overview', 'resource-stackshot-parser-notes'],
+  'Stackshot Resource malformed processByPid omits top process table'
+);
+const largeStackshotSections = parseResourceStackshot(largeStackshotFixture);
+const largeStackshotTable = sectionById(largeStackshotSections, 'resource-stackshot-top-processes');
+assert.equal(largeStackshotTable.table.length, 100, 'Stackshot Resource top process table caps at 100 rows');
+assert.equal(largeStackshotTable.tableSummary, '100 of 150 processes shown', 'Stackshot Resource tableSummary reports capped rows');
+assert.equal(largeStackshotTable.table[0].process, 'LargeStackProcess149', 'Stackshot Resource large table sorts by CPU descending');
+assert.equal(
+  classifyDiagnostic(stackshotParserFixture).supported,
+  false,
+  'Stackshot Resource classification remains unsupported in Slice 3E1'
+);
+assert.equal(detectFileType(stackshotParserFixture), 'unknown', 'Stackshot Resource detectFileType remains unknown in Slice 3E1');
+assert.throws(
+  () => parseInput(stackshotParserFixture),
+  /Unsupported or unrecognized file type\./,
+  'Stackshot Resource parseInput still fails safely in Slice 3E1'
+);
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
 assert.deepEqual(
