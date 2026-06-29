@@ -231,13 +231,14 @@ Supported in active unreleased v0.6 work:
 AccessoryCrash support summarizes crashlogs and does not render raw nested crashlog bodies. Broad Accessory/Firmware diagnostics remain future work unless explicitly planned.
 Stackshot Resource support summarizes trigger, process overview, and capped top-process rows. It does not render full stacks, frame symbols, frame addresses, or perform symbolication.
 
-### Planned Later v0.6 Work
+### Future Parser-Family Work
 
-- Broader Accessory/Firmware diagnostics, if explicitly planned.
+These parser families remain future work and are not blockers for the v0.7 to v1.0 stabilization path unless explicitly approved later.
+
+- Broader Accessory/Firmware diagnostics.
 - App Usage Metrics parser work.
 - Wi-Fi Connectivity parser work.
 - Diagnostic Request parser work.
-- Documentation/release hardening after parser-family slices land.
 
 Future work beyond the classification/parser-family sequence:
 
@@ -274,9 +275,132 @@ Future work beyond the classification/parser-family sequence:
 - Keep browser/mobile checks manual unless browser automation is explicitly approved.
 - Do not migrate the test runner unless the cost is justified and approved.
 
+## Planned Path To v1.0
+
+This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
+
+### v0.7.0-alpha: Human-Readable Diagnostic Explanations
+
+Goal: improve user understanding without adding risky new parser families.
+
+Scope:
+
+- Add conservative human-readable explanation notes for already-supported report types.
+- Focus on explaining exception and termination patterns in plain language.
+- Do not claim exact root cause unless the report directly proves it.
+- Keep explanations local, deterministic, and based on parsed fields.
+- Add no AI diagnosis.
+- Add no confident root-cause claims.
+- Require no new parser family by default.
+
+Possible explanation targets:
+
+- `EXC_BREAKPOINT` / `SIGTRAP`
+- `EXC_BAD_ACCESS`
+- `EXC_CRASH` / `SIGABRT`
+- `EXC_RESOURCE`
+- `EXC_GUARD`
+- Watchdog termination
+- Jetsam memory pressure
+- Panic-full summary
+- Resource Diagnostics summary notes
+
+Required wording style:
+
+- Use cautious language such as "usually", "often", "may indicate", and "check the triggered thread/backtrace".
+- Avoid wording like "this crash was caused by X" unless the report directly proves it.
+
+Example safe wording:
+
+> This usually means the app intentionally trapped or hit a runtime stop condition. Check the triggered thread backtrace to identify the exact function.
+
+Out of scope for `v0.7.0-alpha`:
+
+- AI diagnosis.
+- App Usage Metrics parser.
+- Wi-Fi Connectivity parser.
+- Diagnostic Request parser.
+- Symbolication.
+- Full stack rendering.
+
+### v0.8.0-alpha: Release Hardening And QA Polish
+
+Goal: improve release quality, security posture, documentation, and QA repeatability.
+
+Scope:
+
+- CSP/header hardening planning or implementation if hosting supports it.
+- Optional reusable browser smoke tests.
+- Release QA checklist improvements.
+- README and release note polish.
+- GitHub Release polish.
+- Optional screenshots or demo capture.
+- Accessibility and mobile Safari QA tightening.
+- PWA/offline verification improvements.
+
+Out of scope for `v0.8.0-alpha` unless explicitly approved:
+
+- New parser families.
+- Large UI redesign.
+- Framework migration.
+- Backend or cloud features.
+- Report persistence.
+
+### v0.9.0-beta: Feature Freeze / Release Candidate Preparation
+
+Goal: prepare for stable `v1.0.0`.
+
+Rules:
+
+- No new parser families.
+- No parser architecture redesign.
+- No new storage, backend, or cloud behavior.
+- No large UI changes.
+- Bug fixes, tests, docs, QA, accessibility, and release polish only.
+
+Scope:
+
+- Fix public/beta feedback issues.
+- Final mobile Safari QA.
+- Final PWA/offline QA.
+- Final privacy/search/copy QA.
+- Final supported/unsupported matrix.
+- Final known limitations review.
+- Final release checklist.
+
+### v1.0.0: Stable Release
+
+Goal: declare the original product complete and stable.
+
+`v1.0.0` criteria:
+
+- Supported parser list is clear and accurate.
+- Unsupported families are clearly documented.
+- Privacy behavior is documented and tested.
+- Offline/PWA behavior is verified.
+- Browser QA passes.
+- Automated validation passes.
+- No unresolved release blockers remain.
+- Known limitations are accepted and documented.
+
+Do not block `v1.0.0` on:
+
+- App Usage Metrics.
+- Wi-Fi Connectivity.
+- Diagnostic Request.
+- Broad Accessory/Firmware support.
+- Symbolication.
+- `.dSYM` support.
+- Sysdiagnose extraction.
+- Full stack rendering.
+- AI-style diagnosis.
+- Virtualization or streaming.
+
+These can become future `v1.1`, `v1.2`, or `v2.0` work if explicitly planned.
+
 ## Post-v0.5.0-alpha Or Parallel Hardening
 
-These items remain outside current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later.
+These items remain outside current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later. Some may be candidates for the `v0.8.0-alpha` release-hardening milestone above.
 
 | Area | Future work |
 | --- | --- |
@@ -315,7 +439,8 @@ These ideas are intentionally out of scope for current `v0.6.0-alpha` Apple Diag
 Before starting the next implementation slice:
 
 - Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect active unreleased `v0.6.0-alpha` work.
-- Confirm the next parser-family slice scope.
+- Start from the `v0.7.0-alpha` human-readable diagnostic explanations scope unless a release blocker requires a narrower maintenance slice.
+- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`
