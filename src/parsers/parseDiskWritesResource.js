@@ -7,9 +7,9 @@ const UUID_PATTERN = /\b[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]
 const MAC_ADDRESS_PATTERN = /\b[0-9A-F]{2}(?::[0-9A-F]{2}){5}\b/gi;
 const ADDRESS_VALUE_PATTERN = /\b0x[0-9A-F]{8,}\b/gi;
 const SERIAL_VALUE_PATTERN = /\b(?:FICTIONAL-)?SERIAL-[A-Z0-9-]+\b/gi;
-const REQUEST_OR_DIAGNOSTIC_ID_PATTERN = /\b(?:REQ|REQUEST|INCIDENT|DEVICE|USER|VOLUME)-[A-Z0-9-]+\b/gi;
+const REQUEST_OR_DIAGNOSTIC_ID_PATTERN = /\b(?:REQ|REQUEST|INCIDENT|DEVICE|USER|VOLUME|CRASHKEY)-[A-Z0-9-]+\b/gi;
 const SENSITIVE_LABEL_VALUE_PATTERN =
-  /\b(ECID|UniqueChipID|ChipID|IMEI|MEID|MAC|BluetoothAddress|WiFiAddress|HardwareAddress|DeviceID|device_id|Serial|serial|uuid|identifier|token|key|volume(?:\s+uuid| identifier)?)\b\s*(?:is|:|=)?\s*([A-Z0-9][A-Z0-9-]{7,}|0x[0-9A-F]{8,}|[0-9A-F]{2}(?::[0-9A-F]{2}){5})/gi;
+  /\b(ECID|UniqueChipID|ChipID|IMEI|MEID|MAC|BluetoothAddress|WiFiAddress|HardwareAddress|DeviceID|device_id|Serial|serial|uuid|identifier|token|key|CrashReporterKey|crashReporterKey|volume(?:\s+uuid| identifier)?)\b\s*(?:is|:|=)?\s*([A-Z0-9][A-Z0-9-]{7,}|0x[0-9A-F]{8,}|[0-9A-F]{2}(?::[0-9A-F]{2}){5})/gi;
 const SENSITIVE_KEY_PARTS = [
   'uuid',
   'identifier',

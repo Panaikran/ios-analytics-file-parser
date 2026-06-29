@@ -88,7 +88,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3e2-stackshot-resource-routing-2026-06-29/, 'service worker cache version reflects Slice 3E2 Stackshot Resource routing');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3f-resource-privacy-hardening-2026-06-29/, 'service worker cache version reflects Slice 3F resource privacy hardening');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -384,6 +384,16 @@ function fieldValue(section, label) {
   return section.fields.find((field) => field.label === label)?.value;
 }
 
+function serializeSectionsForCopy(sections) {
+  return sections.map((section) => serializeSectionForCopy(getVisibleSectionForCopy(section))).join('\n');
+}
+
+function assertNoSearchMatches(sections, values, message) {
+  for (const value of values) {
+    assert.equal(filterSectionsByQuery(sections, value).totalMatches, 0, `${message}: ${value}`);
+  }
+}
+
 function assertClassification(input, expected, message) {
   const classification = classifyDiagnostic(input);
   assert.deepEqual(
@@ -673,11 +683,33 @@ const cpuResourceParserFixture = [
     'Window: 60 seconds',
     'Threshold: 80%',
     'Limit Status: exceeded',
-    'Reason: CPU runaway requestID=REQ-CPU-FICTIONAL-123 uuid 11111111-2222-3333-4444-555555555555 address 0xfffffff012345678 serial FICTIONAL-SERIAL-CPU mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF',
+    'Reason: CPU runaway requestID=REQ-CPU-FICTIONAL-123 uuid 11111111-2222-3333-4444-555555555555 address 0xfffffff012345678 serial FICTIONAL-SERIAL-CPU mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF volume VOLUME-FICTIONAL-CPU CrashReporterKey CRASHKEY-CPU-123',
   ].join('\n'),
 ].join('\n');
 const cpuResourceLeakPattern =
-  /FICTIONAL-CPU-INCIDENT-001|REQ-CPU-FICTIONAL-123|11111111-2222-3333-4444-555555555555|\/private\/var\/containers|\/private\/var\/mobile|\/usr\/bin\/DemoCPUApp|0xfffffff012345678|FICTIONAL-SERIAL-CPU|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF/;
+  /FICTIONAL-CPU-INCIDENT-001|REQ-CPU-FICTIONAL-123|11111111-2222-3333-4444-555555555555|\/private\/var\/containers|\/private\/var\/mobile|\/usr\/bin\/DemoCPUApp|0xfffffff012345678|FICTIONAL-SERIAL-CPU|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|VOLUME-FICTIONAL-CPU|CRASHKEY-CPU-123/;
+const cpuNestedPrivacyFixture = [
+  JSON.stringify({
+    bug_type: '202',
+    timestamp: '2026-06-28 10:30:00 +0000',
+    incident_id: 'FICTIONAL-CPU-NESTED-INCIDENT',
+  }),
+  JSON.stringify({
+    bug_type: '202',
+    process: 'NestedCPUApp [124]',
+    cpuLimit: '75%',
+    cpuUsed: '96%',
+    reason:
+      'Nested CPU reason requestID=REQ-CPU-NESTED-123 uuid 12121212-3434-5656-7878-909090909090 path /private/var/mobile/nested.cpu address 0xfffffff087654321 serial FICTIONAL-SERIAL-CPU-NESTED mac 10:20:30:40:50:60 ECID 0xABCDEF1234567890 CrashReporterKey CRASHKEY-CPU-NESTED-123',
+    nestedPayload: {
+      sentinel: 'NESTED-CPU-SENTINEL',
+      path: '/private/var/mobile/Library/Logs/nested.cpu',
+      frames: [{ symbol: '_cpuNestedFrameSymbol', address: '0xfffffff011111111' }],
+    },
+  }),
+].join('\n');
+const cpuNestedLeakPattern =
+  /FICTIONAL-CPU-NESTED-INCIDENT|REQ-CPU-NESTED-123|12121212-3434-5656-7878-909090909090|\/private\/var\/mobile|0xfffffff087654321|0xfffffff011111111|FICTIONAL-SERIAL-CPU-NESTED|10:20:30:40:50:60|0xABCDEF1234567890|CRASHKEY-CPU-NESTED-123|NESTED-CPU-SENTINEL|_cpuNestedFrameSymbol/;
 const cpuResourceJsonFixture = [
   JSON.stringify({
     bug_type: '202',
@@ -770,7 +802,7 @@ const stackshotParserFixture = [
     bug_type: '288',
     exception: '0x00000020',
     reason:
-      'fictional resource stackshot requestID=REQ-STACK-FICTIONAL-123 uuid 55555555-6666-7777-8888-999999999999 address 0xfffffff012345678 serial FICTIONAL-SERIAL-STACK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF',
+      'fictional resource stackshot requestID=REQ-STACK-FICTIONAL-123 uuid 55555555-6666-7777-8888-999999999999 address 0xfffffff012345678 serial FICTIONAL-SERIAL-STACK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF volume VOLUME-FICTIONAL-STACK CrashReporterKey CRASHKEY-STACK-123',
     targetPid: 100,
     triggeredProcess: 'TriggeredStackApp',
     notes: 'Collected near /private/var/mobile/stackshot.log with symbol _sensitiveFrameSymbol',
@@ -863,7 +895,7 @@ const largeStackshotFixture = [
   }),
 ].join('\n');
 const stackshotLeakPattern =
-  /FICTIONAL-STACKSHOT-INCIDENT-001|REQ-STACK-FICTIONAL-123|55555555-6666-7777-8888-999999999999|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF|\/private\/var\/mobile|\/var\/mobile|0xfffffff012345678|0xfffffff011111111|0xABCDEF12|0xfffffff087654321|FICTIONAL-SERIAL-STACK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|NESTED-STACKSHOT-SENTINEL|_sensitiveFrameSymbol|_anotherSensitiveSymbol|_thirdSensitiveSymbol/;
+  /FICTIONAL-STACKSHOT-INCIDENT-001|REQ-STACK-FICTIONAL-123|55555555-6666-7777-8888-999999999999|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF|\/private\/var\/mobile|\/var\/mobile|0xfffffff012345678|0xfffffff011111111|0xABCDEF12|0xfffffff087654321|FICTIONAL-SERIAL-STACK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|VOLUME-FICTIONAL-STACK|CRASHKEY-STACK-123|NESTED-STACKSHOT-SENTINEL|_sensitiveFrameSymbol|_anotherSensitiveSymbol|_thirdSensitiveSymbol/;
 const appUsageClassificationFixture = [
   JSON.stringify({ bug_type: '225', incident_id: 'FICTIONAL-USAGE-INCIDENT' }),
   JSON.stringify([{ eventType: 'example', topic: 'fictional-topic', bundleId: 'com.example.app' }]),
@@ -904,7 +936,7 @@ const diskWritesParserFixture = [
     path: '/private/var/mobile/Containers/Data/Application/AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE/Documents/demo.db',
     actionTaken: 'none',
     reason:
-      'Disk write limit exceeded requestID=REQ-DISK-FICTIONAL-123 uuid 33333333-4444-5555-6666-777777777777 address 0xfffffff012345678 serial FICTIONAL-SERIAL-DISK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF volume VOLUME-FICTIONAL-001',
+      'Disk write limit exceeded requestID=REQ-DISK-FICTIONAL-123 uuid 33333333-4444-5555-6666-777777777777 address 0xfffffff012345678 serial FICTIONAL-SERIAL-DISK mac AA:BB:CC:DD:EE:FF ECID 0x1234567890ABCDEF volume VOLUME-FICTIONAL-001 CrashReporterKey CRASHKEY-DISK-123',
     diskWrites: {
       logicalWrites: '1024 MB',
       physicalWrites: '768 MB',
@@ -947,7 +979,7 @@ const diskWritesFullJsonFixture = JSON.stringify({
   reason: 'logical write limit exceeded',
 });
 const diskWritesLeakPattern =
-  /FICTIONAL-DISK-INCIDENT-001|REQ-DISK-FICTIONAL-123|33333333-4444-5555-6666-777777777777|44444444-5555-6666-7777-888888888888|\/private\/var\/mobile|\/private\/var\/containers|\/var\/mobile|\/private\/var\/root|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|0xfffffff012345678|FICTIONAL-SERIAL-DISK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|VOLUME-FICTIONAL-001|NESTED-DISK-SENTINEL/;
+  /FICTIONAL-DISK-INCIDENT-001|REQ-DISK-FICTIONAL-123|33333333-4444-5555-6666-777777777777|44444444-5555-6666-7777-888888888888|\/private\/var\/mobile|\/private\/var\/containers|\/var\/mobile|\/private\/var\/root|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|0xfffffff012345678|FICTIONAL-SERIAL-DISK|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|VOLUME-FICTIONAL-001|CRASHKEY-DISK-123|NESTED-DISK-SENTINEL/;
 const genericWritesJsonFixture = JSON.stringify({
   bug_type: '109',
   process: 'DemoCrashLikeApp',
@@ -1727,6 +1759,166 @@ assert.doesNotMatch(
   JSON.stringify(parseInput(stackshotParserFixture, { sanitize: false })),
   stackshotLeakPattern,
   'Stackshot Resource parseInput raw mode remains bounded'
+);
+
+const resourcePrivacyCases = [
+  {
+    label: 'CPU Resource',
+    fixture: cpuResourceParserFixture,
+    nestedFixture: cpuNestedPrivacyFixture,
+    directParser: parseCpuResource,
+    leakPattern: cpuResourceLeakPattern,
+    nestedLeakPattern: cpuNestedLeakPattern,
+    safeSearch: 'DemoCPUApp',
+    sensitiveSearches: [
+      'REQ-CPU-FICTIONAL-123',
+      '11111111-2222-3333-4444-555555555555',
+      '/private/var/mobile',
+      '/usr/bin/DemoCPUApp',
+      '0xfffffff012345678',
+      'FICTIONAL-SERIAL-CPU',
+      'AA:BB:CC:DD:EE:FF',
+      '0x1234567890ABCDEF',
+      'VOLUME-FICTIONAL-CPU',
+      'CRASHKEY-CPU-123',
+    ],
+  },
+  {
+    label: 'Disk Writes Resource',
+    fixture: diskWritesParserFixture,
+    directParser: parseDiskWritesResource,
+    leakPattern: diskWritesLeakPattern,
+    safeSearch: 'DemoDiskApp',
+    sensitiveSearches: [
+      'REQ-DISK-FICTIONAL-123',
+      '33333333-4444-5555-6666-777777777777',
+      '44444444-5555-6666-7777-888888888888',
+      '/private/var/mobile',
+      '/private/var/root',
+      '0xfffffff012345678',
+      'FICTIONAL-SERIAL-DISK',
+      'AA:BB:CC:DD:EE:FF',
+      '0x1234567890ABCDEF',
+      'VOLUME-FICTIONAL-001',
+      'CRASHKEY-DISK-123',
+      'NESTED-DISK-SENTINEL',
+    ],
+  },
+  {
+    label: 'Stackshot Resource',
+    fixture: stackshotParserFixture,
+    directParser: parseResourceStackshot,
+    leakPattern: stackshotLeakPattern,
+    safeSearch: 'TriggeredStackApp',
+    sensitiveSearches: [
+      'REQ-STACK-FICTIONAL-123',
+      '55555555-6666-7777-8888-999999999999',
+      'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+      '/private/var/mobile',
+      '0xfffffff012345678',
+      '0xfffffff011111111',
+      'FICTIONAL-SERIAL-STACK',
+      'AA:BB:CC:DD:EE:FF',
+      '0x1234567890ABCDEF',
+      'VOLUME-FICTIONAL-STACK',
+      'CRASHKEY-STACK-123',
+      'NESTED-STACKSHOT-SENTINEL',
+      '_sensitiveFrameSymbol',
+    ],
+  },
+];
+
+for (const resourceCase of resourcePrivacyCases) {
+  const directSanitizedSections = resourceCase.directParser(resourceCase.fixture);
+  const routedSanitizedSections = parseInput(resourceCase.fixture);
+  const directRawSections = resourceCase.directParser(resourceCase.fixture, { sanitize: false });
+  const routedRawSections = parseInput(resourceCase.fixture, { sanitize: false });
+
+  assert.doesNotMatch(
+    JSON.stringify(directSanitizedSections),
+    resourceCase.leakPattern,
+    `${resourceCase.label} direct sanitized output does not expose sensitive resource values`
+  );
+  assert.doesNotMatch(
+    JSON.stringify(routedSanitizedSections),
+    resourceCase.leakPattern,
+    `${resourceCase.label} routed sanitized output does not expose sensitive resource values`
+  );
+  assert.doesNotMatch(
+    JSON.stringify(directRawSections),
+    resourceCase.leakPattern,
+    `${resourceCase.label} direct raw mode stays bounded and does not expose disallowed values`
+  );
+  assert.doesNotMatch(
+    JSON.stringify(routedRawSections),
+    resourceCase.leakPattern,
+    `${resourceCase.label} routed raw mode stays bounded and does not expose disallowed values`
+  );
+  assert.doesNotMatch(
+    serializeSectionsForCopy(routedSanitizedSections),
+    resourceCase.leakPattern,
+    `${resourceCase.label} copied visible content does not expose sensitive resource values`
+  );
+  assertNoSearchMatches(
+    routedSanitizedSections,
+    resourceCase.sensitiveSearches,
+    `${resourceCase.label} sanitized search does not expose sensitive source values`
+  );
+  assert.ok(
+    filterSectionsByQuery(routedSanitizedSections, resourceCase.safeSearch).totalMatches > 0,
+    `${resourceCase.label} sanitized search still finds safe parsed values`
+  );
+
+  if (resourceCase.nestedFixture) {
+    assert.doesNotThrow(
+      () => resourceCase.directParser(resourceCase.nestedFixture),
+      `${resourceCase.label} parser tolerates nested malformed privacy payloads`
+    );
+    assert.doesNotMatch(
+      JSON.stringify(resourceCase.directParser(resourceCase.nestedFixture)),
+      resourceCase.nestedLeakPattern,
+      `${resourceCase.label} nested malformed payloads do not stringify into sanitized output`
+    );
+    assert.doesNotMatch(
+      JSON.stringify(parseInput(resourceCase.nestedFixture)),
+      resourceCase.nestedLeakPattern,
+      `${resourceCase.label} routed nested malformed payloads do not expose source values`
+    );
+  }
+}
+
+const largeRoutedStackshotSections = parseInput(largeStackshotFixture);
+const largeRoutedStackshotTable = sectionById(largeRoutedStackshotSections, 'resource-stackshot-top-processes');
+assert.equal(largeRoutedStackshotTable.table.length, 100, 'Stackshot routed top process table keeps the 100 row cap');
+assert.equal(
+  largeRoutedStackshotTable.tableSummary,
+  '100 of 150 processes shown',
+  'Stackshot routed top process table reports visible and total process counts'
+);
+assert.equal(
+  filterSectionsByQuery(largeRoutedStackshotSections, 'LargeStackProcess0').totalMatches,
+  0,
+  'Stackshot search cannot find process rows outside the rendered top-process cap'
+);
+assert.ok(
+  filterSectionsByQuery(largeRoutedStackshotSections, 'LargeStackProcess149').totalMatches > 0,
+  'Stackshot search can find rendered capped top-process rows'
+);
+const largeStackshotCopyText = serializeSectionsForCopy(largeRoutedStackshotSections);
+assert.doesNotMatch(
+  largeStackshotCopyText,
+  /LargeStackProcess0/,
+  'Stackshot copied content omits process rows outside the rendered cap'
+);
+assert.match(
+  largeStackshotCopyText,
+  /LargeStackProcess149/,
+  'Stackshot copied content includes rendered top-process rows'
+);
+assert.doesNotMatch(
+  serializeSectionsForCopy(parseInput(stackshotParserFixture)),
+  /_sensitiveFrameSymbol|0xfffffff012345678|0xfffffff011111111|0xABCDEF12|0xfffffff087654321/,
+  'Stackshot copied content does not include frame symbols or frame addresses'
 );
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
