@@ -13,6 +13,7 @@ iOS Analytics File Parser is a static browser app for inspecting common iOS and 
 - JetsamEvent memory reports
 - panic-full logs
 - CoreAnalytics `.ips.ca.synced` reports
+- AccessoryCrash and selected resource diagnostics
 - generic analytics text logs
 
 It is intentionally local-first. Reports are parsed in the browser, sanitized by default, and displayed as structured sections, tables, charts, and raw notes where useful.
@@ -23,7 +24,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | --- | --- |
 | Latest released version | `v0.5.1-alpha` |
 | Active unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
-| Current v0.6 focus | Phase 2: AccessoryCrash support and QA cleanup |
+| Current v0.6 focus | Release readiness for Apple Diagnostics Expansion |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -38,6 +39,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.5.1-alpha | Released: file-size validation hotfix |
 | v0.6.0-alpha Phase 1 | Implemented but unreleased: classification architecture and safe unsupported messages |
 | v0.6.0-alpha Phase 2 | Implemented but unreleased: narrow AccessoryCrash `bug_type: 305` support |
+| v0.6.0-alpha Phase 3 | Implemented but unreleased: CPU Resource, Disk Writes Resource, and Stackshot Resource summary parsing |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -88,6 +90,9 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 | Panic-full text or JSON-wrapped `.ips` | `panic` | Panic String, Panic Flags, Kernel Backtrace, Loaded Kexts, System Info |
 | Structured CoreAnalytics `.ips.ca.synced` line-delimited JSON | `coreanalytics` | Summary, Configuration, Record Overview, Event Types, Sample Records, Parser Notes |
 | AccessoryCrash `.ips` with `bug_type: 305` | `accessory-crash` | Summary, Accessory Information, Application Information, Crash Log Overview, Panic / Fault Notes, Parser Notes |
+| CPU Resource `.ips` with `bug_type: 202` | `resource-cpu` | Summary, Process / Command Info, CPU Usage, Limits / Thresholds, Parser Notes |
+| Disk Writes Resource `.ips` with `bug_type: 142` | `resource-diskwrites` | Summary, Process / Command Info, Disk Write Usage, Limits / Thresholds, Parser Notes |
+| Stackshot Resource `.ips` with `bug_type: 288` | `resource-stackshot` | Summary, Trigger / Reason, Process Overview, Top Processes, Parser Notes; summary parsing only |
 | Generic analytics text | `analytics` | Fallback summary and grouped text sections |
 
 ### Recognized But Not Parsed Yet
@@ -96,14 +101,12 @@ Active `v0.6.0-alpha` classification work can recognize some additional Apple di
 
 | Diagnostic family | Classification type | Current support |
 | --- | --- | --- |
-| CPU Resource | `resource-cpu` | Recognized for safe unsupported messaging only |
-| Disk Writes Resource | `resource-diskwrites` | Recognized for safe unsupported messaging only |
-| Stackshot Resource | `resource-stackshot` | Recognized for safe unsupported messaging only |
 | App Usage Metrics | `app-usage-metrics` | Recognized for safe unsupported messaging only |
 | Wi-Fi Connectivity | `wifi-connectivity` | Recognized for safe unsupported messaging only |
 | Diagnostic Request | `diagnostic-request` | Recognized for safe unsupported messaging only |
 
 AccessoryCrash support is intentionally narrow. It covers AccessoryCrash `.ips` reports with `bug_type: 305`; it does not claim broad Accessory/Firmware diagnostic support.
+Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` only. Stackshot Resource support is summary parsing only; full stack rendering and symbolication are not supported.
 
 ## Feature Support
 
@@ -135,6 +138,9 @@ AccessoryCrash support is intentionally narrow. It covers AccessoryCrash `.ips` 
 | Generic analytics fallback parser | Supported |
 | CoreAnalytics `.ips.ca.synced` line-delimited JSON | Supported, capped rendered rows |
 | AccessoryCrash `bug_type: 305` parser | Supported, narrow v0.6 work |
+| CPU Resource `bug_type: 202` parser | Supported, narrow v0.6 work |
+| Disk Writes Resource `bug_type: 142` parser | Supported, narrow v0.6 work |
+| Stackshot Resource `bug_type: 288` parser | Supported, summary parsing only |
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
@@ -176,6 +182,10 @@ AccessoryCrash support is intentionally narrow. It covers AccessoryCrash `.ips` 
 - AccessoryCrash `bug_type: 305` summary, accessory information, application information, crashlog overview, panic/fault notes, and parser notes.
 - AccessoryCrash crashlogs are summarized; raw nested crashlog bodies are not rendered.
 - AccessoryCrash sanitized mode redacts or omits identifier-heavy fields by default.
+- CPU Resource `bug_type: 202` summary, process/command info, CPU usage, limits/thresholds, and parser notes.
+- Disk Writes Resource `bug_type: 142` summary, process/command info, disk write usage, limits/thresholds, and parser notes.
+- Stackshot Resource `bug_type: 288` summary, trigger/reason, process overview, capped top-process summaries, and parser notes.
+- Stackshot Resource support is summary-only. Full stack frames, frame symbols, frame addresses, and raw nested stackshot payloads are not rendered.
 - Diagnostic classification identifies supported formats and selected unsupported Apple diagnostic families before parser routing.
 - Recognized unsupported diagnostics show safe unsupported messages instead of being treated as generic unknown files.
 - Section-specific table columns.
@@ -382,6 +392,8 @@ index.html -> manifest.webmanifest
 |-- PHASE_2_SUMMARY.md
 |-- PHASE_3_SUMMARY.md
 |-- PHASE_4_SUMMARY.md
+|-- PHASE_5_SUMMARY.md
+|-- PHASE_6_SUMMARY.md
 |-- package.json
 |-- icons/
 |   |-- apple-touch-icon.png
@@ -416,13 +428,16 @@ index.html -> manifest.webmanifest
 |   |   |-- parseAccessoryCrash.js
 |   |   |-- parseAnalytics.js
 |   |   |-- parseCoreAnalytics.js
+|   |   |-- parseCpuResource.js
 |   |   |-- parseCrash.js
+|   |   |-- parseDiskWritesResource.js
 |   |   |-- parseIps.js
 |   |   |-- parseIpsContainer.js
 |   |   |-- parseIpsWatchdogStackshot.js
 |   |   |-- parseJetsam.js
 |   |   |-- parsePanic.js
-|   |   `-- parsePanicStub.js
+|   |   |-- parsePanicStub.js
+|   |   `-- parseResourceStackshot.js
 |   |-- privacy/
 |   |   `-- sanitize.js
 |   |-- search/
@@ -478,7 +493,7 @@ parseInput(text, { sanitize: false })
 
 Parser output is treated as immutable by search and UI controls. Search and dense table state are UI concerns layered on top of parsed sections.
 
-Internally, `parseInput()` uses `classifyDiagnostic(text)` and routes supported files with `classification.parserType`. `detectFileType(text)` remains available as a compatibility wrapper that returns legacy strings such as `ips`, `crash`, `jetsam`, `panic`, `coreanalytics`, `analytics`, or `unknown`.
+Internally, `parseInput()` uses `classifyDiagnostic(text)` and routes supported files with `classification.parserType`. `detectFileType(text)` remains available as a compatibility wrapper that returns legacy strings such as `ips`, `crash`, `jetsam`, `panic`, `coreanalytics`, `analytics`, `accessory-crash`, `resource-cpu`, `resource-diskwrites`, `resource-stackshot`, or `unknown`.
 
 Recognized-but-unsupported diagnostics are classified for safe UI messaging only. They do not return `SectionModel[]`; direct unsupported parsing still throws:
 
@@ -510,6 +525,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 3 Summary](PHASE_3_SUMMARY.md)
 - [Phase 4 Summary](PHASE_4_SUMMARY.md)
 - [Phase 5 Summary](PHASE_5_SUMMARY.md)
+- [Phase 6 Summary](PHASE_6_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -531,8 +547,11 @@ After first successful service worker setup, these fictional examples are availa
 - AccessoryCrash support is limited to `.ips` reports with `bug_type: 305`.
 - Broad Accessory/Firmware diagnostics are not supported.
 - AccessoryCrash raw nested crashlog bodies are not rendered; crashlogs are summarized.
-- Some additional Apple diagnostic families are recognized for safe unsupported messages only; they are not parsed into sections yet.
-- CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are not supported parsers yet.
+- CPU Resource support is limited to reports classified as `bug_type: 202`.
+- Disk Writes Resource support is limited to reports classified as `bug_type: 142`.
+- Stackshot Resource support is limited to reports classified as `bug_type: 288`, and it is summary parsing only.
+- Stackshot full stack rendering, frame symbol rendering, frame address rendering, and symbolication are not supported.
+- App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are recognized for safe unsupported messages only; they are not parsed into sections yet.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
@@ -557,7 +576,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.5.0-alpha | Complete | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | v0.5.1-alpha | Complete | File-size validation hotfix restoring the 20 MB safety limit |
 | v0.6.0-alpha Phase 1 | Complete, unreleased | Diagnostic Classification Architecture |
-| v0.6.0-alpha Phase 2 | Active, unreleased | AccessoryCrash `bug_type: 305` support and QA cleanup |
+| v0.6.0-alpha Phase 2 | Complete, unreleased | AccessoryCrash `bug_type: 305` support |
+| v0.6.0-alpha Phase 3 | Release-ready pending final gate, unreleased | CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, Stackshot Resource `bug_type: 288` summary parsing |
 
 The project keeps the same constraints:
 
@@ -589,10 +609,19 @@ The `v0.6.0-alpha` Phase 2 AccessoryCrash work is narrow:
 - Slice 2D hardened AccessoryCrash privacy handling.
 - Slice 2E aligns documentation and QA cleanup.
 
-Upcoming `v0.6.0-alpha` or later work remains parser-family implementation and later hardening, subject to approval:
+The `v0.6.0-alpha` Phase 3 Resource Diagnostics work is narrow:
+
+- Slice 3A designed CPU Resource, Disk Writes Resource, and Stackshot Resource parser boundaries.
+- Slice 3B and Slice 3C added CPU Resource direct parsing and routing.
+- Slice 3D added Disk Writes Resource parsing and routing.
+- Slice 3E1 and Slice 3E2 added Stackshot Resource direct parsing and routing.
+- Slice 3F added cross-resource privacy, search, copy, raw-mode, and row-cap regression coverage.
+- Slice 3G performs browser QA, documentation alignment, and release-readiness checks.
+
+Upcoming work remains parser-family implementation and later hardening, subject to approval:
 
 - broader Accessory/Firmware diagnostics, if explicitly planned
-- Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families
+- App Usage Metrics parser work
 - Wi-Fi Connectivity and Diagnostic Request parser work
 - virtualization or incremental rendering for very large visible tables
 - deeper CoreAnalytics drill-down without raw JSON dumping

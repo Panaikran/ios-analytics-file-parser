@@ -8,7 +8,7 @@ The milestone improves how large parsed reports are modeled, rendered, searched,
 
 No backend, authentication, analytics, cloud storage, report persistence, framework dependency, runtime caching, or new parser format was added.
 
-Historical note: after Phase 5 and the `v0.5.1-alpha` file-size validation hotfix, `v0.6.0-alpha` work began with Diagnostic Classification Architecture. See [ROADMAP.md](ROADMAP.md) for current v0.6 status.
+Historical note: after Phase 5 and the `v0.5.1-alpha` file-size validation hotfix, `v0.6.0-alpha` work began with Diagnostic Classification Architecture and Apple Diagnostics Expansion. See [ROADMAP.md](ROADMAP.md) and [PHASE_6_SUMMARY.md](PHASE_6_SUMMARY.md) for current v0.6 status.
 
 ## Phase 5 Status
 

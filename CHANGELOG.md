@@ -2,29 +2,42 @@
 
 ## v0.6.0-alpha - Unreleased
 
-Apple Diagnostics Expansion classification architecture and narrow AccessoryCrash support.
+Apple Diagnostics Expansion classification architecture, narrow AccessoryCrash support, and narrow Resource Diagnostics support.
 
 ### Added
 
 - Diagnostic classifier in `src/parsers/classifyDiagnostic.js` for supported formats and recognized unsupported Apple diagnostic families.
 - Taxonomy metadata for `type`, `family`, `subtype`, `supported`, `parserType`, `legacyType`, `structure`, and `bugType`.
-- Recognition for unsupported CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request diagnostics.
+- Recognition for unsupported App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request diagnostics.
 - Friendly safe unsupported diagnostic messages for recognized-but-unsupported families.
 - Taxonomy and privacy regression tests for supported and recognized unsupported diagnostics.
 - AccessoryCrash parser support for `.ips` reports with `bug_type: 305`.
 - AccessoryCrash sections: Summary, Accessory Information, Application Information, Crash Log Overview, Panic / Fault Notes, and Parser Notes.
 - AccessoryCrash privacy hardening for incident IDs, UUIDs, request IDs, paths, serials, MAC addresses, ECIDs/chip identifiers, crashlog IDs, nested values, and raw-mode output.
+- CPU Resource parser support for reports classified as `bug_type: 202`.
+- CPU Resource sections: Summary, Process / Command Info, CPU Usage, Limits / Thresholds, and Parser Notes.
+- Disk Writes Resource parser support for reports classified as `bug_type: 142`.
+- Disk Writes Resource sections: Summary, Process / Command Info, Disk Write Usage, Limits / Thresholds, and Parser Notes.
+- Stackshot Resource parser support for reports classified as `bug_type: 288`, with summary-only output.
+- Stackshot Resource sections: Summary, Trigger / Reason, Process Overview, Top Processes, and Parser Notes.
+- Stackshot Top Processes output is capped at 100 rendered rows with visible/total summary wording.
+- Cross-resource privacy, search, copy, raw-mode, malformed-input, and row-cap regression coverage for CPU Resource, Disk Writes Resource, and Stackshot Resource.
 
 ### Changed
 
 - `detectFileType()` is now a compatibility wrapper over `classifyDiagnostic(input).legacyType`.
 - `parseInput()` now routes internally through `classifyDiagnostic(input).parserType` while preserving its public `SectionModel[]` return contract for supported files.
 - AccessoryCrash is now classified and routed through `parseInput()` as `accessory-crash`.
+- CPU Resource is now classified and routed through `parseInput()` as `resource-cpu`.
+- Disk Writes Resource is now classified and routed through `parseInput()` as `resource-diskwrites`.
+- Stackshot Resource is now classified and routed through `parseInput()` as `resource-stackshot`.
 
 ### Notes
 
 - AccessoryCrash support is intentionally narrow and limited to `bug_type: 305`; broad Accessory/Firmware diagnostics are not supported.
-- No CPU Resource, Disk Writes Resource, Stackshot Resource, App Usage Metrics, Wi-Fi Connectivity, or Diagnostic Request parser support was added.
+- Resource Diagnostics support is intentionally narrow and limited to CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288`.
+- Stackshot Resource support is summary parsing only; full stack rendering, frame symbol rendering, frame address rendering, and symbolication are not supported.
+- No App Usage Metrics, Wi-Fi Connectivity, or Diagnostic Request parser support was added.
 - No real diagnostic fixtures were committed.
 - Recognized unsupported diagnostics do not emit sections and still fail safely if parsed directly.
 - No UI rendering model, service worker strategy, package metadata, backend, authentication, analytics, cloud storage, report persistence, or framework dependency changed.

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.6.0-alpha` AccessoryCrash QA and documentation work
+Status: updated for active `v0.6.0-alpha` release-readiness work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -16,7 +16,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
 | Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
-| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Diagnostic classification plus narrow AccessoryCrash `bug_type: 305` support |
+| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
 
 ## Project Constraints
 
@@ -196,13 +196,25 @@ Phase 2 goal: add narrow AccessoryCrash support without claiming broad Accessory
 | Slice 2B | Complete | Added `parseAccessoryCrash()` and direct parser tests against fictional sanitized data |
 | Slice 2C | Complete | Flipped AccessoryCrash classification/routing support and routed `parseInput()` through the parser |
 | Slice 2D | Complete | Hardened AccessoryCrash privacy handling for identifiers, paths, serials, MACs, ECIDs/chip IDs, crashlog IDs, nested values, and raw mode |
-| Slice 2E | Documentation/QA cleanup | Align docs and define final QA checklist for narrow AccessoryCrash support |
+| Slice 2E | Complete | Aligned docs and QA checklist for narrow AccessoryCrash support |
+
+### Phase 3: Resource Diagnostics
+
+Phase 3 goal: add narrow Resource Diagnostics support for CPU, Disk Writes, and Stackshot reports without expanding into App Usage Metrics, Wi-Fi, Diagnostic Request, sysdiagnose extraction, symbolication, or full stack rendering.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 3A | Complete | Designed CPU Resource, Disk Writes Resource, and Stackshot Resource parser boundaries, fictional fixture schemas, privacy rules, and test strategy |
+| Slice 3B | Complete | Added direct `parseCpuResource()` parser tests |
+| Slice 3C | Complete | Flipped CPU Resource classification/routing support and routed `parseInput()` through the parser |
+| Slice 3D | Complete | Added Disk Writes Resource parser, classification/routing support, service-worker precache entry, and privacy tests |
+| Slice 3E1 | Complete | Added direct Stackshot Resource parser tests with summary-only rendering and 100-row top-process cap |
+| Slice 3E2 | Complete | Flipped Stackshot Resource classification/routing support and routed `parseInput()` through the parser |
+| Slice 3F | Complete | Added cross-resource privacy, search, copy, raw-mode, and Stackshot row-cap regression coverage |
+| Slice 3G | Release-readiness | Browser QA, documentation alignment, validation, and release-readiness report |
 
 Recognized but not parsed yet:
 
-- CPU Resource
-- Disk Writes Resource
-- Stackshot Resource
 - App Usage Metrics
 - Wi-Fi Connectivity
 - Diagnostic Request
@@ -212,13 +224,16 @@ Recognition is not parser support. These families show safe unsupported messages
 Supported in active unreleased v0.6 work:
 
 - AccessoryCrash `.ips` reports with `bug_type: 305`.
+- CPU Resource reports with `bug_type: 202`.
+- Disk Writes Resource reports with `bug_type: 142`.
+- Stackshot Resource reports with `bug_type: 288`, summary parsing only.
 
 AccessoryCrash support summarizes crashlogs and does not render raw nested crashlog bodies. Broad Accessory/Firmware diagnostics remain future work unless explicitly planned.
+Stackshot Resource support summarizes trigger, process overview, and capped top-process rows. It does not render full stacks, frame symbols, frame addresses, or perform symbolication.
 
 ### Planned Later v0.6 Work
 
 - Broader Accessory/Firmware diagnostics, if explicitly planned.
-- Resource Diagnostics parser work for CPU, Disk Writes, and Stackshot families.
 - App Usage Metrics parser work.
 - Wi-Fi Connectivity parser work.
 - Diagnostic Request parser work.
@@ -242,6 +257,7 @@ Future work beyond the classification/parser-family sequence:
 - Symbolication.
 - `.dSYM` support.
 - Sysdiagnose archive extraction.
+- Full stack rendering.
 - New framework dependencies without explicit approval.
 - Runtime caching of unknown requests.
 - Report persistence, recent files, or history.
@@ -252,7 +268,7 @@ Future work beyond the classification/parser-family sequence:
 ### Testing Direction
 
 - Preserve existing Node/assert regression tests.
-- Add focused pure-helper tests for table sizing, row limits, search/copy visibility, and CoreAnalytics grouping.
+- Add focused tests for classification, parser routing, privacy redaction, search/copy visibility, row caps, and malformed input.
 - Keep static checks for service worker cache boundaries and forbidden persistence APIs when service-worker-adjacent files change.
 - Run syntax checks for touched JavaScript modules.
 - Keep browser/mobile checks manual unless browser automation is explicitly approved.
@@ -265,7 +281,7 @@ These items remain outside current `v0.6.0-alpha` Apple Diagnostics Expansion wo
 | Area | Future work |
 | --- | --- |
 | CSP/header hardening | Stronger response-header CSP on a host that supports custom headers, such as Cloudflare Pages |
-| Browser QA | Optional automated browser smoke tests |
+| Browser QA | Optional reusable automated browser smoke tests beyond the Slice 3G release-readiness pass |
 | Release operations | Package metadata/version cleanup if release process moves beyond Git tags/docs |
 | Visual QA | Screenshot/demo capture for README and GitHub Releases |
 
