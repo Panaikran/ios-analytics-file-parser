@@ -10,6 +10,7 @@ import { parseIps } from './parseIps.js';
 import { parseIpsWatchdogStackshot } from './parseIpsWatchdogStackshot.js';
 import { parseJetsam } from './parseJetsam.js';
 import { parsePanic } from './parsePanic.js';
+import { parseResourceStackshot } from './parseResourceStackshot.js';
 
 export function parseInput(input, { sanitize = true } = {}) {
   const classification = classifyDiagnostic(input);
@@ -58,6 +59,10 @@ export function parseInput(input, { sanitize = true } = {}) {
 
   if (type === 'resource-diskwrites') {
     return parseDiskWritesResource(input, options);
+  }
+
+  if (type === 'resource-stackshot') {
+    return parseResourceStackshot(input, options);
   }
 
   throw new Error('Unsupported or unrecognized file type.');

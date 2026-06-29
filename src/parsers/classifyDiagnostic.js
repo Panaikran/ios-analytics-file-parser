@@ -15,7 +15,6 @@ const UNSUPPORTED_DIAGNOSTIC_MESSAGES = Object.freeze({
   'accessory-crash': 'Recognized Accessory Crash diagnostic, but this parser is not supported yet.',
   'resource-cpu': 'Recognized CPU Resource diagnostic, but this parser is not supported yet.',
   'resource-diskwrites': 'Recognized Disk Writes Resource diagnostic, but this parser is not supported yet.',
-  'resource-stackshot': 'Recognized Stackshot Resource diagnostic, but this parser is not supported yet.',
   'app-usage-metrics': 'Recognized App Usage Metrics diagnostic, but this parser is not supported yet.',
   'wifi-connectivity': 'Recognized Wi-Fi Connectivity diagnostic, but this parser is not supported yet.',
   'diagnostic-request': 'Recognized Diagnostic Request report, but this parser is not supported yet.',
@@ -71,9 +70,9 @@ function classifyContainer(body, metadata, structure) {
   const bugType = bugTypeOf(body, metadata);
 
   if (isAccessoryCrash(body, metadata)) return supported('accessory-crash', 'accessory', 'crash', 'accessory-crash', structure, bugType);
-  if (isPanicContainer(body)) return supported('panic-full', 'panic', 'full', 'panic', structure, bugType);
+  if (isPanicContainer(body, metadata)) return supported('panic-full', 'panic', 'full', 'panic', structure, bugType);
   if (isWatchdogStackshot(body)) return supported('watchdog', 'watchdog', 'stackshot', 'ips-watchdog-stackshot', structure, bugType);
-  if (isStackshotResource(body, metadata)) return unsupported('resource-stackshot', 'resource', 'stackshot', structure, bugType);
+  if (isStackshotResource(body, metadata)) return supported('resource-stackshot', 'resource', 'stackshot', 'resource-stackshot', structure, bugType);
   if (isJetsam(body)) return supported('jetsam', 'resource', 'memory', 'jetsam', structure, bugType);
 
   if (isDiagnosticRequest(body, metadata)) return unsupported('diagnostic-request', 'diagnostic-request', 'pipeline', structure, bugType);
@@ -170,8 +169,8 @@ function isJetsam(value) {
   );
 }
 
-function isPanicContainer(value) {
-  return Boolean(isPlainObject(value) && (value.panicString || isPanicText(value.panicString ?? '')));
+function isPanicContainer(value, metadata) {
+  return Boolean(isPlainObject(value) && !hasBugType('288', value, metadata) && (value.panicString || isPanicText(value.panicString ?? '')));
 }
 
 function isAccessoryCrash(body, metadata) {
@@ -209,9 +208,11 @@ function hasStrongDiskWritesEvidence(body) {
 }
 
 function isStackshotResource(body, metadata) {
+  const explicitBugType = bugTypeOf(body, metadata);
+  if (explicitBugType) return explicitBugType === '288';
+
   return Boolean(
-    hasBugType('288', body, metadata) ||
-      (isPlainObject(body) && body.processByPid && body.memoryStatus) ||
+    (isPlainObject(body) && body.processByPid && body.memoryStatus) ||
       (isPlainObject(body) && body.processByPid && body.reason && body.exception)
   );
 }

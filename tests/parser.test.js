@@ -88,7 +88,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3d-diskwrites-resource-routing-2026-06-28/, 'service worker cache version reflects Slice 3D Disk Writes Resource routing');
+assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3e2-stackshot-resource-routing-2026-06-29/, 'service worker cache version reflects Slice 3E2 Stackshot Resource routing');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -97,16 +97,19 @@ assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'ser
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'service worker precaches the AccessoryCrash parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'service worker precaches the CPU Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/, 'service worker precaches the Disk Writes Resource parser');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/parseResourceStackshot\.js/, 'service worker precaches the Stackshot Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.match(parserIndexSource, /import \{ parseAccessoryCrash \} from '\.\/parseAccessoryCrash\.js';/, 'parseInput imports the AccessoryCrash parser');
 assert.match(parserIndexSource, /import \{ parseCpuResource \} from '\.\/parseCpuResource\.js';/, 'parseInput imports the CPU Resource parser');
 assert.match(parserIndexSource, /import \{ parseDiskWritesResource \} from '\.\/parseDiskWritesResource\.js';/, 'parseInput imports the Disk Writes Resource parser');
+assert.match(parserIndexSource, /import \{ parseResourceStackshot \} from '\.\/parseResourceStackshot\.js';/, 'parseInput imports the Stackshot Resource parser');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
 assert.match(parserIndexSource, /type === 'accessory-crash'[^]*parseAccessoryCrash\(parsed\.body, parsed\.metadata, options\)/, 'parseInput routes AccessoryCrash containers through the AccessoryCrash parser');
 assert.match(parserIndexSource, /type === 'resource-cpu'[^]*parseCpuResource\(input, options\)/, 'parseInput routes CPU Resource input through the CPU Resource parser');
 assert.match(parserIndexSource, /type === 'resource-diskwrites'[^]*parseDiskWritesResource\(input, options\)/, 'parseInput routes Disk Writes Resource input through the Disk Writes Resource parser');
+assert.match(parserIndexSource, /type === 'resource-stackshot'[^]*parseResourceStackshot\(input, options\)/, 'parseInput routes Stackshot Resource input through the Stackshot Resource parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(
@@ -726,6 +729,35 @@ const stackshotClassificationFixture = [
     processByPid: { 100: { procname: 'DemoProcess' } },
   }),
 ].join('\n');
+const stackshotWithPanicStringFixture = [
+  JSON.stringify({ bug_type: '288', incident_id: 'FICTIONAL-STACKSHOT-PANIC-INCIDENT' }),
+  JSON.stringify({
+    bug_type: '288',
+    panicString: 'panic-like text inside a fictional stackshot resource report',
+    reason: 'fictional resource stackshot with panic-like field',
+    memoryStatus: { pageSize: 16384 },
+    processByPid: { 100: { procname: 'StackshotPanicLikeApp' } },
+  }),
+].join('\n');
+const jetsamWithProcessByPidFixture = [
+  JSON.stringify({ bug_type: '298', incident_id: 'FICTIONAL-JETSAM-PROCESSBYPID' }),
+  JSON.stringify({
+    bug_type: '298',
+    memoryStatus: { pageSize: 16384 },
+    rpages: 2048,
+    processByPid: { 100: { procname: 'JetsamProcessByPidApp' } },
+  }),
+].join('\n');
+const watchdogWithStackshotPayloadFixture = [
+  JSON.stringify({ bug_type: '509', incident_id: 'FICTIONAL-WATCHDOG-STACKSHOT-PAYLOAD' }),
+  JSON.stringify({
+    bug_type: '509',
+    termination: { namespace: 'SPRINGBOARD', code: '0x8badf00d' },
+    stackshot: { processByPid: { 100: { procname: 'WatchdogStackshotApp' } } },
+    memoryStatus: { pageSize: 16384 },
+    processByPid: { 100: { procname: 'WatchdogStackshotApp' } },
+  }),
+].join('\n');
 const stackshotParserFixture = [
   JSON.stringify({
     bug_type: '288',
@@ -926,11 +958,6 @@ const genericWritesJsonFixture = JSON.stringify({
 
 const unsupportedDiagnosticMessageCases = [
   [
-    stackshotClassificationFixture,
-    'Recognized Stackshot Resource diagnostic, but this parser is not supported yet.',
-    'Stackshot resource',
-  ],
-  [
     appUsageClassificationFixture,
     'Recognized App Usage Metrics diagnostic, but this parser is not supported yet.',
     'App Usage Metrics',
@@ -999,12 +1026,12 @@ assertClassification(
     type: 'resource-stackshot',
     family: 'resource',
     subtype: 'stackshot',
-    supported: false,
-    parserType: null,
-    legacyType: 'unknown',
+    supported: true,
+    parserType: 'resource-stackshot',
+    legacyType: 'resource-stackshot',
     bugType: '288',
   },
-  'classifies stackshot/resource diagnostics before app crash'
+  'classifies supported stackshot/resource diagnostics'
 );
 assert.notEqual(
   classifyDiagnostic(stackshotClassificationFixture).type,
@@ -1078,6 +1105,11 @@ assert.equal(
   'supported Disk Writes Resource diagnostics do not receive a recognized-unsupported message'
 );
 assert.equal(
+  getUnsupportedDiagnosticMessage(classifyDiagnostic(stackshotClassificationFixture)),
+  null,
+  'supported Stackshot Resource diagnostics do not receive a recognized-unsupported message'
+);
+assert.equal(
   classifyDiagnostic(cpuResourceParserFixture).type,
   'resource-cpu',
   'CPU Resource reports with crash-like Date/Time and OS Version markers classify as CPU Resource'
@@ -1098,15 +1130,46 @@ assert.equal(
   'legacy crash reports with harmless CPU wording still detect as crash'
 );
 assert.equal(detectFileType(diskWritesClassificationFixture), 'resource-diskwrites', 'detectFileType returns routable Disk Writes Resource type');
+assert.equal(detectFileType(stackshotClassificationFixture), 'resource-stackshot', 'detectFileType returns routable Stackshot Resource type');
 assert.equal(
   classifyDiagnostic(genericWritesJsonFixture).type,
   'app-crash',
   'generic writes keys without strong Disk Writes evidence do not classify as Disk Writes Resource'
 );
-assertUnsupportedFamilyDetection(
-  stackshotClassificationFixture,
+assert.equal(
+  classifyDiagnostic(stackshotWithPanicStringFixture).type,
   'resource-stackshot',
-  'unsupported stackshot/resource diagnostics'
+  'Stackshot Resource with panicString classifies as Stackshot Resource'
+);
+assert.notEqual(
+  classifyDiagnostic(stackshotWithPanicStringFixture).type,
+  'panic-full',
+  'Stackshot Resource with panicString does not classify as panic-full'
+);
+assert.equal(
+  detectFileType(stackshotWithPanicStringFixture),
+  'resource-stackshot',
+  'Stackshot Resource with panicString detects as Stackshot Resource'
+);
+assert.equal(
+  classifyDiagnostic(jetsamWithProcessByPidFixture).type,
+  'jetsam',
+  'Jetsam with processByPid and memoryStatus still classifies as Jetsam'
+);
+assert.equal(
+  detectFileType(jetsamWithProcessByPidFixture),
+  'jetsam',
+  'Jetsam with processByPid and memoryStatus still detects as Jetsam'
+);
+assert.equal(
+  classifyDiagnostic(watchdogWithStackshotPayloadFixture).type,
+  'watchdog',
+  'Watchdog with stackshot payload still classifies as Watchdog'
+);
+assert.equal(
+  detectFileType(watchdogWithStackshotPayloadFixture),
+  'ips-watchdog-stackshot',
+  'Watchdog with stackshot payload still detects as watchdog stackshot'
 );
 assert.notEqual(
   detectFileType(stackshotClassificationFixture),
@@ -1630,16 +1693,40 @@ const largeStackshotTable = sectionById(largeStackshotSections, 'resource-stacks
 assert.equal(largeStackshotTable.table.length, 100, 'Stackshot Resource top process table caps at 100 rows');
 assert.equal(largeStackshotTable.tableSummary, '100 of 150 processes shown', 'Stackshot Resource tableSummary reports capped rows');
 assert.equal(largeStackshotTable.table[0].process, 'LargeStackProcess149', 'Stackshot Resource large table sorts by CPU descending');
-assert.equal(
-  classifyDiagnostic(stackshotParserFixture).supported,
-  false,
-  'Stackshot Resource classification remains unsupported in Slice 3E1'
+assert.equal(classifyDiagnostic(stackshotParserFixture).supported, true, 'Stackshot Resource classification is supported in Slice 3E2');
+assert.equal(classifyDiagnostic(stackshotParserFixture).parserType, 'resource-stackshot', 'Stackshot Resource classification exposes parserType for routing');
+assert.equal(classifyDiagnostic(stackshotParserFixture).legacyType, 'resource-stackshot', 'Stackshot Resource classification exposes legacyType for detectFileType compatibility');
+assert.equal(detectFileType(stackshotParserFixture), 'resource-stackshot', 'Stackshot Resource detectFileType returns routable type in Slice 3E2');
+assert.deepEqual(
+  parseInput(stackshotParserFixture).map((section) => section.id),
+  [
+    'resource-stackshot-summary',
+    'resource-stackshot-trigger-reason',
+    'resource-stackshot-process-overview',
+    'resource-stackshot-top-processes',
+    'resource-stackshot-parser-notes',
+  ],
+  'Stackshot Resource parseInput route returns expected sections'
 );
-assert.equal(detectFileType(stackshotParserFixture), 'unknown', 'Stackshot Resource detectFileType remains unknown in Slice 3E1');
-assert.throws(
-  () => parseInput(stackshotParserFixture),
-  /Unsupported or unrecognized file type\./,
-  'Stackshot Resource parseInput still fails safely in Slice 3E1'
+assert.deepEqual(
+  parseInput(stackshotParserFixture),
+  parseResourceStackshot(stackshotParserFixture),
+  'Stackshot Resource parseInput route matches direct parser output'
+);
+assert.deepEqual(
+  parseInput(stackshotParserFixture, { sanitize: false }),
+  parseResourceStackshot(stackshotParserFixture, { sanitize: false }),
+  'Stackshot Resource raw parseInput route matches direct parser output'
+);
+assert.doesNotMatch(
+  JSON.stringify(parseInput(stackshotParserFixture)),
+  stackshotLeakPattern,
+  'Stackshot Resource parseInput sanitized output preserves the same privacy boundary'
+);
+assert.doesNotMatch(
+  JSON.stringify(parseInput(stackshotParserFixture, { sanitize: false })),
+  stackshotLeakPattern,
+  'Stackshot Resource parseInput raw mode remains bounded'
 );
 
 const accessoryCrashSections = parseAccessoryCrash(accessoryCrashParserBody, accessoryCrashParserMetadata);
