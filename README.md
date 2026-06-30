@@ -16,15 +16,16 @@ iOS Analytics File Parser is a static browser app for inspecting common iOS and 
 - AccessoryCrash and selected resource diagnostics
 - generic analytics text logs
 
-It is intentionally local-first. Reports are parsed in the browser, sanitized by default, and displayed as structured sections, tables, charts, and raw notes where useful.
+It is intentionally local-first. Reports are parsed in the browser, sanitized by default, and displayed as structured sections, tables, charts, cautious explanation notes, and raw notes where useful.
 
 ## Release Status
 
 | Item | Status |
 | --- | --- |
 | Latest released version | `v0.5.1-alpha` |
-| Active unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
-| Current v0.6 focus | Release readiness for Apple Diagnostics Expansion |
+| Release-ready unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
+| Active unreleased milestone | `v0.7.0-alpha`: Human-Readable Diagnostic Explanations |
+| Current v0.7 focus | Documentation and release readiness for deterministic explanations |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -40,6 +41,11 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.6.0-alpha Phase 1 | Implemented but unreleased: classification architecture and safe unsupported messages |
 | v0.6.0-alpha Phase 2 | Implemented but unreleased: narrow AccessoryCrash `bug_type: 305` support |
 | v0.6.0-alpha Phase 3 | Implemented but unreleased: CPU Resource, Disk Writes Resource, and Stackshot Resource summary parsing |
+| v0.7.0-alpha Slice 7A | Implemented but unreleased: pure deterministic explanation helper |
+| v0.7.0-alpha Slice 7B | Implemented but unreleased: parser pipeline explanation integration |
+| v0.7.0-alpha Slice 7C | Implemented but unreleased: search/copy/privacy regression coverage |
+| v0.7.0-alpha Slice 7D | Complete: Browser/UI smoke QA passed |
+| v0.7.0-alpha Slice 7E | Complete: documentation and release-readiness alignment |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -52,6 +58,8 @@ Note: `package.json` may still show `0.1.0`. Project release state is currently 
 Apple diagnostic files are useful, but they are dense and hard to scan quickly. This project provides a local tool for turning those reports into readable diagnostic sections while preserving privacy by default.
 
 The goal is not to symbolicate, upload, diagnose, or store reports. The goal is to make the report content easier to inspect safely on the user's own machine.
+
+Human-readable explanations are deterministic and local-only. They are based on already-parsed safe fields, use cautious wording, and do not provide AI diagnosis or exact root-cause claims.
 
 ## Privacy Model
 
@@ -141,6 +149,9 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | CPU Resource `bug_type: 202` parser | Supported, narrow v0.6 work |
 | Disk Writes Resource `bug_type: 142` parser | Supported, narrow v0.6 work |
 | Stackshot Resource `bug_type: 288` parser | Supported, summary parsing only |
+| Human-readable diagnostic explanations | Supported for selected already-supported report patterns |
+| AI diagnosis | Not supported |
+| Exact root-cause claims | Not supported |
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
@@ -188,6 +199,8 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Stackshot Resource support is summary-only. Full stack frames, frame symbols, frame addresses, and raw nested stackshot payloads are not rendered.
 - Diagnostic classification identifies supported formats and selected unsupported Apple diagnostic families before parser routing.
 - Recognized unsupported diagnostics show safe unsupported messages instead of being treated as generic unknown files.
+- Human-readable explanation sections are inserted for supported diagnostics when a safe deterministic rule applies.
+- Explanations use already-parsed safe fields only, avoid AI diagnosis, and avoid exact root-cause claims.
 - Section-specific table columns.
 - Simple Jetsam memory bar chart.
 - Large-report size helpers centralize section and report size summaries for future scale work.
@@ -203,6 +216,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Copy output uses plain text and reflects currently visible content.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
+- Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
 
 ### CoreAnalytics Sections
 
@@ -315,7 +329,8 @@ The project is a static, local-first browser app.
 - `src/models/reportSize.js` summarizes large report and large section size signals.
 - `src/parsers/classifyDiagnostic.js` classifies supported formats and selected recognized-but-unsupported diagnostic families.
 - `src/parsers/detect.js` remains a compatibility wrapper around classifier legacy type names.
-- `src/parsers/index.js` routes `parseInput()` through `classification.parserType`.
+- `src/parsers/index.js` routes `parseInput()` through `classification.parserType` and inserts one safe explanation section when applicable.
+- `src/explanations/diagnosticExplanations.js` contains deterministic, local-only explanation rules for already-parsed supported diagnostics.
 - `src/parsers/` parses supported report formats.
 - `src/privacy/sanitize.js` applies default sanitization.
 - `src/models/sectionModel.js` documents the shared section shape.
@@ -351,6 +366,11 @@ src/parsers/*
   |-- createSanitizer({ sanitize })
   |-- normalize report fields
   |-- emit SectionModel[]
+  v
+src/explanations/diagnosticExplanations.js
+  |
+  |-- inspect parsed safe SectionModel[] fields only
+  |-- emit at most one explanation SectionModel
   v
 src/search/filterSections.js
   |
@@ -394,6 +414,7 @@ index.html -> manifest.webmanifest
 |-- PHASE_4_SUMMARY.md
 |-- PHASE_5_SUMMARY.md
 |-- PHASE_6_SUMMARY.md
+|-- PHASE_7_SUMMARY.md
 |-- package.json
 |-- icons/
 |   |-- apple-touch-icon.png
@@ -418,6 +439,8 @@ index.html -> manifest.webmanifest
 |   |   |-- copyMetadata.js
 |   |   |-- serializeSection.js
 |   |   `-- visibleSection.js
+|   |-- explanations/
+|   |   `-- diagnosticExplanations.js
 |   |-- models/
 |   |   |-- reportSize.js
 |   |   `-- sectionModel.js
@@ -495,6 +518,8 @@ Parser output is treated as immutable by search and UI controls. Search and dens
 
 Internally, `parseInput()` uses `classifyDiagnostic(text)` and routes supported files with `classification.parserType`. `detectFileType(text)` remains available as a compatibility wrapper that returns legacy strings such as `ips`, `crash`, `jetsam`, `panic`, `coreanalytics`, `analytics`, `accessory-crash`, `resource-cpu`, `resource-diskwrites`, `resource-stackshot`, or `unknown`.
 
+When a supported parsed report matches a safe deterministic explanation rule, `parseInput()` inserts one `diagnostic-explanation` section after the first Summary-like section. If no Summary-like section exists, the explanation section is appended. Explanations are generic guidance from parsed fields; they are not AI diagnosis and do not identify an exact root cause.
+
 Recognized-but-unsupported diagnostics are classified for safe UI messaging only. They do not return `SectionModel[]`; direct unsupported parsing still throws:
 
 ```text
@@ -526,6 +551,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 4 Summary](PHASE_4_SUMMARY.md)
 - [Phase 5 Summary](PHASE_5_SUMMARY.md)
 - [Phase 6 Summary](PHASE_6_SUMMARY.md)
+- [Phase 7 Summary](PHASE_7_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -552,6 +578,8 @@ After first successful service worker setup, these fictional examples are availa
 - Stackshot Resource support is limited to reports classified as `bug_type: 288`, and it is summary parsing only.
 - Stackshot full stack rendering, frame symbol rendering, frame address rendering, and symbolication are not supported.
 - App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are recognized for safe unsupported messages only; they are not parsed into sections yet.
+- Human-readable explanations are conservative and generic; they do not symbolicate, inspect full raw stacks, or identify the exact faulty function.
+- No AI diagnosis or exact root-cause analysis is provided.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
@@ -577,7 +605,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.5.1-alpha | Complete | File-size validation hotfix restoring the 20 MB safety limit |
 | v0.6.0-alpha Phase 1 | Complete, unreleased | Diagnostic Classification Architecture |
 | v0.6.0-alpha Phase 2 | Complete, unreleased | AccessoryCrash `bug_type: 305` support |
-| v0.6.0-alpha Phase 3 | Release-ready pending final gate, unreleased | CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, Stackshot Resource `bug_type: 288` summary parsing |
+| v0.6.0-alpha Phase 3 | Release-ready, unreleased | CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, Stackshot Resource `bug_type: 288` summary parsing |
+| v0.7.0-alpha | Release-ready pending commit/review, unreleased | Human-readable deterministic explanations for supported diagnostics |
 
 The project keeps the same constraints:
 
@@ -617,6 +646,16 @@ The `v0.6.0-alpha` Phase 3 Resource Diagnostics work is narrow:
 - Slice 3E1 and Slice 3E2 added Stackshot Resource direct parsing and routing.
 - Slice 3F added cross-resource privacy, search, copy, raw-mode, and row-cap regression coverage.
 - Slice 3G performs browser QA, documentation alignment, and release-readiness checks.
+
+The `v0.7.0-alpha` Human-Readable Diagnostic Explanations work is narrow:
+
+- Slice 7A added the pure deterministic explanation helper.
+- Slice 7B integrated explanation sections into `parseInput()`.
+- Slice 7C added search, copy, privacy, raw-mode, and unsupported-diagnostic regression coverage.
+- Slice 7D completed Browser/UI smoke QA for rendered explanation sections.
+- Slice 7E aligns documentation and release-readiness state.
+
+The explanation layer does not add AI diagnosis, exact root-cause claims, new parser families, symbolication, full stack rendering, backend services, storage, or analytics.
 
 Upcoming work remains parser-family implementation and later hardening, subject to approval:
 

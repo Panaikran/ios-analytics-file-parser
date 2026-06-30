@@ -183,13 +183,8 @@ No release tag, GitHub release, package metadata change, or publish action is in
 
 ## v0.7.0-alpha Starting Point
 
-Potential future work, subject to explicit approval:
+After Phase 6, the project moved into Human-Readable Diagnostic Explanations rather than another parser-family expansion.
 
-- App Usage Metrics parser planning
-- Wi-Fi Connectivity parser planning
-- Diagnostic Request parser planning
-- broader Accessory/Firmware diagnostics
-- reusable browser smoke automation
-- virtualization or incremental rendering for very large visible reports
-- deeper CoreAnalytics drill-down without raw JSON dumping
-- CSP/header hardening on a host that supports response headers
+The `v0.7.0-alpha` direction is deterministic, local-only explanation sections for already-supported diagnostics. It does not add AI diagnosis, exact root-cause claims, new parser families, symbolication, full stack rendering, backend services, storage, or analytics.
+
+Parser-family work such as App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics remains future work unless explicitly approved later.

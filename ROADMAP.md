@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.6.0-alpha` release-readiness work
+Status: updated for active `v0.7.0-alpha` release-readiness work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -16,7 +16,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
 | Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
-| Apple Diagnostics Expansion | Active, unreleased | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
+| Apple Diagnostics Expansion | Release-ready, unreleased | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
+| Human-Readable Diagnostic Explanations | Active, unreleased | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
 
 ## Project Constraints
 
@@ -170,7 +171,7 @@ Not changed:
 - No runtime caching, backend, authentication, analytics, cloud storage, or report persistence was added.
 - No package metadata change was made.
 
-## Active Roadmap: v0.6.0-alpha
+## Release-Ready Roadmap: v0.6.0-alpha
 
 Theme: Apple Diagnostics Expansion.
 
@@ -211,7 +212,7 @@ Phase 3 goal: add narrow Resource Diagnostics support for CPU, Disk Writes, and 
 | Slice 3E1 | Complete | Added direct Stackshot Resource parser tests with summary-only rendering and 100-row top-process cap |
 | Slice 3E2 | Complete | Flipped Stackshot Resource classification/routing support and routed `parseInput()` through the parser |
 | Slice 3F | Complete | Added cross-resource privacy, search, copy, raw-mode, and Stackshot row-cap regression coverage |
-| Slice 3G | Release-readiness | Browser QA, documentation alignment, validation, and release-readiness report |
+| Slice 3G | Complete | Browser QA, documentation alignment, validation, and release-readiness report |
 
 Recognized but not parsed yet:
 
@@ -275,11 +276,57 @@ Future work beyond the classification/parser-family sequence:
 - Keep browser/mobile checks manual unless browser automation is explicitly approved.
 - Do not migrate the test runner unless the cost is justified and approved.
 
+## Active Roadmap: v0.7.0-alpha
+
+Theme: Human-Readable Diagnostic Explanations.
+
+Goal: improve user understanding of already-supported diagnostics without adding new parser families, AI diagnosis, exact root-cause claims, symbolication, or full stack rendering.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 7A | Complete | Added the pure deterministic explanation helper in `src/explanations/diagnosticExplanations.js` |
+| Slice 7B | Complete | Integrated explanation sections into `parseInput()` while preserving the `SectionModel[]` contract |
+| Slice 7C | Complete | Added search, copy, privacy, raw-mode, and unsupported-diagnostic regression coverage |
+| Slice 7D | Complete | Completed Browser/UI smoke QA for rendered explanation sections |
+| Slice 7E | Complete | Documentation alignment, validation, Phase 7 summary, and release-readiness report |
+
+Supported explanation coverage is limited to already-supported diagnostics:
+
+- `EXC_BREAKPOINT` / `SIGTRAP`
+- `EXC_BAD_ACCESS`
+- `EXC_CRASH` / `SIGABRT`
+- `EXC_RESOURCE`
+- `EXC_GUARD`
+- Watchdog
+- Jetsam
+- Panic
+- AccessoryCrash
+- CPU Resource
+- Disk Writes Resource
+- Stackshot Resource
+
+Explanation rules are deterministic, local-only, and based on already-parsed safe fields. They participate in existing section rendering, section navigation, search, and copy behavior.
+
+Still out of scope for `v0.7.0-alpha`:
+
+- AI diagnosis.
+- Exact root-cause claims.
+- New parser families.
+- App Usage Metrics parser work.
+- Wi-Fi Connectivity parser work.
+- Diagnostic Request parser work.
+- Broad Accessory/Firmware support.
+- Symbolication.
+- Full stack rendering.
+- Backend, cloud storage, analytics, or report persistence.
+
 ## Planned Path To v1.0
 
-This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
+This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope and `v0.7.0-alpha` completes the deterministic explanation milestone. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
+
+Status: release-ready pending commit/review, unreleased.
 
 Goal: improve user understanding without adding risky new parser families.
 
@@ -417,7 +464,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, and `PHASE_4_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, and `PHASE_7_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -438,8 +485,8 @@ These ideas are intentionally out of scope for current `v0.6.0-alpha` Apple Diag
 
 Before starting the next implementation slice:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect active unreleased `v0.6.0-alpha` work.
-- Start from the `v0.7.0-alpha` human-readable diagnostic explanations scope unless a release blocker requires a narrower maintenance slice.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect active unreleased `v0.7.0-alpha` explanation work.
+- After `v0.7.0-alpha` is reviewed, start from the `v0.8.0-alpha` release-hardening and QA polish scope unless a release blocker requires a narrower maintenance slice.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:

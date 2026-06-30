@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.7.0-alpha - Unreleased
+
+Human-readable diagnostic explanations for already-supported report types.
+
+### Added
+
+- Deterministic explanation helper in `src/explanations/diagnosticExplanations.js`.
+- One `What This Usually Means` explanation section for supported parsed reports when a safe rule applies.
+- Explanation coverage for selected app crash exceptions, Watchdog, Jetsam, Panic, AccessoryCrash, CPU Resource, Disk Writes Resource, and Stackshot Resource reports.
+- Search, copy, privacy, raw-mode, malformed-input, and unsupported-diagnostic regression coverage for explanation sections.
+- Browser/UI smoke QA for rendered explanation sections, section navigation, search, copy, raw local mode, Clear Report, mobile widths, and service-worker/offline behavior.
+- Phase 7 summary documentation.
+
+### Changed
+
+- `parseInput()` now inserts at most one explanation section into supported `SectionModel[]` output after the first Summary-like section when practical.
+- Explanation sections participate in existing section rendering, section navigation, search, and copy behavior.
+- Service worker precache coverage now includes the explanation helper module.
+
+### Notes
+
+- Explanations are deterministic, local-only, and based on already-parsed safe fields.
+- No AI diagnosis, exact root-cause claims, symbolication, full stack rendering, new parser families, backend, analytics, cloud storage, report persistence, package metadata change, tag, or GitHub release was added.
+- App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broad Accessory/Firmware diagnostics remain unsupported.
+
 ## v0.6.0-alpha - Unreleased
 
 Apple Diagnostics Expansion classification architecture, narrow AccessoryCrash support, and narrow Resource Diagnostics support.

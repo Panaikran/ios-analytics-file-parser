@@ -48,6 +48,11 @@ import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
 import { getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
+import {
+  EXPLANATION_SECTION_ID,
+  createExplanationSection,
+  getDiagnosticExplanation,
+} from '../src/explanations/diagnosticExplanations.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
@@ -60,6 +65,7 @@ const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
+const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -88,7 +94,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.6\.0-alpha-slice3f-resource-privacy-hardening-2026-06-29/, 'service worker cache version reflects Slice 3F resource privacy hardening');
+assert.match(serviceWorkerText, /v0\.7\.0-alpha-slice7b-diagnostic-explanations-2026-06-30/, 'service worker cache version reflects Slice 7B diagnostic explanation routing');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -98,14 +104,17 @@ assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'se
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'service worker precaches the CPU Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/, 'service worker precaches the Disk Writes Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseResourceStackshot\.js/, 'service worker precaches the Stackshot Resource parser');
+assert.match(serviceWorkerText, /\.\/src\/explanations\/diagnosticExplanations\.js/, 'service worker precaches the diagnostic explanations helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
+assert.match(parserIndexSource, /getDiagnosticExplanation/, 'parseInput imports diagnostic explanation helpers');
 assert.match(parserIndexSource, /import \{ parseAccessoryCrash \} from '\.\/parseAccessoryCrash\.js';/, 'parseInput imports the AccessoryCrash parser');
 assert.match(parserIndexSource, /import \{ parseCpuResource \} from '\.\/parseCpuResource\.js';/, 'parseInput imports the CPU Resource parser');
 assert.match(parserIndexSource, /import \{ parseDiskWritesResource \} from '\.\/parseDiskWritesResource\.js';/, 'parseInput imports the Disk Writes Resource parser');
 assert.match(parserIndexSource, /import \{ parseResourceStackshot \} from '\.\/parseResourceStackshot\.js';/, 'parseInput imports the Stackshot Resource parser');
 assert.doesNotMatch(parserIndexSource, /detectFileType/, 'parseInput no longer depends on detectFileType compatibility routing');
 assert.match(parserIndexSource, /classification\.parserType/, 'parseInput routes with classification parserType metadata');
+assert.match(parserIndexSource, /withDiagnosticExplanation/, 'parseInput wraps supported parser output with diagnostic explanation insertion');
 assert.match(parserIndexSource, /type === 'accessory-crash'[^]*parseAccessoryCrash\(parsed\.body, parsed\.metadata, options\)/, 'parseInput routes AccessoryCrash containers through the AccessoryCrash parser');
 assert.match(parserIndexSource, /type === 'resource-cpu'[^]*parseCpuResource\(input, options\)/, 'parseInput routes CPU Resource input through the CPU Resource parser');
 assert.match(parserIndexSource, /type === 'resource-diskwrites'[^]*parseDiskWritesResource\(input, options\)/, 'parseInput routes Disk Writes Resource input through the Disk Writes Resource parser');
@@ -420,6 +429,232 @@ function assertUnsupportedFamilyDetection(input, expectedType, message) {
     `${message} parseInput fails safely`
   );
 }
+
+function supportedClassification(type) {
+  return {
+    type,
+    supported: true,
+  };
+}
+
+function unsupportedClassification(type) {
+  return {
+    type,
+    supported: false,
+  };
+}
+
+function exceptionSections(fields) {
+  return [
+    {
+      id: 'exception',
+      title: 'Exception',
+      priority: 'critical',
+      fields: Object.entries(fields).map(([label, value]) => ({ label, value })),
+    },
+  ];
+}
+
+function explanationOutput(explanation) {
+  return JSON.stringify(createExplanationSection(explanation));
+}
+
+function withoutExplanationSection(sections) {
+  return sections.filter((section) => section.id !== EXPLANATION_SECTION_ID);
+}
+
+function explanationSectionFrom(sections) {
+  return sectionById(sections, EXPLANATION_SECTION_ID);
+}
+
+function assertExplanationDoesNotLeak(sections, leakPattern, message) {
+  const explanationSection = explanationSectionFrom(sections);
+  assert.ok(explanationSection, `${message}: explanation section exists`);
+  assert.doesNotMatch(JSON.stringify(explanationSection), leakPattern, `${message}: explanation section stays generic`);
+}
+
+function assertExplanationAfterSummary(sections, expectedRuleId, message) {
+  const ids = sections.map((section) => section.id);
+  const explanationIndex = ids.indexOf(EXPLANATION_SECTION_ID);
+  assert.notEqual(explanationIndex, -1, `${message}: explanation section exists`);
+  assert.equal(ids.indexOf(EXPLANATION_SECTION_ID, explanationIndex + 1), -1, `${message}: explanation section is not duplicated`);
+  assert.ok(explanationIndex > 0, `${message}: explanation section is not first`);
+
+  const previousSection = sections[explanationIndex - 1];
+  const previousId = String(previousSection?.id ?? '').toLowerCase();
+  const previousTitle = String(previousSection?.title ?? '').toLowerCase();
+  assert.ok(
+    previousId === 'summary' || previousId.endsWith('-summary') || previousTitle === 'summary' || previousTitle.endsWith(' summary'),
+    `${message}: explanation section follows a summary-like section`
+  );
+
+  assert.equal(
+    fieldValue(sectionById(sections, EXPLANATION_SECTION_ID), 'Category'),
+    EXPLANATIONS_BY_RULE[expectedRuleId],
+    `${message}: explanation category matches expected rule`
+  );
+}
+
+const EXPLANATIONS_BY_RULE = {
+  'exc-breakpoint': 'Runtime trap or breakpoint',
+  'exc-bad-access': 'Invalid memory access',
+  'exc-crash': 'Abort or crash signal',
+  'exc-resource': 'Resource limit report',
+  'exc-guard': 'System guard violation',
+  watchdog: 'Watchdog termination',
+  jetsam: 'Memory pressure termination',
+  panic: 'System panic report',
+  'accessory-crash': 'Accessory crash or fault',
+  'resource-cpu': 'CPU resource limit',
+  'resource-diskwrites': 'Disk write resource limit',
+  'resource-stackshot': 'Resource stackshot summary',
+};
+
+const cautiousExplanationPattern = /\b(usually|often|may indicate|commonly means|check)\b/i;
+const overconfidentExplanationPattern = /\b(root cause|definitely|proves|was caused by|the fix is)\b/i;
+const sensitiveExplanationPattern =
+  /11111111-2222-3333-4444-555555555555|REQ-EXPLANATION-12345|FICTIONAL-SERIAL-EXPLANATION|AA:BB:CC:DD:EE:FF|0x1234567890ABCDEF|\/private\/var\/mobile|C:\\Users\\Example|0xfffffff012345678|_sensitiveFrameSymbol|NESTED-EXPLANATION-SENTINEL/;
+
+assert.doesNotMatch(
+  diagnosticExplanationsSource,
+  /parseInput|parseIpsContainer|sourceText|localStorage|sessionStorage|indexedDB|document\.|navigator\.clipboard|fetch\(|XMLHttpRequest|sendBeacon|WebSocket/,
+  'diagnostic explanation helper stays pure and does not inspect parser source text, DOM, clipboard, storage, network, or analytics APIs'
+);
+assert.doesNotMatch(searchSource, /document\.|window\.|navigator\.clipboard/, 'search filtering stays data-only and does not require DOM or clipboard access');
+
+const explanationCases = [
+  {
+    label: 'EXC_BREAKPOINT',
+    classification: supportedClassification('app-crash'),
+    sections: exceptionSections({ Type: 'EXC_BREAKPOINT', Signal: 'SIGTRAP' }),
+    ruleId: 'exc-breakpoint',
+  },
+  {
+    label: 'EXC_BAD_ACCESS',
+    classification: supportedClassification('app-crash'),
+    sections: exceptionSections({ Type: 'EXC_BAD_ACCESS', Signal: 'SIGSEGV' }),
+    ruleId: 'exc-bad-access',
+  },
+  {
+    label: 'EXC_CRASH',
+    classification: supportedClassification('crash-legacy'),
+    sections: exceptionSections({ Type: 'EXC_CRASH', Signal: 'SIGABRT' }),
+    ruleId: 'exc-crash',
+  },
+  {
+    label: 'EXC_RESOURCE',
+    classification: supportedClassification('app-crash'),
+    sections: exceptionSections({ Type: 'EXC_RESOURCE', Signal: 'SIGKILL' }),
+    ruleId: 'exc-resource',
+  },
+  {
+    label: 'EXC_GUARD',
+    classification: supportedClassification('app-crash'),
+    sections: exceptionSections({ Type: 'EXC_GUARD', Codes: 'GUARD_TYPE_FD' }),
+    ruleId: 'exc-guard',
+  },
+  {
+    label: 'Watchdog',
+    classification: supportedClassification('watchdog'),
+    sections: [{ id: 'termination', title: 'Termination', fields: [{ label: 'Code', value: '0x8badf00d' }] }],
+    ruleId: 'watchdog',
+  },
+  {
+    label: 'Jetsam',
+    classification: supportedClassification('jetsam'),
+    sections: [{ id: 'victim', title: 'Victim', fields: [{ label: 'Reason', value: 'highwater' }] }],
+    ruleId: 'jetsam',
+  },
+  {
+    label: 'Panic',
+    classification: supportedClassification('panic-full'),
+    sections: [{ id: 'panic-string', title: 'Panic String', raw: 'panic string omitted from explanation' }],
+    ruleId: 'panic',
+  },
+  {
+    label: 'AccessoryCrash',
+    classification: supportedClassification('accessory-crash'),
+    sections: [{ id: 'accessory-crash-summary', title: 'Accessory Crash Summary', fields: [{ label: 'Bug Type', value: '305' }] }],
+    ruleId: 'accessory-crash',
+  },
+  {
+    label: 'CPU Resource',
+    classification: supportedClassification('resource-cpu'),
+    sections: [{ id: 'resource-cpu-summary', title: 'CPU Resource Summary', fields: [{ label: 'Bug Type', value: '202' }] }],
+    ruleId: 'resource-cpu',
+  },
+  {
+    label: 'Disk Writes Resource',
+    classification: supportedClassification('resource-diskwrites'),
+    sections: [{ id: 'resource-diskwrites-summary', title: 'Disk Writes Resource Summary', fields: [{ label: 'Bug Type', value: '142' }] }],
+    ruleId: 'resource-diskwrites',
+  },
+  {
+    label: 'Stackshot Resource',
+    classification: supportedClassification('resource-stackshot'),
+    sections: [{ id: 'resource-stackshot-summary', title: 'Stackshot Resource Summary', fields: [{ label: 'Bug Type', value: '288' }] }],
+    ruleId: 'resource-stackshot',
+  },
+];
+
+for (const explanationCase of explanationCases) {
+  const explanation = getDiagnosticExplanation(explanationCase.sections, explanationCase.classification);
+  assert.equal(explanation?.ruleId, explanationCase.ruleId, `${explanationCase.label} selects the expected explanation rule`);
+
+  const section = createExplanationSection(explanation);
+  assert.equal(section?.id, EXPLANATION_SECTION_ID, `${explanationCase.label} creates the standard explanation section`);
+  assert.match(explanationOutput(explanation), cautiousExplanationPattern, `${explanationCase.label} uses cautious explanation wording`);
+  assert.doesNotMatch(explanationOutput(explanation), overconfidentExplanationPattern, `${explanationCase.label} avoids overconfident root-cause wording`);
+}
+
+for (const type of ['app-usage-metrics', 'wifi-connectivity', 'diagnostic-request', 'unknown']) {
+  assert.equal(
+    getDiagnosticExplanation([{ id: 'summary', title: 'Summary' }], unsupportedClassification(type)),
+    null,
+    `${type} does not receive an explanation when unsupported`
+  );
+}
+
+assert.equal(getDiagnosticExplanation(null, supportedClassification('app-crash')), null, 'malformed sections return no explanation');
+assert.equal(
+  getDiagnosticExplanation([{ id: 'exception', title: 'Exception', fields: 'malformed' }], supportedClassification('app-crash')),
+  null,
+  'malformed exception fields return no crash explanation'
+);
+assert.equal(
+  getDiagnosticExplanation([], supportedClassification('resource-cpu')),
+  null,
+  'missing parsed resource sections return no explanation'
+);
+assert.equal(createExplanationSection(null), null, 'null explanation does not create a section');
+
+const sensitiveExplanation = getDiagnosticExplanation(
+  [
+    {
+      id: 'exception',
+      title: 'Exception',
+      fields: [
+        {
+          label: 'Type',
+          value: 'EXC_BAD_ACCESS',
+        },
+        {
+          label: 'Codes',
+          value:
+            '11111111-2222-3333-4444-555555555555 REQ-EXPLANATION-12345 FICTIONAL-SERIAL-EXPLANATION AA:BB:CC:DD:EE:FF 0x1234567890ABCDEF /private/var/mobile C:\\Users\\Example 0xfffffff012345678 _sensitiveFrameSymbol NESTED-EXPLANATION-SENTINEL',
+        },
+      ],
+      table: [{ symbol: '_sensitiveFrameSymbol', address: '0xfffffff012345678' }],
+    },
+  ],
+  supportedClassification('app-crash')
+);
+
+assert.doesNotMatch(
+  explanationOutput(sensitiveExplanation),
+  sensitiveExplanationPattern,
+  'explanation output does not echo identifiers, paths, addresses, raw stack details, or nested payload sentinels'
+);
 
 assert.equal(detectFileType(ipsText), 'ips', 'detects a standard app crash IPS report');
 assert.equal(detectFileType(fullIpsText), 'ips', 'detects a full standard app crash IPS report');
@@ -1346,12 +1581,12 @@ assert.doesNotMatch(
   'CPU Resource raw mode remains bounded and avoids paths, identifiers, raw addresses, serials, MACs, and ECID values'
 );
 assert.deepEqual(
-  parseInput(cpuResourceParserFixture),
+  withoutExplanationSection(parseInput(cpuResourceParserFixture)),
   parseCpuResource(cpuResourceParserFixture),
   'CPU Resource parseInput route matches direct parser output in sanitized mode'
 );
 assert.deepEqual(
-  parseInput(cpuResourceParserFixture, { sanitize: false }),
+  withoutExplanationSection(parseInput(cpuResourceParserFixture, { sanitize: false })),
   parseCpuResource(cpuResourceParserFixture, { sanitize: false }),
   'CPU Resource parseInput route matches direct parser output in raw mode'
 );
@@ -1367,6 +1602,7 @@ assert.deepEqual(
   parseInput(cpuResourceParserFixture).map((section) => section.id),
   [
     'resource-cpu-summary',
+    EXPLANATION_SECTION_ID,
     'resource-cpu-process-info',
     'resource-cpu-usage',
     'resource-cpu-limits',
@@ -1374,6 +1610,7 @@ assert.deepEqual(
   ],
   'CPU Resource parseInput route returns expected sections'
 );
+assertExplanationAfterSummary(parseInput(cpuResourceParserFixture), 'resource-cpu', 'CPU Resource parseInput inserts explanation');
 assert.doesNotMatch(
   JSON.stringify(parseInput(cpuResourceParserFixture)),
   cpuResourceLeakPattern,
@@ -1384,6 +1621,30 @@ assert.doesNotMatch(
   cpuResourceLeakPattern,
   'CPU Resource parseInput raw mode remains bounded'
 );
+const cpuRoutedSections = parseInput(cpuResourceParserFixture);
+const cpuExplanationSearch = filterSectionsByQuery(cpuRoutedSections, 'too much CPU for too long');
+assert.equal(cpuExplanationSearch.active, true, 'explanation-only search is active');
+assert.deepEqual(
+  cpuExplanationSearch.sections.map((section) => section.id),
+  [EXPLANATION_SECTION_ID],
+  'explanation-only search returns the explanation section'
+);
+assert.equal(cpuExplanationSearch.totalMatches, 1, 'explanation-only search counts explanation text matches');
+const cpuNormalSearch = filterSectionsByQuery(cpuRoutedSections, 'DemoCPUApp');
+assert.ok(sectionById(cpuNormalSearch.sections, 'resource-cpu-process-info'), 'normal parser-section search still returns process info');
+assert.equal(sectionById(cpuNormalSearch.sections, EXPLANATION_SECTION_ID), undefined, 'normal parser-section search filters out unrelated explanation text');
+assert.doesNotMatch(
+  serializeSectionsForCopy(cpuNormalSearch.sections),
+  /What This Usually Means|too much CPU for too long/,
+  'copy of filtered parser sections does not include filtered-out explanation text'
+);
+const cpuExplanationCopy = serializeSectionForCopy(explanationSectionFrom(cpuRoutedSections));
+assert.match(cpuExplanationCopy, /What This Usually Means/, 'copy includes explanation title when explanation section is visible');
+assert.match(cpuExplanationCopy, /too much CPU for too long/, 'copy includes explanation text when explanation section is visible');
+assert.doesNotMatch(cpuExplanationCopy, /[{}\[\]]/, 'explanation copy remains plain text rather than serialized objects');
+const cpuProcessCopy = serializeSectionForCopy(sectionById(cpuRoutedSections, 'resource-cpu-process-info'));
+assert.match(cpuProcessCopy, /Process: DemoCPUApp/, 'copy for normal parser sections remains unchanged');
+assert.doesNotMatch(cpuProcessCopy, /What This Usually Means|too much CPU for too long/, 'normal parser-section copy does not include explanation text');
 assert.equal(classifyDiagnostic(cpuResourceJsonFixture).supported, true, 'JSON CPU Resource classification is supported');
 assert.equal(detectFileType(cpuResourceJsonFixture), 'resource-cpu', 'JSON CPU Resource detectFileType returns routable type');
 const parsedJsonCpuSections = parseInput(cpuResourceJsonFixture);
@@ -1548,12 +1809,12 @@ assert.doesNotMatch(
   'Disk Writes Resource raw mode remains bounded and avoids paths, identifiers, volume IDs, nested payloads, serials, MACs, and ECID values'
 );
 assert.deepEqual(
-  parseInput(diskWritesParserFixture),
+  withoutExplanationSection(parseInput(diskWritesParserFixture)),
   parseDiskWritesResource(diskWritesParserFixture),
   'Disk Writes Resource parseInput route matches direct parser output in sanitized mode'
 );
 assert.deepEqual(
-  parseInput(diskWritesParserFixture, { sanitize: false }),
+  withoutExplanationSection(parseInput(diskWritesParserFixture, { sanitize: false })),
   parseDiskWritesResource(diskWritesParserFixture, { sanitize: false }),
   'Disk Writes Resource parseInput route matches direct parser output in raw mode'
 );
@@ -1569,6 +1830,7 @@ assert.deepEqual(
   parseInput(diskWritesParserFixture).map((section) => section.id),
   [
     'resource-diskwrites-summary',
+    EXPLANATION_SECTION_ID,
     'resource-diskwrites-process-info',
     'resource-diskwrites-usage',
     'resource-diskwrites-limits',
@@ -1576,6 +1838,7 @@ assert.deepEqual(
   ],
   'Disk Writes Resource parseInput route returns expected sections'
 );
+assertExplanationAfterSummary(parseInput(diskWritesParserFixture), 'resource-diskwrites', 'Disk Writes Resource parseInput inserts explanation');
 assert.doesNotMatch(
   JSON.stringify(parseInput(diskWritesParserFixture)),
   diskWritesLeakPattern,
@@ -1733,6 +1996,7 @@ assert.deepEqual(
   parseInput(stackshotParserFixture).map((section) => section.id),
   [
     'resource-stackshot-summary',
+    EXPLANATION_SECTION_ID,
     'resource-stackshot-trigger-reason',
     'resource-stackshot-process-overview',
     'resource-stackshot-top-processes',
@@ -1740,13 +2004,14 @@ assert.deepEqual(
   ],
   'Stackshot Resource parseInput route returns expected sections'
 );
+assertExplanationAfterSummary(parseInput(stackshotParserFixture), 'resource-stackshot', 'Stackshot Resource parseInput inserts explanation');
 assert.deepEqual(
-  parseInput(stackshotParserFixture),
+  withoutExplanationSection(parseInput(stackshotParserFixture)),
   parseResourceStackshot(stackshotParserFixture),
   'Stackshot Resource parseInput route matches direct parser output'
 );
 assert.deepEqual(
-  parseInput(stackshotParserFixture, { sanitize: false }),
+  withoutExplanationSection(parseInput(stackshotParserFixture, { sanitize: false })),
   parseResourceStackshot(stackshotParserFixture, { sanitize: false }),
   'Stackshot Resource raw parseInput route matches direct parser output'
 );
@@ -1853,6 +2118,16 @@ for (const resourceCase of resourcePrivacyCases) {
     JSON.stringify(routedRawSections),
     resourceCase.leakPattern,
     `${resourceCase.label} routed raw mode stays bounded and does not expose disallowed values`
+  );
+  assertExplanationDoesNotLeak(
+    routedSanitizedSections,
+    resourceCase.leakPattern,
+    `${resourceCase.label} sanitized explanation output does not expose sensitive resource values`
+  );
+  assertExplanationDoesNotLeak(
+    routedRawSections,
+    resourceCase.leakPattern,
+    `${resourceCase.label} raw-mode explanation output remains generic`
   );
   assert.doesNotMatch(
     serializeSectionsForCopy(routedSanitizedSections),
@@ -2148,6 +2423,16 @@ assert.doesNotMatch(
   accessoryCrashPrivacyLeakPattern,
   'AccessoryCrash parseInput sanitized output preserves the same hardened privacy boundary'
 );
+assertExplanationDoesNotLeak(
+  parsedHardenedAccessoryCrashSections,
+  accessoryCrashPrivacyLeakPattern,
+  'AccessoryCrash sanitized explanation output does not expose sensitive values'
+);
+assertExplanationDoesNotLeak(
+  parseInput(accessoryCrashPrivacyFixture, { sanitize: false }),
+  accessoryCrashRawLeakPattern,
+  'AccessoryCrash raw-mode explanation output remains generic'
+);
 assert.equal(
   filterSectionsByQuery(parsedHardenedAccessoryCrashSections, 'AA:BB:CC:DD:EE:FF').totalMatches,
   0,
@@ -2209,6 +2494,7 @@ assert.deepEqual(
   parsedAccessoryCrashSections.map((section) => section.id),
   [
     'accessory-crash-summary',
+    EXPLANATION_SECTION_ID,
     'accessory-information',
     'accessory-application-information',
     'accessory-crashlog-overview',
@@ -2217,6 +2503,7 @@ assert.deepEqual(
   ],
   'AccessoryCrash parseInput route returns expected sections'
 );
+assertExplanationAfterSummary(parsedAccessoryCrashSections, 'accessory-crash', 'AccessoryCrash parseInput inserts explanation');
 assert.doesNotMatch(
   JSON.stringify(parsedAccessoryCrashSections),
   /11111111-2222-3333-4444-555555555555|AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE|REQ-FICTIONAL-12345|\/private\/var\/mobile|CRASHLOG-FICTIONAL-001|abcdef12-3456-7890-abcd-ef1234567890|FICTIONAL-SERIAL-12345/,
@@ -2298,10 +2585,11 @@ assert.equal(
   'panic parsing preserves raw incident IDs only when sanitization is explicitly disabled'
 );
 assert.deepEqual(
-  ipsSections.slice(0, 3).map((section) => section.id),
+  withoutExplanationSection(ipsSections).slice(0, 3).map((section) => section.id),
   ['summary', 'exception', 'crashed-thread'],
   'IPS Phase 1 core sections remain first'
 );
+assertExplanationAfterSummary(ipsSections, 'exc-bad-access', 'App Crash parseInput inserts explanation');
 assert.equal(fieldValue(sectionById(ipsSections, 'summary'), 'App'), 'DemoApp');
 assert.equal(fieldValue(sectionById(ipsSections, 'summary'), 'Bundle ID'), 'com.example.demoapp');
 assert.equal(fieldValue(sectionById(ipsSections, 'exception'), 'Type'), 'EXC_BAD_ACCESS');
@@ -2976,7 +3264,7 @@ assert.equal(
 );
 
 assert.deepEqual(
-  fullIpsSections.map((section) => section.id),
+  withoutExplanationSection(fullIpsSections).map((section) => section.id),
   ['summary', 'exception', 'crashed-thread', 'all-threads', 'binary-images'],
   'full IPS includes all threads and binary images'
 );
@@ -2996,10 +3284,11 @@ assert.equal(fieldValue(sectionById(metadataIpsSections, 'summary'), 'Incident I
 
 const crashSections = parseInput(crashText);
 assert.deepEqual(
-  crashSections.slice(0, 3).map((section) => section.id),
+  withoutExplanationSection(crashSections).slice(0, 3).map((section) => section.id),
   ['summary', 'exception', 'crashed-thread'],
   'legacy crash Phase 1 core sections remain first'
 );
+assertExplanationAfterSummary(crashSections, 'exc-bad-access', 'Legacy Crash parseInput inserts explanation');
 assert.equal(fieldValue(sectionById(crashSections, 'summary'), 'App'), 'DemoApp');
 assert.equal(fieldValue(sectionById(crashSections, 'summary'), 'Version'), '2.1.4 (318)');
 assert.equal(fieldValue(sectionById(crashSections, 'exception'), 'Termination Reason'), 'Namespace SIGNAL, Code 11 Segmentation fault: 11');
@@ -3007,7 +3296,7 @@ assert.equal(sectionById(crashSections, 'crashed-thread').table[1].symbol, 'view
 
 const fullCrashSections = parseInput(fullCrashText);
 assert.deepEqual(
-  fullCrashSections.map((section) => section.id),
+  withoutExplanationSection(fullCrashSections).map((section) => section.id),
   ['summary', 'exception', 'crashed-thread', 'all-threads', 'binary-images'],
   'full legacy crash includes all threads and binary images'
 );
@@ -3019,9 +3308,10 @@ assert.equal(sectionById(fullCrashSections, 'binary-images').table[1].arch, 'arm
 const watchdogSections = parseInput(watchdogText);
 assert.deepEqual(
   watchdogSections.map((section) => section.id),
-  ['summary', 'termination', 'main-thread-stackshot'],
+  ['summary', EXPLANATION_SECTION_ID, 'termination', 'main-thread-stackshot'],
   'watchdog stackshot Phase 1 output contains summary, termination, and main thread stackshot'
 );
+assertExplanationAfterSummary(watchdogSections, 'watchdog', 'Watchdog parseInput inserts explanation');
 assert.equal(fieldValue(sectionById(watchdogSections, 'summary'), 'App'), 'WatchdogApp');
 assert.equal(fieldValue(sectionById(watchdogSections, 'summary'), 'Bundle ID'), 'com.example.watchdog');
 assert.equal(fieldValue(sectionById(watchdogSections, 'summary'), 'Device'), 'iPhone18,1');
@@ -3036,9 +3326,10 @@ assert.equal(sectionById(watchdogSections, 'main-thread-stackshot').table[1].sym
 const jetsamSections = parseInput(jetsamText);
 assert.deepEqual(
   jetsamSections.map((section) => section.id),
-  ['summary', 'victim', 'process-table', 'system-memory', 'limits'],
+  ['summary', EXPLANATION_SECTION_ID, 'victim', 'process-table', 'system-memory', 'limits'],
   'JetsamEvent includes summary, victim, process table, system memory, and limits'
 );
+assertExplanationAfterSummary(jetsamSections, 'jetsam', 'Jetsam parseInput inserts explanation');
 assert.equal(fieldValue(sectionById(jetsamSections, 'summary'), 'Reason'), 'per-process-limit');
 assert.equal(fieldValue(sectionById(jetsamSections, 'victim'), 'Process'), 'MemoryHog');
 assert.equal(sectionById(jetsamSections, 'process-table').table[0].process, 'MemoryHog');
@@ -3067,9 +3358,10 @@ assert.equal(fieldValue(sectionById(realSchemaJetsamSections, 'limits'), 'Per-pr
 const panicSections = parseInput(panicText);
 assert.deepEqual(
   panicSections.map((section) => section.id),
-  ['panic-string', 'panic-flags', 'kernel-backtrace', 'loaded-kexts', 'system-info'],
+  ['panic-string', 'panic-flags', 'kernel-backtrace', 'loaded-kexts', 'system-info', EXPLANATION_SECTION_ID],
   'panic-full includes panic string, flags, backtrace, kexts, and system info'
 );
+assert.equal(fieldValue(sectionById(panicSections, EXPLANATION_SECTION_ID), 'Category'), 'System panic report', 'panic-full parseInput appends explanation when no summary section exists');
 assert.match(sectionById(panicSections, 'panic-string').raw, /userspace watchdog timeout/);
 assert.equal(sectionById(panicSections, 'kernel-backtrace').table[0].returnAddress, '0xfffffff007123456');
 assert.equal(sectionById(panicSections, 'loaded-kexts').table[0].name, 'com.apple.driver.ExampleKext');
@@ -3077,9 +3369,10 @@ assert.equal(sectionById(panicSections, 'loaded-kexts').table[0].name, 'com.appl
 const jsonPanicSections = parseInput(jsonPanicText);
 assert.deepEqual(
   jsonPanicSections.map((section) => section.id),
-  ['panic-string', 'panic-flags', 'kernel-backtrace', 'loaded-kexts', 'system-info'],
+  ['panic-string', 'panic-flags', 'kernel-backtrace', 'loaded-kexts', 'system-info', EXPLANATION_SECTION_ID],
   'JSON-wrapped panic-full includes panic string, flags, backtrace, kexts, and system info'
 );
+assert.equal(fieldValue(sectionById(jsonPanicSections, EXPLANATION_SECTION_ID), 'Category'), 'System panic report', 'JSON-wrapped panic-full parseInput appends explanation when no summary section exists');
 assert.match(sectionById(jsonPanicSections, 'panic-string').raw, /LLC Bus error from cpu3/);
 assert.equal(fieldValue(sectionById(jsonPanicSections, 'panic-flags'), 'Flags'), '0x802');
 assert.equal(fieldValue(sectionById(jsonPanicSections, 'system-info'), 'OS / Build'), 'iPhone OS 18.2 (22C152)');
