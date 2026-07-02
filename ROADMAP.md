@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.7.0-alpha` release-readiness work
+Status: updated for active `v0.8.0-alpha` release-readiness work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -17,7 +17,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
 | Apple Diagnostics Expansion | Release-ready, unreleased | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
-| Human-Readable Diagnostic Explanations | Active, unreleased | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
+| Human-Readable Diagnostic Explanations | Release-ready, unreleased | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
+| Release Hardening and QA Polish | Release-ready pending commit/review, unreleased | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
 
 ## Project Constraints
 
@@ -222,7 +223,7 @@ Recognized but not parsed yet:
 
 Recognition is not parser support. These families show safe unsupported messages and do not emit `SectionModel[]` yet.
 
-Supported in active unreleased v0.6 work:
+Supported by the unreleased v0.6 Apple Diagnostics Expansion work:
 
 - AccessoryCrash `.ips` reports with `bug_type: 305`.
 - CPU Resource reports with `bug_type: 202`.
@@ -322,11 +323,11 @@ Still out of scope for `v0.7.0-alpha`:
 
 ## Planned Path To v1.0
 
-This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope and `v0.7.0-alpha` completes the deterministic explanation milestone. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
+This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope, `v0.7.0-alpha` has completed deterministic explanations, and `v0.8.0-alpha` has completed release hardening. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
 
-Status: release-ready pending commit/review, unreleased.
+Status: release-ready, unreleased.
 
 Goal: improve user understanding without adding risky new parser families.
 
@@ -374,16 +375,23 @@ Out of scope for `v0.7.0-alpha`:
 
 Goal: improve release quality, security posture, documentation, and QA repeatability.
 
-Scope:
+Status: complete and ready for review.
 
-- CSP/header hardening planning or implementation if hosting supports it.
-- Optional reusable browser smoke tests.
-- Release QA checklist improvements.
-- README and release note polish.
-- GitHub Release polish.
-- Optional screenshots or demo capture.
-- Accessibility and mobile Safari QA tightening.
-- PWA/offline verification improvements.
+Completed scope:
+
+- Slice 8A: UI polish for spacing, typography, wrapping, table containment, status feedback, and mobile readability.
+- Slice 8A.5: documentation foundation with `PLANS.md` and `ARCHITECTURE.md`.
+- Slice 8B: accessibility polish for keyboard usability, focus visibility, accessible names, live-region behavior, touch targets, and reduced-motion guardrails.
+- Slice 8C: browser and mobile QA across supported parser families, unsupported diagnostics, user flows, PWA behavior, and responsive widths.
+- Slice 8D: platform hardening for service-worker cache boundaries, manifest/install metadata, navigation fallback behavior, offline shell, static guards, and PWA verification.
+- Slice 8E: documentation alignment and release-readiness verification.
+
+Not included:
+
+- GitHub Release creation.
+- Package metadata changes.
+- Screenshots or demo capture.
+- Hosting migration or deploy-time response-header configuration.
 
 Out of scope for `v0.8.0-alpha` unless explicitly approved:
 
@@ -445,9 +453,9 @@ Do not block `v1.0.0` on:
 
 These can become future `v1.1`, `v1.2`, or `v2.0` work if explicitly planned.
 
-## Post-v0.5.0-alpha Or Parallel Hardening
+## Future Hardening And Exploratory Work
 
-These items remain outside current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later. Some may be candidates for the `v0.8.0-alpha` release-hardening milestone above.
+These items remain outside the current v1.0 stabilization path unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -464,12 +472,12 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, and `PHASE_7_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, and `PHASE_8_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for current `v0.6.0-alpha` Apple Diagnostics Expansion work unless explicitly approved later.
+These ideas are intentionally out of scope for the current v1.0 stabilization path unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |
@@ -485,8 +493,8 @@ These ideas are intentionally out of scope for current `v0.6.0-alpha` Apple Diag
 
 Before starting the next implementation slice:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect active unreleased `v0.7.0-alpha` explanation work.
-- After `v0.7.0-alpha` is reviewed, start from the `v0.8.0-alpha` release-hardening and QA polish scope unless a release blocker requires a narrower maintenance slice.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect completed unreleased `v0.8.0-alpha` hardening work.
+- After `v0.8.0-alpha` is reviewed and committed, start from the `v0.9.0-beta` feature-freeze and release-candidate preparation scope unless a release blocker requires a narrower maintenance slice.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:

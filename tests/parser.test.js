@@ -78,23 +78,78 @@ const coreAnalyticsSmallText = await readFile(new URL('./fixtures/example-corean
 const coreAnalyticsMediumText = await readFile(new URL('./fixtures/example-coreanalytics-medium.ips.ca.synced', import.meta.url), 'utf8');
 const coreAnalyticsLargeText = await readFile(new URL('./fixtures/example-coreanalytics-large.ips.ca.synced', import.meta.url), 'utf8');
 const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const manifestText = await readFile(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
 const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
+const manifest = JSON.parse(manifestText);
+const precacheBody = serviceWorkerText.match(/const PRECACHE_URLS = \[(?<body>[^]*?)\];/)?.groups?.body ?? '';
+const precacheUrls = [...precacheBody.matchAll(/'([^']+)'/g)].map((match) => match[1]);
 
 assert.match(indexHtmlText, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/, 'viewport supports mobile Safari safe-area rendering without disabling zoom');
-assert.match(indexHtmlText, /<input id="file-input" type="file">/, 'file picker does not restrict iOS analytics file extensions with accept filters');
+assert.match(indexHtmlText, /<link rel="manifest" href=".\/manifest.webmanifest">/, 'page links the manifest with a GitHub Pages-safe relative path');
+assert.match(indexHtmlText, /<link rel="apple-touch-icon" href=".\/icons\/apple-touch-icon.png">/, 'page links the Apple touch icon with a GitHub Pages-safe relative path');
+assert.match(indexHtmlText, /<a class="skip-link" href="#main-content">Skip to main content<\/a>/, 'page includes a keyboard skip link to main content');
+assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main content exposes a stable skip-link target');
+assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file">/, 'file picker has an explicit accessible name without extension filters');
 assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
 assert.match(indexHtmlText, /Install for quick access\. Installation saves the app shell, not\s+your reports\./, 'install guidance clarifies reports are not saved');
 assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Screen\./, 'install guidance includes iPhone and iPad Add to Home Screen steps');
 assert.match(indexHtmlText, /<div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden><\/div>/, 'offline status supports accessible text and actions');
+assert.match(indexHtmlText, /id="privacy-toggle"[^>]*aria-describedby="privacy-mode-label"/, 'privacy toggle is associated with the current privacy mode label');
+assert.match(indexHtmlText, /id="result-search"[^>]*aria-describedby="search-count"/, 'search input is associated with calm search status text');
+assert.deepEqual(
+  {
+    name: manifest.name,
+    shortName: manifest.short_name,
+    startUrl: manifest.start_url,
+    scope: manifest.scope,
+    display: manifest.display,
+    backgroundColor: manifest.background_color,
+    themeColor: manifest.theme_color,
+  },
+  {
+    name: 'iOS Analytics File Parser',
+    shortName: 'iOS Parser',
+    startUrl: './',
+    scope: './',
+    display: 'standalone',
+    backgroundColor: '#0d0d0f',
+    themeColor: '#0d0d0f',
+  },
+  'manifest keeps the expected install identity and GitHub Pages-safe launch scope'
+);
+assert.equal(manifest.prefer_related_applications, false, 'manifest does not steer users toward related native apps');
+assert.ok(
+  manifest.icons.some((icon) => icon.src === './icons/maskable-512.png' && icon.purpose === 'maskable'),
+  'manifest includes a maskable icon for install surfaces'
+);
+assert.ok(
+  manifest.icons.every((icon) => icon.src.startsWith('./icons/') && !/^(?:https?:)?\/\//.test(icon.src)),
+  'manifest icon paths are local relative URLs'
+);
+assert.ok(precacheUrls.length > 0, 'service worker exposes a static precache allowlist');
+assert.equal(new Set(precacheUrls).size, precacheUrls.length, 'service worker precache allowlist has no duplicate entries');
+assert.ok(precacheUrls.every((asset) => asset === './' || asset.startsWith('./')), 'service worker precaches only relative app-shell assets');
+assert.equal(precacheUrls.some((asset) => /^(?:https?:)?\/\//.test(asset)), false, 'service worker precache allowlist has no external URLs');
+assert.equal(precacheUrls.some((asset) => asset.includes('tests/fixtures')), false, 'service worker precache allowlist excludes test fixtures');
+assert.match(serviceWorkerText, /const ALLOWLIST_URLS = new Set\(PRECACHE_URLS\.map/, 'service worker derives runtime fetch boundaries from the explicit precache allowlist');
+assert.match(serviceWorkerText, /if \(request\.method !== 'GET'\) return false;[^]*if \(url\.origin !== self\.location\.origin\) return false;[^]*ALLOWLIST_URLS\.has\(normalizeHref\(url\)\)/, 'service worker allowlist rejects non-GET, cross-origin, and non-precached requests');
+assert.match(serviceWorkerText, /if \(isAllowedRequest\(request\)\) \{[^]*event\.respondWith\(cacheFirstAllowedAsset\(request\)\)/, 'service worker serves only allowlisted assets through cache-first handling');
+assert.match(serviceWorkerText, /if \(request\.mode === 'navigate'\) \{[^]*event\.respondWith\(navigationFallback\(request\)\)/, 'service worker only uses navigation fallback for navigation requests');
+assert.match(serviceWorkerText, /const ROOT_URL = normalizeHref\(new URL\('\.\/', self\.location\.href\)\)/, 'service worker tracks the app scope root for safe navigation fallback');
+assert.match(serviceWorkerText, /if \(requestUrl !== ROOT_URL && requestUrl !== INDEX_URL\) \{[^]*Response\.redirect\(ROOT_URL, 302\)/, 'service worker redirects unsupported nested navigations to the app root before relative assets resolve');
+assert.match(serviceWorkerText, /cache\.match\(INDEX_URL\)/, 'service worker navigation fallback uses cached index.html');
+assert.match(serviceWorkerText, /cacheName\.startsWith\(CACHE_PREFIX\) && cacheName !== CACHE_NAME[^]*caches\.delete\(cacheName\)/, 'service worker activation deletes older app caches for the same cache prefix');
+assert.match(serviceWorkerText, /caches\.open\(CACHE_NAME\)\.then\(\(cache\) => cache\.addAll\(PRECACHE_URLS\)\)/, 'service worker install precaches exactly the explicit app-shell allowlist');
 assert.doesNotMatch(serviceWorkerText, /cache\.put/, 'service worker does not dynamically cache network responses');
+assert.doesNotMatch(serviceWorkerText, /cache\.add\(/, 'service worker does not add individual runtime requests to cache');
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.7\.0-alpha-slice7b-diagnostic-explanations-2026-06-30/, 'service worker cache version reflects Slice 7B diagnostic explanation routing');
+assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8d-platform-hardening-2026-07-02/, 'service worker cache version reflects Slice 8D platform hardening');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -142,6 +197,11 @@ assert.match(mainScriptText, /function reloadForWaitingUpdate\(\)[^]*reloadAfter
 assert.match(mainScriptText, /controllerchange[^]*if \(!reloadAfterControllerChange\) return;[^]*window\.location\.reload\(\)/, 'controllerchange reload is gated behind user-requested update flow');
 assert.match(renderSectionText, /document\.createElement\('div'\)/, 'raw section text renders inside a block wrapper');
 assert.match(renderSectionText, /raw-note raw-note--wrap/, 'raw section text uses the mobile wrapping class');
+assert.match(renderSectionText, /section-copy__feedback[^]*feedback\.setAttribute\('role', 'status'\)/, 'copy feedback uses a scoped status role');
+assert.match(renderSectionText, /thread-group__toggle[^]*aria-label[^]*Toggle \$\{group\.thread\} thread group/, 'thread group toggles expose explicit accessible names');
+assert.match(renderSectionText, /table-toggle[^]*aria-label[^]*Toggle loaded kexts table/, 'collapsible loaded-kext controls expose explicit accessible names');
+assert.match(renderSectionText, /renderTableButton\('Show more'[^]*Show more rows in \$\{section\.title\}/, 'limited table Show more control has contextual accessible text');
+assert.match(renderSectionText, /renderTableButton\('Show all'[^]*Show all rows in \$\{section\.title\}/, 'limited table Show all control has contextual accessible text');
 const rawWrapRule = styleText.match(/\.raw-note--wrap\s*{(?<body>[^}]*)}/s)?.groups?.body ?? '';
 assert.match(rawWrapRule, /white-space:\s*pre-wrap;/, 'raw wrapping class preserves panic string line breaks');
 assert.match(rawWrapRule, /overflow-wrap:\s*anywhere;/, 'raw wrapping class allows arbitrary token wrapping');
@@ -157,10 +217,16 @@ assert.match(styleText, /\.search-count\s*{[^}]*max-width:\s*100%;[^}]*overflow-
 assert.match(styleText, /\.section-copy__feedback\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'copy feedback wraps without widening section cards');
 assert.match(styleText, /\.coreanalytics-overview__chip\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'CoreAnalytics facet chips wrap long rendered values');
 assert.match(styleText, /\.section-nav__link\s*{[^}]*min-height:\s*44px;/s, 'section nav chips have practical mobile touch targets');
+assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
+assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
+assert.match(styleText, /\.skip-link:focus-visible\s*{[^}]*transform:\s*translateY\(0\);[^}]*outline:/s, 'skip link becomes visible with a focus outline');
+assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-motion users receive motion guardrails');
+assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
 assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
 assert.match(styleText, /\.thread-group__toggle,\s*\.table-toggle,\s*\.table-control-button\s*{[^}]*min-height:\s*44px;/s, 'dense table controls have practical mobile touch targets');
+assert.match(styleText, /\.frame-table:not\(\.frame-table--compact\) th,\s*\.frame-table:not\(\.frame-table--compact\) td\s*{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s, 'non-compact report tables wrap long text inside their scroll containers');
 assert.doesNotMatch(
   `${searchMetadataSource}\n${copyMetadataSource}`,
   /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/,

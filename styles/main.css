@@ -12,6 +12,10 @@
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
 }
 
+button {
+  touch-action: manipulation;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -69,6 +73,27 @@ body {
   overflow-x: clip;
 }
 
+.skip-link {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  z-index: 10;
+  transform: translateY(-160%);
+  border: 1px solid rgba(48, 209, 88, 0.7);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--success);
+  padding: 10px 12px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid rgba(48, 209, 88, 0.7);
+  outline-offset: 3px;
+}
+
 code,
 textarea,
 .frame-table {
@@ -83,7 +108,7 @@ textarea,
 }
 
 .intro {
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 .privacy-badge {
@@ -245,10 +270,15 @@ h1 {
 .file-picker span,
 .clear-report,
 .parse-paste {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--surface-strong);
   border-radius: 8px;
   padding: 10px 14px;
   font-weight: 650;
+  line-height: 1.25;
 }
 
 .file-picker span,
@@ -257,7 +287,9 @@ h1 {
   color: var(--background);
 }
 
-.file-picker:focus-within span {
+.file-picker:focus-within span,
+.clear-report:focus-visible,
+.parse-paste:focus-visible {
   outline: 2px solid rgba(48, 209, 88, 0.7);
   outline-offset: 3px;
 }
@@ -306,6 +338,10 @@ h1 {
 }
 
 .example-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--surface-strong);
   border-radius: 8px;
   background: #111113;
@@ -314,6 +350,7 @@ h1 {
   padding: 9px 12px;
   font: inherit;
   font-size: 0.92rem;
+  line-height: 1.25;
 }
 
 .example-button:hover,
@@ -346,6 +383,8 @@ textarea {
 .status {
   padding: 14px 16px;
   color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .status[data-tone="error"] {
@@ -507,6 +546,7 @@ textarea {
   border-radius: 999px;
   color: var(--text);
   padding: 7px 10px;
+  line-height: 1.25;
   text-decoration: none;
 }
 
@@ -623,6 +663,7 @@ textarea {
 
 .section-card__header h2 {
   min-width: 0;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
@@ -678,10 +719,13 @@ textarea {
 
 .field-list dt {
   color: var(--muted);
+  font-weight: 650;
+  line-height: 1.45;
 }
 
 .field-list dd {
   margin: 0;
+  line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -772,8 +816,16 @@ textarea {
   border-bottom: 1px solid var(--border);
   padding: 10px;
   text-align: left;
+  line-height: 1.45;
   vertical-align: top;
   white-space: nowrap;
+}
+
+.frame-table:not(.frame-table--compact) th,
+.frame-table:not(.frame-table--compact) td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .frame-table th {
@@ -807,6 +859,7 @@ textarea {
 .raw-note {
   margin: 16px 0 0;
   color: var(--warning);
+  line-height: 1.55;
 }
 
 .raw-note--wrap {
@@ -818,6 +871,17 @@ textarea {
   word-break: break-word;
   line-break: anywhere;
   contain: inline-size;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 @media (max-width: 720px) {
@@ -854,5 +918,40 @@ textarea {
 
   .section-nav__link {
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-panel {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .trust-strip,
+  .example-controls,
+  .table-controls {
+    gap: 8px;
+  }
+
+  .file-picker,
+  .clear-report,
+  .parse-paste,
+  .privacy-toggle,
+  .clear-search,
+  .offline-status__button {
+    max-width: 100%;
+  }
+
+  .file-picker span,
+  .clear-report,
+  .parse-paste,
+  .privacy-toggle,
+  .clear-search,
+  .offline-status__button {
+    white-space: normal;
+  }
+
+  .search-panel {
+    align-items: stretch;
   }
 }

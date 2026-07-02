@@ -1,65 +1,85 @@
 # AGENTS.md
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+# iOS Analytics File Parser
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+Read this file before making changes.
 
-## 1. Think Before Coding
+## Core Principles
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- Think before coding.
+- Prefer the simplest solution that satisfies the task.
+- Make narrow, surgical changes.
+- Do not refactor unrelated code.
+- Preserve the existing architecture unless explicitly requested.
+- Keep parser families independent.
+- Finish the current roadmap milestone before expanding scope.
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+## Project Philosophy
 
-## 2. Simplicity First
+Always preserve:
 
-**Minimum code that solves the problem. Nothing speculative.**
+- Local-first
+- Privacy-first
+- Static browser application
+- No backend
+- No uploads
+- No analytics
+- No cloud storage
+- No report persistence
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+## Parser Rules
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+- One parser per diagnostic family.
+- Do not merge parsers into a mega-parser.
+- Freeze completed parsers unless fixing a verified bug.
+- Do not add new parser families unless the roadmap explicitly requires them.
 
-## 3. Surgical Changes
+## Verification
 
-**Touch only what you must. Clean up only your own mess.**
+Run relevant validation before reporting completion:
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+```powershell
+npm.cmd test
+node --check <modified-js-file>
+git diff --check
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+If `service-worker.js` changes:
 
----
+```powershell
+node --check service-worker.js
+```
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+## Browser QA
+
+When UI, CSS, rendering, or the service worker changes, verify:
+
+- parsing
+- search
+- copy
+- section navigation
+- mobile layout
+- privacy mode
+- Clear Report
+- offline shell (if affected)
+
+## Common Gotchas
+
+- Update the service-worker precache when new production modules are added.
+- Bump the cache version when precached assets change.
+- Do not claim planned features are implemented.
+- Keep explanation wording cautious; never claim an exact root cause.
+- Preserve the existing `SectionModel[]` contract unless explicitly redesigning it.
+
+## Task-Specific Documentation
+
+Read these before working:
+
+- `ROADMAP.md` — milestone planning and scope.
+- `README.md` — supported features and user documentation.
+- `CHANGELOG.md` — release history.
+- `PHASE_*_SUMMARY.md` — milestone summaries.
+- `PLANS.md` (if present) — planning workflow.
+- `ARCHITECTURE.md` (if present) — architecture details.
+
+If documentation and implementation disagree, report the mismatch instead of guessing.

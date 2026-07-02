@@ -104,6 +104,7 @@ function renderThreadGroups(section, view, { onToggleThreadGroup }) {
     button.className = 'thread-group__toggle';
     button.type = 'button';
     button.setAttribute('aria-expanded', String(group.expanded));
+    button.setAttribute('aria-label', `Toggle ${group.thread} thread group, ${group.frameCount} frames, currently ${group.expanded ? 'expanded' : 'collapsed'}`);
     button.textContent = `${group.thread} - ${group.frameCount} frames - ${group.stateLabel}`;
     button.addEventListener('click', () => {
       onToggleThreadGroup?.(section.id, group.thread, !group.expanded);
@@ -130,8 +131,8 @@ function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRow
     const controls = document.createElement('div');
     controls.className = 'table-controls';
     controls.append(
-      renderTableButton('Show more', () => onShowMoreRows?.(section.id, view.nextLimit)),
-      renderTableButton('Show all', () => onShowAllRows?.(section.id, view.totalRows))
+      renderTableButton('Show more', () => onShowMoreRows?.(section.id, view.nextLimit), `Show more rows in ${section.title}`),
+      renderTableButton('Show all', () => onShowAllRows?.(section.id, view.totalRows), `Show all rows in ${section.title}`)
     );
     wrapper.append(controls);
   }
@@ -147,6 +148,7 @@ function renderCollapsibleKextTable(section, view, { onToggleDenseTable }) {
   button.className = 'table-toggle';
   button.type = 'button';
   button.setAttribute('aria-expanded', String(view.expanded));
+  button.setAttribute('aria-label', `Toggle loaded kexts table, ${view.totalRows} rows, currently ${view.expanded ? 'expanded' : 'collapsed'}`);
   button.textContent = `Loaded kexts - ${view.totalRows} rows - ${view.expanded ? 'expanded' : 'collapsed'}`;
   button.addEventListener('click', () => onToggleDenseTable?.(section.id, !view.expanded));
   wrapper.append(button, renderRowCount(view.summary));
@@ -165,11 +167,12 @@ function renderRowCount(text) {
   return summary;
 }
 
-function renderTableButton(label, onClick) {
+function renderTableButton(label, onClick, ariaLabel = label) {
   const button = document.createElement('button');
   button.className = 'table-control-button';
   button.type = 'button';
   button.textContent = label;
+  button.setAttribute('aria-label', ariaLabel);
   button.addEventListener('click', onClick);
   return button;
 }
@@ -186,6 +189,7 @@ function renderCopyControl(section, onCopySection, copyMetadata) {
 
   const feedback = document.createElement('span');
   feedback.className = 'section-copy__feedback';
+  feedback.setAttribute('role', 'status');
   feedback.setAttribute('aria-live', 'polite');
 
   button.addEventListener('click', async () => {
