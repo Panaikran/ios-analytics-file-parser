@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.8.0-alpha - Unreleased
+## v0.8.0-alpha
 
 Release hardening and QA polish for the existing static, local-first app.
 
@@ -21,11 +21,11 @@ Release hardening and QA polish for the existing static, local-first app.
 
 ### Notes
 
-- No parser behavior, parser routing, explanation logic, parser families, package metadata, tag, GitHub release, backend, analytics, cloud storage, report persistence, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
+- No parser behavior, parser routing, explanation logic, parser families, package metadata, backend, analytics, cloud storage, report persistence, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
 - CSP/header hardening remains hosting-dependent. GitHub Pages does not serve custom response headers directly.
 - Safari and Mobile Safari remain manual QA targets when available; they were not available in the Windows QA environment.
 
-## v0.7.0-alpha - Unreleased
+## v0.7.0-alpha
 
 Human-readable diagnostic explanations for already-supported report types.
 
@@ -47,10 +47,10 @@ Human-readable diagnostic explanations for already-supported report types.
 ### Notes
 
 - Explanations are deterministic, local-only, and based on already-parsed safe fields.
-- No AI diagnosis, exact root-cause claims, symbolication, full stack rendering, new parser families, backend, analytics, cloud storage, report persistence, package metadata change, tag, or GitHub release was added.
+- No AI diagnosis, exact root-cause claims, symbolication, full stack rendering, new parser families, backend, analytics, cloud storage, report persistence, or package metadata change was added.
 - App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broad Accessory/Firmware diagnostics remain unsupported.
 
-## v0.6.0-alpha - Unreleased
+## v0.6.0-alpha
 
 Apple Diagnostics Expansion classification architecture, narrow AccessoryCrash support, and narrow Resource Diagnostics support.
 

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.8.0-alpha` release-readiness work
+Status: updated for active `v0.9.0-beta` feature-freeze work
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -16,9 +16,10 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | PWA Update Hotfix | Complete | `v0.4.1-alpha` | Service worker update activation fix using `event.waitUntil(self.skipWaiting())` |
 | Large Report Usability and Performance | Complete | `v0.5.0-alpha` | Large report guardrails, shared table controls, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | File-size Validation Hotfix | Complete | `v0.5.1-alpha` | Restored the documented 20 MB file safety limit and corrected the too-large message |
-| Apple Diagnostics Expansion | Release-ready, unreleased | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
-| Human-Readable Diagnostic Explanations | Release-ready, unreleased | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
-| Release Hardening and QA Polish | Release-ready pending commit/review, unreleased | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
+| Apple Diagnostics Expansion | Released | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
+| Human-Readable Diagnostic Explanations | Released | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
+| Release Hardening and QA Polish | Released | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
+| Feature Freeze / Release Candidate Preparation | Active | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
 
 ## Project Constraints
 
@@ -223,7 +224,7 @@ Recognized but not parsed yet:
 
 Recognition is not parser support. These families show safe unsupported messages and do not emit `SectionModel[]` yet.
 
-Supported by the unreleased v0.6 Apple Diagnostics Expansion work:
+Supported by the v0.6 Apple Diagnostics Expansion release:
 
 - AccessoryCrash `.ips` reports with `bug_type: 305`.
 - CPU Resource reports with `bug_type: 202`.
@@ -323,11 +324,11 @@ Still out of scope for `v0.7.0-alpha`:
 
 ## Planned Path To v1.0
 
-This path assumes `v0.6.0-alpha` remains release-ready or released with the current Apple Diagnostics Expansion scope, `v0.7.0-alpha` has completed deterministic explanations, and `v0.8.0-alpha` has completed release hardening. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
+With `v0.6.0-alpha`, `v0.7.0-alpha`, and `v0.8.0-alpha` released, this path now focuses on `v0.9.0-beta` feature freeze and `v1.0.0` stable-release preparation. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
 
-Status: release-ready, unreleased.
+Status: released.
 
 Goal: improve user understanding without adding risky new parser families.
 
@@ -375,7 +376,7 @@ Out of scope for `v0.7.0-alpha`:
 
 Goal: improve release quality, security posture, documentation, and QA repeatability.
 
-Status: complete and ready for review.
+Status: released.
 
 Completed scope:
 
@@ -493,8 +494,8 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 Before starting the next implementation slice:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect completed unreleased `v0.8.0-alpha` hardening work.
-- After `v0.8.0-alpha` is reviewed and committed, start from the `v0.9.0-beta` feature-freeze and release-candidate preparation scope unless a release blocker requires a narrower maintenance slice.
+- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect the released `v0.8.0-alpha` hardening work.
+- Start from the `v0.9.0-beta` feature-freeze and release-candidate preparation scope unless a release blocker requires a narrower maintenance slice.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:

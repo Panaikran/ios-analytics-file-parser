@@ -2,11 +2,11 @@
 
 ## Overview
 
-Phase 8 is the unreleased `v0.8.0-alpha` Release Hardening and QA Polish milestone.
+Phase 8 was the `v0.8.0-alpha` Release Hardening and QA Polish milestone.
 
 The milestone improves release confidence, UI consistency, accessibility, browser/mobile QA coverage, documentation foundation, and PWA/platform behavior while preserving the static browser app, local-first privacy model, parser-family boundaries, sanitized default output, and conservative service-worker cache strategy.
 
-No parser behavior, parser routing, explanation logic, parser family, package metadata, release tag, GitHub release, backend, authentication, analytics, cloud storage, report persistence, framework dependency, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
+No parser behavior, parser routing, explanation logic, parser family, package metadata, backend, authentication, analytics, cloud storage, report persistence, framework dependency, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
 
 ## Milestone Theme
 
@@ -121,19 +121,21 @@ git status --short
 - Full stack rendering is not supported.
 - AI diagnosis and exact root-cause claims are not provided.
 
-## Release Gate
+## Release Status
 
-`v0.8.0-alpha` should not be tagged or published until:
+`v0.8.0-alpha` has been released.
 
-- documentation reflects implemented behavior only
-- automated validation passes
-- browser/mobile QA results remain free of unresolved blockers
-- accessibility and platform hardening checks are complete
-- privacy guarantees remain true
-- service-worker/offline behavior is verified
-- `git status --short` is reviewed and release-intended changes are committed
+The implementation milestone reached release readiness with:
 
-No release tag, GitHub release, package metadata change, version number change, or publish action is included in Slice 8E.
+- documentation reflecting implemented behavior only
+- automated validation passing
+- browser/mobile QA results free of unresolved blockers
+- accessibility and platform hardening checks complete
+- privacy guarantees preserved
+- service-worker/offline behavior verified
+- release-intended changes committed before release
+
+No package metadata change or version number change was part of the Phase 8 implementation milestone.
 
 ## Remaining Roadmap
 
