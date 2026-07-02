@@ -16,7 +16,8 @@
     <link rel="stylesheet" href="./styles/main.css">
   </head>
   <body>
-    <main class="app-shell">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <main id="main-content" class="app-shell">
       <section class="intro">
         <p class="privacy-badge">Parsed locally - not uploaded</p>
         <h1>iOS Analytics File Parser</h1>
@@ -49,7 +50,7 @@
         <h2 id="input-title">Load a report</h2>
         <label class="file-picker">
           <span>Choose file</span>
-          <input id="file-input" type="file">
+          <input id="file-input" type="file" aria-label="Choose report file">
         </label>
 
         <button id="clear-report" class="clear-report" type="button" disabled>Clear report</button>
@@ -71,7 +72,7 @@
         <div id="status" class="status" role="status" aria-live="polite">No report loaded yet.</div>
         <div id="privacy-panel" class="privacy-panel" hidden>
           <p id="privacy-mode-label" class="privacy-mode-label">Privacy mode: Sanitized view</p>
-          <button id="privacy-toggle" class="privacy-toggle" type="button" aria-pressed="false">
+          <button id="privacy-toggle" class="privacy-toggle" type="button" aria-pressed="false" aria-describedby="privacy-mode-label">
             Switch to raw local view
           </button>
           <p id="privacy-warning" class="privacy-warning" hidden>
@@ -81,7 +82,7 @@
         <div id="search-panel" class="search-panel" hidden>
           <label class="search-field" for="result-search">
             <span>Search parsed output</span>
-            <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text">
+            <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text" aria-describedby="search-count">
           </label>
           <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
           <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>

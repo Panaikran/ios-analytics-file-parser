@@ -84,17 +84,21 @@ const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', i
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
 
 assert.match(indexHtmlText, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/, 'viewport supports mobile Safari safe-area rendering without disabling zoom');
-assert.match(indexHtmlText, /<input id="file-input" type="file">/, 'file picker does not restrict iOS analytics file extensions with accept filters');
+assert.match(indexHtmlText, /<a class="skip-link" href="#main-content">Skip to main content<\/a>/, 'page includes a keyboard skip link to main content');
+assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main content exposes a stable skip-link target');
+assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file">/, 'file picker has an explicit accessible name without extension filters');
 assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
 assert.match(indexHtmlText, /Install for quick access\. Installation saves the app shell, not\s+your reports\./, 'install guidance clarifies reports are not saved');
 assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Screen\./, 'install guidance includes iPhone and iPad Add to Home Screen steps');
 assert.match(indexHtmlText, /<div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden><\/div>/, 'offline status supports accessible text and actions');
+assert.match(indexHtmlText, /id="privacy-toggle"[^>]*aria-describedby="privacy-mode-label"/, 'privacy toggle is associated with the current privacy mode label');
+assert.match(indexHtmlText, /id="result-search"[^>]*aria-describedby="search-count"/, 'search input is associated with calm search status text');
 assert.doesNotMatch(serviceWorkerText, /cache\.put/, 'service worker does not dynamically cache network responses');
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8a-ui-polish-2026-07-02/, 'service worker cache version reflects Slice 8A UI polish');
+assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8b-accessibility-polish-2026-07-02/, 'service worker cache version reflects Slice 8B accessibility polish');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -142,6 +146,11 @@ assert.match(mainScriptText, /function reloadForWaitingUpdate\(\)[^]*reloadAfter
 assert.match(mainScriptText, /controllerchange[^]*if \(!reloadAfterControllerChange\) return;[^]*window\.location\.reload\(\)/, 'controllerchange reload is gated behind user-requested update flow');
 assert.match(renderSectionText, /document\.createElement\('div'\)/, 'raw section text renders inside a block wrapper');
 assert.match(renderSectionText, /raw-note raw-note--wrap/, 'raw section text uses the mobile wrapping class');
+assert.match(renderSectionText, /section-copy__feedback[^]*feedback\.setAttribute\('role', 'status'\)/, 'copy feedback uses a scoped status role');
+assert.match(renderSectionText, /thread-group__toggle[^]*aria-label[^]*Toggle \$\{group\.thread\} thread group/, 'thread group toggles expose explicit accessible names');
+assert.match(renderSectionText, /table-toggle[^]*aria-label[^]*Toggle loaded kexts table/, 'collapsible loaded-kext controls expose explicit accessible names');
+assert.match(renderSectionText, /renderTableButton\('Show more'[^]*Show more rows in \$\{section\.title\}/, 'limited table Show more control has contextual accessible text');
+assert.match(renderSectionText, /renderTableButton\('Show all'[^]*Show all rows in \$\{section\.title\}/, 'limited table Show all control has contextual accessible text');
 const rawWrapRule = styleText.match(/\.raw-note--wrap\s*{(?<body>[^}]*)}/s)?.groups?.body ?? '';
 assert.match(rawWrapRule, /white-space:\s*pre-wrap;/, 'raw wrapping class preserves panic string line breaks');
 assert.match(rawWrapRule, /overflow-wrap:\s*anywhere;/, 'raw wrapping class allows arbitrary token wrapping');
@@ -158,6 +167,9 @@ assert.match(styleText, /\.section-copy__feedback\s*{[^}]*max-width:\s*100%;[^}]
 assert.match(styleText, /\.coreanalytics-overview__chip\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'CoreAnalytics facet chips wrap long rendered values');
 assert.match(styleText, /\.section-nav__link\s*{[^}]*min-height:\s*44px;/s, 'section nav chips have practical mobile touch targets');
 assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
+assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
+assert.match(styleText, /\.skip-link:focus-visible\s*{[^}]*transform:\s*translateY\(0\);[^}]*outline:/s, 'skip link becomes visible with a focus outline');
+assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-motion users receive motion guardrails');
 assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
