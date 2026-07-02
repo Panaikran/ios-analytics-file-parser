@@ -22,11 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v0.5.1-alpha` |
-| Release-ready unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
-| Release-ready unreleased milestone | `v0.7.0-alpha`: Human-Readable Diagnostic Explanations |
-| Active unreleased milestone | `v0.8.0-alpha`: Release Hardening and QA Polish |
-| Current v0.8 focus | Documentation and release readiness for UI, accessibility, browser/mobile QA, and platform hardening |
+| Latest released version | `v0.8.0-alpha` |
+| Active milestone | `v0.9.0-beta`: Feature Freeze / Release Candidate Preparation |
+| Current v0.9 focus | Bug fixes, tests, docs, QA, accessibility, privacy verification, PWA/offline verification, and release polish |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -39,20 +37,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | PWA update hotfix | Complete in `v0.4.1-alpha` |
 | v0.5.0-alpha | Released: Large Report Usability and Performance |
 | v0.5.1-alpha | Released: file-size validation hotfix |
-| v0.6.0-alpha Phase 1 | Implemented but unreleased: classification architecture and safe unsupported messages |
-| v0.6.0-alpha Phase 2 | Implemented but unreleased: narrow AccessoryCrash `bug_type: 305` support |
-| v0.6.0-alpha Phase 3 | Implemented but unreleased: CPU Resource, Disk Writes Resource, and Stackshot Resource summary parsing |
-| v0.7.0-alpha Slice 7A | Implemented but unreleased: pure deterministic explanation helper |
-| v0.7.0-alpha Slice 7B | Implemented but unreleased: parser pipeline explanation integration |
-| v0.7.0-alpha Slice 7C | Implemented but unreleased: search/copy/privacy regression coverage |
-| v0.7.0-alpha Slice 7D | Complete: Browser/UI smoke QA passed |
-| v0.7.0-alpha Slice 7E | Complete: documentation and release-readiness alignment |
-| v0.8.0-alpha Slice 8A | Complete: UI polish |
-| v0.8.0-alpha Slice 8A.5 | Complete: documentation foundation |
-| v0.8.0-alpha Slice 8B | Complete: accessibility polish |
-| v0.8.0-alpha Slice 8C | Complete: browser and mobile QA |
-| v0.8.0-alpha Slice 8D | Complete: platform hardening |
-| v0.8.0-alpha Slice 8E | Active: documentation and release-readiness alignment |
+| v0.6.0-alpha | Released: Apple Diagnostics Expansion |
+| v0.7.0-alpha | Released: Human-Readable Diagnostic Explanations |
+| v0.8.0-alpha | Released: Release Hardening and QA Polish |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -157,18 +144,18 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Disk Writes Resource `bug_type: 142` parser | Supported, narrow v0.6 work |
 | Stackshot Resource `bug_type: 288` parser | Supported, summary parsing only |
 | Human-readable diagnostic explanations | Supported for selected already-supported report patterns |
-| Release-hardening UI polish | Supported in active `v0.8.0-alpha` work |
-| Accessibility polish | Supported in active `v0.8.0-alpha` work |
-| Browser/mobile QA pass | Complete in active `v0.8.0-alpha` work |
-| Platform/PWA hardening | Supported in active `v0.8.0-alpha` work |
+| Release-hardening UI polish | Released in `v0.8.0-alpha` |
+| Accessibility polish | Released in `v0.8.0-alpha` |
+| Browser/mobile QA pass | Complete in `v0.8.0-alpha` |
+| Platform/PWA hardening | Released in `v0.8.0-alpha` |
 | AI diagnosis | Not supported |
 | Exact root-cause claims | Not supported |
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
 | Search/copy scope wording for capped rows | Supported |
-| Diagnostic classification layer | Implemented in `v0.6.0-alpha` work |
-| Friendly messages for recognized unsupported diagnostics | Implemented in `v0.6.0-alpha` work |
+| Diagnostic classification layer | Released in `v0.6.0-alpha` |
+| Friendly messages for recognized unsupported diagnostics | Released in `v0.6.0-alpha` |
 | Web App Manifest | Supported |
 | Install guidance | Supported |
 | Service worker app shell | Supported |
@@ -565,6 +552,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 5 Summary](PHASE_5_SUMMARY.md)
 - [Phase 6 Summary](PHASE_6_SUMMARY.md)
 - [Phase 7 Summary](PHASE_7_SUMMARY.md)
+- [Phase 8 Summary](PHASE_8_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -616,11 +604,10 @@ After first successful service worker setup, these fictional examples are availa
 | v0.4.1-alpha | Complete | PWA update activation hotfix for waiting service workers |
 | v0.5.0-alpha | Complete | Large Report Usability and Performance: size helpers, shared table-view model, CoreAnalytics overview, search/copy scope wording, mobile Safari polish |
 | v0.5.1-alpha | Complete | File-size validation hotfix restoring the 20 MB safety limit |
-| v0.6.0-alpha Phase 1 | Complete, unreleased | Diagnostic Classification Architecture |
-| v0.6.0-alpha Phase 2 | Complete, unreleased | AccessoryCrash `bug_type: 305` support |
-| v0.6.0-alpha Phase 3 | Release-ready, unreleased | CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, Stackshot Resource `bug_type: 288` summary parsing |
-| v0.7.0-alpha | Release-ready, unreleased | Human-readable deterministic explanations for supported diagnostics |
-| v0.8.0-alpha | Release-ready pending commit/review, unreleased | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
+| v0.6.0-alpha | Released | Diagnostic Classification Architecture, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
+| v0.7.0-alpha | Released | Human-readable deterministic explanations for supported diagnostics |
+| v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
+| v0.9.0-beta | Active milestone | Feature Freeze / Release Candidate Preparation |
 
 The project keeps the same constraints:
 
@@ -634,7 +621,7 @@ The project keeps the same constraints:
 - no framework dependencies unless explicitly approved
 - sanitized output remains default
 
-CSP/header hardening is intentionally deferred beyond the `v0.5.0-alpha` release unless approved as a focused follow-up.
+CSP/header hardening remains hosting-dependent and is deferred until the project uses a host that supports custom response headers.
 
 The `v0.6.0-alpha` Phase 1 work delivered diagnostic classification architecture:
 
@@ -682,7 +669,7 @@ The `v0.8.0-alpha` Release Hardening and QA Polish work is narrow:
 
 The hardening milestone does not add parser families, parser redesign, UI redesign, backend services, storage, analytics, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering.
 
-Upcoming work remains stabilization and release-candidate preparation, subject to approval:
+Active work is now stabilization and release-candidate preparation:
 
 - v0.9.0-beta feature freeze and release-candidate preparation
 - final mobile Safari, PWA/offline, privacy/search/copy, and accessibility QA
