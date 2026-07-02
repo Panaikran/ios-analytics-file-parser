@@ -78,12 +78,18 @@ const coreAnalyticsSmallText = await readFile(new URL('./fixtures/example-corean
 const coreAnalyticsMediumText = await readFile(new URL('./fixtures/example-coreanalytics-medium.ips.ca.synced', import.meta.url), 'utf8');
 const coreAnalyticsLargeText = await readFile(new URL('./fixtures/example-coreanalytics-large.ips.ca.synced', import.meta.url), 'utf8');
 const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const manifestText = await readFile(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
 const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
+const manifest = JSON.parse(manifestText);
+const precacheBody = serviceWorkerText.match(/const PRECACHE_URLS = \[(?<body>[^]*?)\];/)?.groups?.body ?? '';
+const precacheUrls = [...precacheBody.matchAll(/'([^']+)'/g)].map((match) => match[1]);
 
 assert.match(indexHtmlText, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/, 'viewport supports mobile Safari safe-area rendering without disabling zoom');
+assert.match(indexHtmlText, /<link rel="manifest" href=".\/manifest.webmanifest">/, 'page links the manifest with a GitHub Pages-safe relative path');
+assert.match(indexHtmlText, /<link rel="apple-touch-icon" href=".\/icons\/apple-touch-icon.png">/, 'page links the Apple touch icon with a GitHub Pages-safe relative path');
 assert.match(indexHtmlText, /<a class="skip-link" href="#main-content">Skip to main content<\/a>/, 'page includes a keyboard skip link to main content');
 assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main content exposes a stable skip-link target');
 assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file">/, 'file picker has an explicit accessible name without extension filters');
@@ -93,12 +99,57 @@ assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Scre
 assert.match(indexHtmlText, /<div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden><\/div>/, 'offline status supports accessible text and actions');
 assert.match(indexHtmlText, /id="privacy-toggle"[^>]*aria-describedby="privacy-mode-label"/, 'privacy toggle is associated with the current privacy mode label');
 assert.match(indexHtmlText, /id="result-search"[^>]*aria-describedby="search-count"/, 'search input is associated with calm search status text');
+assert.deepEqual(
+  {
+    name: manifest.name,
+    shortName: manifest.short_name,
+    startUrl: manifest.start_url,
+    scope: manifest.scope,
+    display: manifest.display,
+    backgroundColor: manifest.background_color,
+    themeColor: manifest.theme_color,
+  },
+  {
+    name: 'iOS Analytics File Parser',
+    shortName: 'iOS Parser',
+    startUrl: './',
+    scope: './',
+    display: 'standalone',
+    backgroundColor: '#0d0d0f',
+    themeColor: '#0d0d0f',
+  },
+  'manifest keeps the expected install identity and GitHub Pages-safe launch scope'
+);
+assert.equal(manifest.prefer_related_applications, false, 'manifest does not steer users toward related native apps');
+assert.ok(
+  manifest.icons.some((icon) => icon.src === './icons/maskable-512.png' && icon.purpose === 'maskable'),
+  'manifest includes a maskable icon for install surfaces'
+);
+assert.ok(
+  manifest.icons.every((icon) => icon.src.startsWith('./icons/') && !/^(?:https?:)?\/\//.test(icon.src)),
+  'manifest icon paths are local relative URLs'
+);
+assert.ok(precacheUrls.length > 0, 'service worker exposes a static precache allowlist');
+assert.equal(new Set(precacheUrls).size, precacheUrls.length, 'service worker precache allowlist has no duplicate entries');
+assert.ok(precacheUrls.every((asset) => asset === './' || asset.startsWith('./')), 'service worker precaches only relative app-shell assets');
+assert.equal(precacheUrls.some((asset) => /^(?:https?:)?\/\//.test(asset)), false, 'service worker precache allowlist has no external URLs');
+assert.equal(precacheUrls.some((asset) => asset.includes('tests/fixtures')), false, 'service worker precache allowlist excludes test fixtures');
+assert.match(serviceWorkerText, /const ALLOWLIST_URLS = new Set\(PRECACHE_URLS\.map/, 'service worker derives runtime fetch boundaries from the explicit precache allowlist');
+assert.match(serviceWorkerText, /if \(request\.method !== 'GET'\) return false;[^]*if \(url\.origin !== self\.location\.origin\) return false;[^]*ALLOWLIST_URLS\.has\(normalizeHref\(url\)\)/, 'service worker allowlist rejects non-GET, cross-origin, and non-precached requests');
+assert.match(serviceWorkerText, /if \(isAllowedRequest\(request\)\) \{[^]*event\.respondWith\(cacheFirstAllowedAsset\(request\)\)/, 'service worker serves only allowlisted assets through cache-first handling');
+assert.match(serviceWorkerText, /if \(request\.mode === 'navigate'\) \{[^]*event\.respondWith\(navigationFallback\(request\)\)/, 'service worker only uses navigation fallback for navigation requests');
+assert.match(serviceWorkerText, /const ROOT_URL = normalizeHref\(new URL\('\.\/', self\.location\.href\)\)/, 'service worker tracks the app scope root for safe navigation fallback');
+assert.match(serviceWorkerText, /if \(requestUrl !== ROOT_URL && requestUrl !== INDEX_URL\) \{[^]*Response\.redirect\(ROOT_URL, 302\)/, 'service worker redirects unsupported nested navigations to the app root before relative assets resolve');
+assert.match(serviceWorkerText, /cache\.match\(INDEX_URL\)/, 'service worker navigation fallback uses cached index.html');
+assert.match(serviceWorkerText, /cacheName\.startsWith\(CACHE_PREFIX\) && cacheName !== CACHE_NAME[^]*caches\.delete\(cacheName\)/, 'service worker activation deletes older app caches for the same cache prefix');
+assert.match(serviceWorkerText, /caches\.open\(CACHE_NAME\)\.then\(\(cache\) => cache\.addAll\(PRECACHE_URLS\)\)/, 'service worker install precaches exactly the explicit app-shell allowlist');
 assert.doesNotMatch(serviceWorkerText, /cache\.put/, 'service worker does not dynamically cache network responses');
+assert.doesNotMatch(serviceWorkerText, /cache\.add\(/, 'service worker does not add individual runtime requests to cache');
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8b-accessibility-polish-2026-07-02/, 'service worker cache version reflects Slice 8B accessibility polish');
+assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8d-platform-hardening-2026-07-02/, 'service worker cache version reflects Slice 8D platform hardening');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
