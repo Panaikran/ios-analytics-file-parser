@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.8.0-alpha - Unreleased
+
+Release hardening and QA polish for the existing static, local-first app.
+
+### Added
+
+- Foundational project documentation in `PLANS.md` and `ARCHITECTURE.md`.
+- Static regression guards for manifest metadata, GitHub Pages-safe relative paths, explicit service-worker precache allowlist boundaries, navigation fallback behavior, old-cache cleanup, and no runtime cache additions.
+- Phase 8 summary documentation.
+
+### Improved
+
+- UI spacing, wrapping, dense-table containment, section navigation, copy/search feedback wrapping, and mobile readability.
+- Keyboard usability, focus visibility, accessible names for ambiguous controls, live-region behavior, touch target sizing, and reduced-motion guardrails.
+- Browser and mobile QA coverage across supported parser families, recognized unsupported diagnostics, explanation sections, search, copy, raw local mode, Clear Report, responsive widths, and PWA behavior.
+- Service-worker platform behavior by redirecting unsupported nested navigations back to the app root before relative app-shell assets can resolve against the wrong path.
+- PWA/install confidence through manifest, service-worker, offline-shell, offline-example, and cache-boundary verification.
+- README, ROADMAP, CHANGELOG, and phase-summary alignment for the completed hardening milestone.
+
+### Notes
+
+- No parser behavior, parser routing, explanation logic, parser families, package metadata, tag, GitHub release, backend, analytics, cloud storage, report persistence, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
+- CSP/header hardening remains hosting-dependent. GitHub Pages does not serve custom response headers directly.
+- Safari and Mobile Safari remain manual QA targets when available; they were not available in the Windows QA environment.
+
 ## v0.7.0-alpha - Unreleased
 
 Human-readable diagnostic explanations for already-supported report types.

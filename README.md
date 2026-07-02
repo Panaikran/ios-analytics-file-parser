@@ -24,8 +24,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | --- | --- |
 | Latest released version | `v0.5.1-alpha` |
 | Release-ready unreleased milestone | `v0.6.0-alpha`: Apple Diagnostics Expansion |
-| Active unreleased milestone | `v0.7.0-alpha`: Human-Readable Diagnostic Explanations |
-| Current v0.7 focus | Documentation and release readiness for deterministic explanations |
+| Release-ready unreleased milestone | `v0.7.0-alpha`: Human-Readable Diagnostic Explanations |
+| Active unreleased milestone | `v0.8.0-alpha`: Release Hardening and QA Polish |
+| Current v0.8 focus | Documentation and release readiness for UI, accessibility, browser/mobile QA, and platform hardening |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -46,6 +47,12 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.7.0-alpha Slice 7C | Implemented but unreleased: search/copy/privacy regression coverage |
 | v0.7.0-alpha Slice 7D | Complete: Browser/UI smoke QA passed |
 | v0.7.0-alpha Slice 7E | Complete: documentation and release-readiness alignment |
+| v0.8.0-alpha Slice 8A | Complete: UI polish |
+| v0.8.0-alpha Slice 8A.5 | Complete: documentation foundation |
+| v0.8.0-alpha Slice 8B | Complete: accessibility polish |
+| v0.8.0-alpha Slice 8C | Complete: browser and mobile QA |
+| v0.8.0-alpha Slice 8D | Complete: platform hardening |
+| v0.8.0-alpha Slice 8E | Active: documentation and release-readiness alignment |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -105,7 +112,7 @@ The service worker caches only the app shell, static assets, icons, manifest, ES
 
 ### Recognized But Not Parsed Yet
 
-Active `v0.6.0-alpha` classification work can recognize some additional Apple diagnostic families and show safe unsupported messages. Recognized does not mean parsed: these files do not produce diagnostic sections yet, and direct parser calls still fail safely.
+The diagnostic classifier can recognize some additional Apple diagnostic families and show safe unsupported messages. Recognized does not mean parsed: these files do not produce diagnostic sections yet, and direct parser calls still fail safely.
 
 | Diagnostic family | Classification type | Current support |
 | --- | --- | --- |
@@ -150,14 +157,18 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Disk Writes Resource `bug_type: 142` parser | Supported, narrow v0.6 work |
 | Stackshot Resource `bug_type: 288` parser | Supported, summary parsing only |
 | Human-readable diagnostic explanations | Supported for selected already-supported report patterns |
+| Release-hardening UI polish | Supported in active `v0.8.0-alpha` work |
+| Accessibility polish | Supported in active `v0.8.0-alpha` work |
+| Browser/mobile QA pass | Complete in active `v0.8.0-alpha` work |
+| Platform/PWA hardening | Supported in active `v0.8.0-alpha` work |
 | AI diagnosis | Not supported |
 | Exact root-cause claims | Not supported |
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
 | Search/copy scope wording for capped rows | Supported |
-| Diagnostic classification layer | Implemented in active `v0.6.0-alpha` work |
-| Friendly messages for recognized unsupported diagnostics | Implemented in active `v0.6.0-alpha` work |
+| Diagnostic classification layer | Implemented in `v0.6.0-alpha` work |
+| Friendly messages for recognized unsupported diagnostics | Implemented in `v0.6.0-alpha` work |
 | Web App Manifest | Supported |
 | Install guidance | Supported |
 | Service worker app shell | Supported |
@@ -250,6 +261,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - Update-ready status uses the copy: `Update ready. Reload when done with the current report.`
 - Updates require the user to press `Reload app`; the app does not auto-reload while a report may be open.
 - `v0.4.1-alpha` fixes update activation by keeping the `skipWaiting()` request alive during the service worker message event.
+- `v0.8.0-alpha` platform hardening keeps the service worker on an explicit precache allowlist, adds static guards for manifest and cache boundaries, and redirects unsupported nested navigations back to the app root so relative assets do not break.
 - Offline setup failures are non-blocking; online parsing still works.
 
 ### Accessibility And Mobile
@@ -265,6 +277,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - Panic/raw diagnostic text wraps inside cards on mobile Safari.
 - Page padding accounts for mobile Safari safe-area and bottom toolbar behavior.
 - v0.5 mobile polish improves narrow-width containment, CoreAnalytics chip wrapping, search/copy feedback wrapping, and practical touch targets for dense-table controls.
+- v0.8 UI and accessibility polish improves spacing consistency, readable wrapping, touch target sizing, focus visibility, accessible names, reduced-motion guardrails, and mobile/table containment without redesigning the app.
 
 ## Running Locally
 
@@ -557,7 +570,7 @@ After first successful service worker setup, these fictional examples are availa
 
 ## Known Limitations
 
-- CSP/header hardening is deferred beyond `v0.5.0-alpha`.
+- CSP/header hardening is deferred until the project uses a host that supports custom response headers.
 - GitHub Pages does not provide custom security headers; stronger header CSP may require a future hosting option such as Cloudflare Pages.
 - No Cloudflare/header CSP deployment is configured yet.
 - No report persistence, recent files, or history.
@@ -606,7 +619,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.6.0-alpha Phase 1 | Complete, unreleased | Diagnostic Classification Architecture |
 | v0.6.0-alpha Phase 2 | Complete, unreleased | AccessoryCrash `bug_type: 305` support |
 | v0.6.0-alpha Phase 3 | Release-ready, unreleased | CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, Stackshot Resource `bug_type: 288` summary parsing |
-| v0.7.0-alpha | Release-ready pending commit/review, unreleased | Human-readable deterministic explanations for supported diagnostics |
+| v0.7.0-alpha | Release-ready, unreleased | Human-readable deterministic explanations for supported diagnostics |
+| v0.8.0-alpha | Release-ready pending commit/review, unreleased | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
 
 The project keeps the same constraints:
 
@@ -657,13 +671,21 @@ The `v0.7.0-alpha` Human-Readable Diagnostic Explanations work is narrow:
 
 The explanation layer does not add AI diagnosis, exact root-cause claims, new parser families, symbolication, full stack rendering, backend services, storage, or analytics.
 
-Upcoming work remains parser-family implementation and later hardening, subject to approval:
+The `v0.8.0-alpha` Release Hardening and QA Polish work is narrow:
 
-- broader Accessory/Firmware diagnostics, if explicitly planned
-- App Usage Metrics parser work
-- Wi-Fi Connectivity and Diagnostic Request parser work
-- virtualization or incremental rendering for very large visible tables
-- deeper CoreAnalytics drill-down without raw JSON dumping
+- Slice 8A polished existing UI spacing, wrapping, table containment, and mobile readability.
+- Slice 8A.5 added foundational project documentation in `PLANS.md` and `ARCHITECTURE.md`.
+- Slice 8B improved keyboard, focus, accessible-name, live-region, touch-target, and reduced-motion details.
+- Slice 8C completed browser and mobile QA with no blockers.
+- Slice 8D hardened PWA/platform behavior, service-worker navigation fallback, manifest/cache static guards, and offline verification.
+- Slice 8E aligns documentation and release-readiness state.
+
+The hardening milestone does not add parser families, parser redesign, UI redesign, backend services, storage, analytics, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering.
+
+Upcoming work remains stabilization and release-candidate preparation, subject to approval:
+
+- v0.9.0-beta feature freeze and release-candidate preparation
+- final mobile Safari, PWA/offline, privacy/search/copy, and accessibility QA
 - CSP/header hardening on a host that supports response headers
 - export improvements beyond visible-section copy
 
