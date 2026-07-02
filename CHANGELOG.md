@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.9.0-beta - Unreleased
+
+Feature freeze and release-candidate preparation for the stable `v1.0.0` target.
+
+### Added
+
+- Phase 9 release-candidate summary documentation.
+
+### Improved
+
+- Reconciled post-`v0.8.0-alpha` release-state wording across project documentation.
+- Completed parser, privacy, explanation, search/copy, service-worker, and local-first regression auditing with no regressions found.
+- Completed Chrome and Edge browser/mobile/accessibility/PWA release-candidate QA with no blockers.
+- Polished README, ROADMAP, CHANGELOG, and phase-summary documentation for beta release-candidate review.
+
+### Notes
+
+- No parser behavior, parser routing, explanation logic, UI redesign, accessibility redesign, parser families, package metadata, backend, analytics, cloud storage, report persistence, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering was added.
+- App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broad Accessory/Firmware diagnostics remain unsupported.
+- Firefox, Safari, and Mobile Safari QA require environments where those browsers are available.
+
 ## v0.8.0-alpha
 
 Release hardening and QA polish for the existing static, local-first app.

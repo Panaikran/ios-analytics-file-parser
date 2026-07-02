@@ -404,6 +404,8 @@ Out of scope for `v0.8.0-alpha` unless explicitly approved:
 
 ### v0.9.0-beta: Feature Freeze / Release Candidate Preparation
 
+Status: active beta / release-candidate preparation.
+
 Goal: prepare for stable `v1.0.0`.
 
 Rules:
@@ -423,6 +425,15 @@ Scope:
 - Final supported/unsupported matrix.
 - Final known limitations review.
 - Final release checklist.
+
+Completed beta slices:
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 9A | Complete | Reconciled post-`v0.8.0-alpha` release-state documentation and marked `v0.9.0-beta` as the active milestone |
+| Slice 9B | Complete | Audited parser behavior, explanations, privacy guarantees, search/copy behavior, service-worker boundaries, and local-first architecture with no regressions found |
+| Slice 9C | Complete | Completed Chrome and Edge browser/mobile/accessibility/PWA release-candidate QA with no blockers; Firefox, Safari, and Mobile Safari require separate available environments |
+| Slice 9D | Complete | Aligned release-candidate documentation, repository presentation, known limitations, and Phase 9 summary |
 
 ### v1.0.0: Stable Release
 
@@ -473,7 +484,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, and `PHASE_8_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, and `PHASE_9_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -492,10 +503,10 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Before starting the next implementation slice:
+Before moving from beta review toward `v1.0.0`:
 
-- Confirm README, ROADMAP, CHANGELOG, and phase summaries reflect the released `v0.8.0-alpha` hardening work.
-- Start from the `v0.9.0-beta` feature-freeze and release-candidate preparation scope unless a release blocker requires a narrower maintenance slice.
+- Review the `v0.9.0-beta` release-candidate documentation and QA evidence.
+- Fix only verified release blockers.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
@@ -503,3 +514,4 @@ Before starting the next implementation slice:
   - `node --check service-worker.js`
   - touched JavaScript modules
 - Preserve existing parser behavior and PWA privacy boundaries.
+- Create tags, releases, package metadata changes, or publishing actions only after explicit approval.

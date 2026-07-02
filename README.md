@@ -24,7 +24,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | --- | --- |
 | Latest released version | `v0.8.0-alpha` |
 | Active milestone | `v0.9.0-beta`: Feature Freeze / Release Candidate Preparation |
-| Current v0.9 focus | Bug fixes, tests, docs, QA, accessibility, privacy verification, PWA/offline verification, and release polish |
+| Current v0.9 focus | Release-candidate documentation, repository polish, and stable-release preparation |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -415,6 +415,8 @@ index.html -> manifest.webmanifest
 |-- PHASE_5_SUMMARY.md
 |-- PHASE_6_SUMMARY.md
 |-- PHASE_7_SUMMARY.md
+|-- PHASE_8_SUMMARY.md
+|-- PHASE_9_SUMMARY.md
 |-- package.json
 |-- icons/
 |   |-- apple-touch-icon.png
@@ -553,6 +555,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 6 Summary](PHASE_6_SUMMARY.md)
 - [Phase 7 Summary](PHASE_7_SUMMARY.md)
 - [Phase 8 Summary](PHASE_8_SUMMARY.md)
+- [Phase 9 Summary](PHASE_9_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -607,7 +610,7 @@ After first successful service worker setup, these fictional examples are availa
 | v0.6.0-alpha | Released | Diagnostic Classification Architecture, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
 | v0.7.0-alpha | Released | Human-readable deterministic explanations for supported diagnostics |
 | v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
-| v0.9.0-beta | Active milestone | Feature Freeze / Release Candidate Preparation |
+| v0.9.0-beta | Active milestone | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
 
 The project keeps the same constraints:
 
@@ -669,12 +672,14 @@ The `v0.8.0-alpha` Release Hardening and QA Polish work is narrow:
 
 The hardening milestone does not add parser families, parser redesign, UI redesign, backend services, storage, analytics, AI diagnosis, symbolication, sysdiagnose extraction, or full stack rendering.
 
-Active work is now stabilization and release-candidate preparation:
+The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narrow:
 
-- v0.9.0-beta feature freeze and release-candidate preparation
-- final mobile Safari, PWA/offline, privacy/search/copy, and accessibility QA
-- CSP/header hardening on a host that supports response headers
-- export improvements beyond visible-section copy
+- Slice 9A reconciled post-`v0.8.0-alpha` release-state documentation.
+- Slice 9B completed parser, privacy, explanation, search/copy, and local-first regression auditing with no regressions found.
+- Slice 9C completed Chrome and Edge browser/mobile/accessibility/PWA release-candidate QA with no blockers; Firefox, Safari, and Mobile Safari require environments where those browsers are available.
+- Slice 9D aligned release-candidate documentation and repository polish for review.
+
+Active work remains feature freeze: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
 ## Screenshots / Demo
 
