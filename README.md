@@ -22,9 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v0.9.0-beta` |
-| Active phase | `v1.0.0`: Pending stable release publication |
-| Current v1.0 focus | RC1 verification is complete; the project is ready for manual stable release publication |
+| Latest released version | `v1.0.0` |
+| Active phase | None |
+| Current v1.0 focus | None |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |

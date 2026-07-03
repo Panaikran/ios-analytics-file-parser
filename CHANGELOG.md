@@ -1,10 +1,10 @@
 # Changelog
 
-## v1.0.0 - Pending Release
+## v1.0.0 - First Stable Release
 
-Stable release candidate documentation for the upcoming `v1.0.0` release.
+Stable release candidate documentation for the  `v1.0.0` release.
 
-RC1 verification is complete and the project is ready for manual stable release publication. The `v1.0.0` release has not been tagged or published yet.
+The `v1.0.0` release has been published.
 
 ### Included
 
