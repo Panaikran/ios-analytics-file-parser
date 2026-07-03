@@ -1,10 +1,24 @@
 # Changelog
 
-## v1.0.0 RC1 - In Verification
+## v1.0.0 - Pending Release
 
-Final verification for the stable `v1.0.0` release target.
+Stable release candidate documentation for the upcoming `v1.0.0` release.
 
-RC1 is limited to regression verification, browser/accessibility/PWA verification, documentation consistency, and verified release-blocker fixes. It does not add feature work.
+RC1 verification is complete and the project is ready for manual stable release publication. The `v1.0.0` release has not been tagged or published yet.
+
+### Included
+
+- Supported parser families finalized: App Crash, Legacy Crash, Watchdog, Jetsam, Panic, CoreAnalytics, Generic Analytics, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing.
+- Deterministic, local-only explanation sections for supported diagnostics when safe rules apply.
+- Privacy-first sanitized default mode and opt-in Raw Local View.
+- Search, copy, section navigation, dense table, browser/mobile, accessibility, and PWA/offline hardening completed across prior milestones.
+- RC1 automated regression, privacy, local-first, browser, mobile, accessibility, and PWA verification completed with no release blockers.
+
+### Notes
+
+- App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broad Accessory/Firmware diagnostics, symbolication, `.dSYM` support, sysdiagnose extraction, full stack rendering, AI diagnosis, backend services, analytics, cloud storage, and report persistence remain unsupported.
+- Firefox, Safari, and Mobile Safari QA require environments where those browsers are available.
+- Tags, GitHub Releases, package metadata changes, and publishing actions require separate explicit approval.
 
 ## v0.9.0-beta
 

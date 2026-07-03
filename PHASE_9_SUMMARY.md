@@ -175,9 +175,9 @@ git status --short
 ## Remaining Work Before v1.0
 
 - `v0.9.0-beta` has been released.
-- Complete `v1.0.0 RC1` final verification.
+- `v1.0.0 RC1` final verification completed successfully.
+- The project is ready for the upcoming `v1.0.0` stable release.
 - Perform any additional browser checks in environments not available during Windows QA, especially Safari and Mobile Safari.
-- Fix only verified release blockers.
 - Complete explicit tag, release, package metadata, or publishing actions only after separate approval.
 
-No tag, release, package metadata change, or publishing action is part of this Phase 9 documentation summary.
+No tag, release, package metadata change, or publishing action is part of this Phase 9 documentation summary. The `v1.0.0` release has not been published yet.

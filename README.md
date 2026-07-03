@@ -23,8 +23,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v0.9.0-beta` |
-| Active phase | `v1.0.0 RC1`: Final Verification |
-| Current v1.0 focus | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review |
+| Active phase | `v1.0.0`: Pending stable release publication |
+| Current v1.0 focus | RC1 verification is complete; the project is ready for manual stable release publication |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -47,6 +47,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Framework dependencies | None |
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
+
+RC1 verification has completed successfully and the project is ready for the upcoming `v1.0.0` stable release. The `v1.0.0` release has not been tagged or published yet.
 
 ## Why This Exists
 
@@ -612,7 +614,7 @@ After first successful service worker setup, these fictional examples are availa
 | v0.7.0-alpha | Released | Human-readable deterministic explanations for supported diagnostics |
 | v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
 | v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
-| v1.0.0 RC1 | Active phase | Final Verification for the stable `v1.0.0` target |
+| v1.0.0 RC1 | Complete | Final verification passed; stable `v1.0.0` publication is pending manual release action |
 
 The project keeps the same constraints:
 
@@ -683,7 +685,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-The active `v1.0.0 RC1` Final Verification phase is not feature work. It is limited to final regression checks, browser/accessibility/PWA verification, documentation consistency, and verified release-blocker fixes.
+The `v1.0.0 RC1` Final Verification phase is complete. It was not feature work; it was limited to final regression checks, browser/accessibility/PWA verification, documentation consistency, and release-blocker review. Stable `v1.0.0` publication remains a separate manual release action.
 
 ## Screenshots / Demo
 

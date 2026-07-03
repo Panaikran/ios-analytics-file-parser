@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v1.0.0 RC1` final verification
+Status: updated for pending `v1.0.0` stable release publication
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -20,7 +20,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Human-Readable Diagnostic Explanations | Released | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
 | Release Hardening and QA Polish | Released | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
 | Feature Freeze / Release Candidate Preparation | Released | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
-| Stable Release Final Verification | Active | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review |
+| Stable Release Final Verification | Complete | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review completed with no blockers |
+| Stable Release Publication | Pending manual release | `v1.0.0` | Project is ready for stable release publication; tagging and publishing require separate explicit approval |
 
 ## Project Constraints
 
@@ -325,7 +326,7 @@ Still out of scope for `v0.7.0-alpha`:
 
 ## Planned Path To v1.0
 
-With `v0.6.0-alpha`, `v0.7.0-alpha`, `v0.8.0-alpha`, and `v0.9.0-beta` released, this path now focuses on `v1.0.0 RC1` final verification and stable-release preparation. It prioritizes documentation accuracy, privacy, browser/PWA confidence, and release stability over adding more parser families.
+With `v0.6.0-alpha`, `v0.7.0-alpha`, `v0.8.0-alpha`, and `v0.9.0-beta` released, and `v1.0.0 RC1` verification complete, this path now focuses on manual stable-release publication. It prioritizes documentation accuracy, privacy, browser/PWA confidence, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
 
@@ -438,7 +439,7 @@ Completed beta slices:
 
 ### v1.0.0 RC1: Final Verification
 
-Status: active final verification.
+Status: complete.
 
 Goal: verify the current implementation is stable enough for the stable `v1.0.0` release.
 
@@ -448,6 +449,8 @@ Scope:
 - Final browser, mobile, accessibility, and PWA verification.
 - Final documentation consistency audit.
 - Release-blocker review.
+
+Result: RC1 verification completed successfully with no unresolved release blockers. The project is ready for the upcoming `v1.0.0` stable release, which has not been tagged or published yet.
 
 Not included:
 
@@ -528,8 +531,8 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 Before publishing `v1.0.0`:
 
-- Complete `v1.0.0 RC1` final verification.
-- Fix only verified release blockers.
+- Review the pending release documentation.
+- Keep `v1.0.0` tagging, release creation, package metadata changes, and publishing as explicit manual release actions.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
