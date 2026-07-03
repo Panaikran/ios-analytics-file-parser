@@ -1,6 +1,12 @@
 # Changelog
 
-## v0.9.0-beta - Unreleased
+## v1.0.0 RC1 - In Verification
+
+Final verification for the stable `v1.0.0` release target.
+
+RC1 is limited to regression verification, browser/accessibility/PWA verification, documentation consistency, and verified release-blocker fixes. It does not add feature work.
+
+## v0.9.0-beta
 
 Feature freeze and release-candidate preparation for the stable `v1.0.0` target.
 

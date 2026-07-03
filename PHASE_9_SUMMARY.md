@@ -174,7 +174,8 @@ git status --short
 
 ## Remaining Work Before v1.0
 
-- Review and commit the `v0.9.0-beta` documentation changes.
+- `v0.9.0-beta` has been released.
+- Complete `v1.0.0 RC1` final verification.
 - Perform any additional browser checks in environments not available during Windows QA, especially Safari and Mobile Safari.
 - Fix only verified release blockers.
 - Complete explicit tag, release, package metadata, or publishing actions only after separate approval.

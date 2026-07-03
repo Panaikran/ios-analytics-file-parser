@@ -22,9 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v0.8.0-alpha` |
-| Active milestone | `v0.9.0-beta`: Feature Freeze / Release Candidate Preparation |
-| Current v0.9 focus | Release-candidate documentation, repository polish, and stable-release preparation |
+| Latest released version | `v0.9.0-beta` |
+| Active phase | `v1.0.0 RC1`: Final Verification |
+| Current v1.0 focus | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -40,6 +40,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.6.0-alpha | Released: Apple Diagnostics Expansion |
 | v0.7.0-alpha | Released: Human-Readable Diagnostic Explanations |
 | v0.8.0-alpha | Released: Release Hardening and QA Polish |
+| v0.9.0-beta | Released: Feature Freeze / Release Candidate Preparation |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -610,7 +611,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.6.0-alpha | Released | Diagnostic Classification Architecture, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
 | v0.7.0-alpha | Released | Human-readable deterministic explanations for supported diagnostics |
 | v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
-| v0.9.0-beta | Active milestone | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
+| v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
+| v1.0.0 RC1 | Active phase | Final Verification for the stable `v1.0.0` target |
 
 The project keeps the same constraints:
 
@@ -679,7 +681,9 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 - Slice 9C completed Chrome and Edge browser/mobile/accessibility/PWA release-candidate QA with no blockers; Firefox, Safari, and Mobile Safari require environments where those browsers are available.
 - Slice 9D aligned release-candidate documentation and repository polish for review.
 
-Active work remains feature freeze: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
+The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
+
+The active `v1.0.0 RC1` Final Verification phase is not feature work. It is limited to final regression checks, browser/accessibility/PWA verification, documentation consistency, and verified release-blocker fixes.
 
 ## Screenshots / Demo
 

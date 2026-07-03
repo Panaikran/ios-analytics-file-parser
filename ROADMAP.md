@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for active `v0.9.0-beta` feature-freeze work
+Status: updated for active `v1.0.0 RC1` final verification
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -19,7 +19,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Apple Diagnostics Expansion | Released | `v0.6.0-alpha` | Diagnostic classification, AccessoryCrash `bug_type: 305`, CPU Resource `bug_type: 202`, Disk Writes Resource `bug_type: 142`, and Stackshot Resource `bug_type: 288` summary parsing |
 | Human-Readable Diagnostic Explanations | Released | `v0.7.0-alpha` | Deterministic explanation sections for supported diagnostics, with search/copy/privacy coverage and browser QA |
 | Release Hardening and QA Polish | Released | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
-| Feature Freeze / Release Candidate Preparation | Active | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
+| Feature Freeze / Release Candidate Preparation | Released | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
+| Stable Release Final Verification | Active | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review |
 
 ## Project Constraints
 
@@ -173,7 +174,7 @@ Not changed:
 - No runtime caching, backend, authentication, analytics, cloud storage, or report persistence was added.
 - No package metadata change was made.
 
-## Release-Ready Roadmap: v0.6.0-alpha
+## Completed Roadmap: v0.6.0-alpha
 
 Theme: Apple Diagnostics Expansion.
 
@@ -324,7 +325,7 @@ Still out of scope for `v0.7.0-alpha`:
 
 ## Planned Path To v1.0
 
-With `v0.6.0-alpha`, `v0.7.0-alpha`, and `v0.8.0-alpha` released, this path now focuses on `v0.9.0-beta` feature freeze and `v1.0.0` stable-release preparation. It prioritizes understanding, QA, documentation accuracy, privacy, and release stability over adding more parser families.
+With `v0.6.0-alpha`, `v0.7.0-alpha`, `v0.8.0-alpha`, and `v0.9.0-beta` released, this path now focuses on `v1.0.0 RC1` final verification and stable-release preparation. It prioritizes documentation accuracy, privacy, browser/PWA confidence, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
 
@@ -404,7 +405,7 @@ Out of scope for `v0.8.0-alpha` unless explicitly approved:
 
 ### v0.9.0-beta: Feature Freeze / Release Candidate Preparation
 
-Status: active beta / release-candidate preparation.
+Status: released.
 
 Goal: prepare for stable `v1.0.0`.
 
@@ -430,10 +431,32 @@ Completed beta slices:
 
 | Slice | Status | Scope |
 | --- | --- | --- |
-| Slice 9A | Complete | Reconciled post-`v0.8.0-alpha` release-state documentation and marked `v0.9.0-beta` as the active milestone |
+| Slice 9A | Complete | Reconciled post-`v0.8.0-alpha` release-state documentation and documented `v0.9.0-beta` beta scope |
 | Slice 9B | Complete | Audited parser behavior, explanations, privacy guarantees, search/copy behavior, service-worker boundaries, and local-first architecture with no regressions found |
 | Slice 9C | Complete | Completed Chrome and Edge browser/mobile/accessibility/PWA release-candidate QA with no blockers; Firefox, Safari, and Mobile Safari require separate available environments |
 | Slice 9D | Complete | Aligned release-candidate documentation, repository presentation, known limitations, and Phase 9 summary |
+
+### v1.0.0 RC1: Final Verification
+
+Status: active final verification.
+
+Goal: verify the current implementation is stable enough for the stable `v1.0.0` release.
+
+Scope:
+
+- Final parser, explanation, privacy, search/copy, and local-first regression verification.
+- Final browser, mobile, accessibility, and PWA verification.
+- Final documentation consistency audit.
+- Release-blocker review.
+
+Not included:
+
+- New parser families.
+- Parser routing changes.
+- Explanation redesign.
+- UI or accessibility redesign.
+- Package metadata changes.
+- Tags, releases, or publishing actions without explicit approval.
 
 ### v1.0.0: Stable Release
 
@@ -503,9 +526,9 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Before moving from beta review toward `v1.0.0`:
+Before publishing `v1.0.0`:
 
-- Review the `v0.9.0-beta` release-candidate documentation and QA evidence.
+- Complete `v1.0.0 RC1` final verification.
 - Fix only verified release blockers.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
 - Run `npm.cmd test`.
