@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 13 is the unreleased `v1.3.0` Structured Sanitized Export milestone. It adds deterministic local JSON downloads above the existing sanitized visible-export contract without changing parser behavior, comparison behavior, or text export.
+Phase 13 is the released `v1.3.0` Structured Sanitized Export milestone. It adds deterministic local JSON downloads above the existing sanitized visible-export contract without changing parser behavior, comparison behavior, or text export.
 
 ## Completed Slices
 
@@ -65,5 +65,5 @@ Browser smoke QA was attempted in the available environment. Native browser auto
 - Text export behavior remains unchanged.
 - Documentation reflects the implemented v1.3.0 scope.
 - Browser-environment limitations are recorded honestly.
-- v1.3.0 remains unreleased and ready for manual release review.
-- No tag or GitHub Release was created.
+- v1.3.0 has been tagged and published on GitHub.
+- No v1.4.0 implementation scope has been approved.

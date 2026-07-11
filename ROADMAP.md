@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.3.0` implemented and ready for manual release review; not released
+Status: `v1.3.0` released; `v1.4.0` planning only
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -24,7 +24,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Stable Release Publication | Released | `v1.0.0` | Stable parser, explanation, privacy, accessibility, and PWA foundation published |
 | Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
 | Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
-| Structured Sanitized Export | Implemented, unreleased | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
+| Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
+| Next Milestone | Planning only | `v1.4.0` | Scope not approved |
 
 ## Project Constraints
 
@@ -551,9 +552,9 @@ Not included:
 - Export history, report persistence, uploads, cloud processing, analytics, or background export.
 - New parser families, parser redesign, comparison redesign, or additional export formats.
 
-## Active Roadmap: v1.3.0
+## Completed Milestone: v1.3.0
 
-Status: implemented and ready for manual release review. `v1.3.0` is not released.
+Status: released.
 
 Goal: provide deterministic structured JSON downloads while preserving the existing visible-export, privacy, comparison, and local-first contracts.
 
@@ -578,6 +579,12 @@ Not included:
 - Raw, original-file, CSV, or PDF export.
 - Export history, report persistence, uploads, cloud processing, analytics, or background export.
 - New parser families, parser redesign, comparison redesign, or v1.4.0 implementation work.
+
+## Active Roadmap: v1.4.0
+
+Status: planning only. No v1.4.0 implementation scope is approved.
+
+The next milestone requires a separate planning and review pass. No feature, parser family, export format, or architectural change is committed to v1.4.0 by this roadmap state.
 
 ## Future Hardening And Exploratory Work
 
@@ -617,11 +624,11 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Before manual `v1.3.0` release review:
+For `v1.4.0` planning review:
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
-- Preserve the approved v1.3.0 JSON schema and export boundaries.
+- Preserve the released v1.3.0 JSON schema and export boundaries.
 - Do not approve v1.4.0 implementation scope until a separate planning pass.
 - Run `npm.cmd test`.
 - Run focused syntax checks:

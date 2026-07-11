@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.3.0 — Structured Sanitized Export (Unreleased)
+## v1.3.0 — Structured Sanitized Export
+
+The `v1.3.0` release has been published.
 
 ### Added
 
