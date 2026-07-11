@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.3.0 — Structured Sanitized Export (Unreleased)
+
+### Added
+
+- Deterministic schema-versioned JSON export using schema version `1` for eligible sanitized single-report and comparison output.
+- Generic filenames: `ios-diagnostic-export.json` for single reports and `ios-diagnostic-comparison.json` for comparisons.
+
+### Improved
+
+- JSON export reuses existing search, copy, text-export, and table-visibility rules while preserving section, field, column, and visible-row order.
+- Raw Local View, raw content, hidden or capped rows, filtered-out and unrendered data, nested unsupported values, inherited properties, prototype-style keys, and source-only values are excluded.
+- JSON downloads use a UTF-8-compatible JSON Blob and revoke temporary object URLs.
+- Regression coverage now verifies every supported parser family, comparison boundaries, privacy sentinels, parity, malformed data, and repeated download cleanup.
+- Service-worker cache version updated for the JSON download workflow.
+
+### Notes
+
+- Existing text export remains unchanged and continues to use its `.txt` filenames and visibility contract.
+- Browser smoke QA and accessibility checks were attempted in the available environment; native download observation, screenshots, and forced offline reload were unavailable.
+- No raw, original-file, CSV, PDF, persistence, export history, uploads, cloud processing, analytics, background export, new parser families, AI diagnosis, symbolication, `.dSYM`, or sysdiagnose extraction was added.
+
 ## v1.2.0 - Sanitized Visible Export
 
 The `v1.2.0` release has been published.
