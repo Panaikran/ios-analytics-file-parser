@@ -64,6 +64,7 @@ const searchSource = await readFile(new URL('../src/search/filterSections.js', i
 const searchMetadataSource = await readFile(new URL('../src/search/searchMetadata.js', import.meta.url), 'utf8');
 const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata.js', import.meta.url), 'utf8');
 const downloadTextSource = await readFile(new URL('../src/clipboard/downloadText.js', import.meta.url), 'utf8');
+const serializeSectionSource = await readFile(new URL('../src/clipboard/serializeSection.js', import.meta.url), 'utf8');
 const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
@@ -193,11 +194,13 @@ assert.match(mainScriptText, /import \{ createComparisonSections, validateCompar
 assert.match(mainScriptText, /import \{ downloadTextFile \} from '\.\/clipboard\/downloadText\.js';/, 'main app delegates downloads to the focused text-download helper');
 assert.match(mainScriptText, /serializeSectionsForExport/, 'main app reuses the visible export serializer');
 assert.match(mainScriptText, /getVisibleSectionForCopy/, 'main app reuses existing table visibility for export');
+assert.doesNotMatch(mainScriptText, /getTableView/, 'main app does not introduce a second table-visibility pipeline for export');
 assert.match(mainScriptText, /!comparisonMode && \(!appState\.sanitize/, 'Raw Local View never produces export content');
 assert.match(mainScriptText, /comparisonEntries\.length > 0 && !validateComparison\(comparisonEntries\)\.valid/, 'incomplete comparison selection never produces export content');
 assert.match(mainScriptText, /downloadVisibleExportButton\.disabled = !exportText/, 'visible export disables when no eligible output exists');
 assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.txt' : 'ios-diagnostic-export\.txt'/, 'visible export uses generic filenames only');
 assert.doesNotMatch(downloadTextSource, /(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|navigator\.clipboard)/, 'visible export download helper has no network, persistence, or clipboard behavior');
+assert.doesNotMatch(serializeSectionSource, /(?:document|window|scroll)/, 'visible export serialization is independent of DOM viewport and scroll state');
 assert.match(mainScriptText, /let comparisonEntries = \[\];[^]*let comparisonSections = \[\];[^]*let comparisonMode = false;/, 'comparison state remains separate from single-report app state');
 assert.match(mainScriptText, /parseInput\(appState\.sourceText, \{ sanitize: true \}\)/, 'Add to comparison always reparses sanitized sections');
 assert.match(mainScriptText, /validateComparison\(comparisonEntries\)[^]*compareReportsButton\.disabled = !validation\.valid;/, 'Compare enablement delegates to comparison validation');
@@ -4141,6 +4144,115 @@ for (const [parserType, fixture] of supportedComparisonCases) {
   assert.equal(JSON.stringify(entries), beforeComparison, `${parserType} comparison does not retain or mutate parser output`);
   assert.equal(comparison[0].fields.find((field) => field.label === 'Comparison Mode')?.value, 'Sanitized only', `${parserType} comparison remains sanitized only`);
 }
+
+for (const [parserType, fixture] of supportedComparisonCases) {
+  const sections = parseInput(fixture);
+  const beforeExport = JSON.stringify(sections);
+  const visibleSections = sections.map((section) => getVisibleSectionForCopy(section, { allSections: sections }));
+  const exportText = serializeSectionsForExport(visibleSections);
+
+  assert.ok(exportText, `${parserType} produces sanitized visible export content`);
+  assert.equal(exportText, serializeSectionsForExport(visibleSections), `${parserType} visible export is deterministic`);
+  assert.equal(
+    exportText,
+    visibleSections.map((section) => serializeSectionsForExport([section])).join('\n\n---\n\n'),
+    `${parserType} visible export preserves ordered sections`
+  );
+  assert.equal(JSON.stringify(sections), beforeExport, `${parserType} visible export does not mutate parser output`);
+  assert.equal(exportText.startsWith(sections[0].title), true, `${parserType} visible export preserves its first section`);
+  assert.doesNotMatch(
+    serializeSectionsForExport(visibleSections.map((section) => ({
+      ...section,
+      sourceOnly: `${parserType}-EXPORT-SOURCE-SENTINEL`,
+      raw: `${parserType}-EXPORT-RAW-SENTINEL`,
+    }))),
+    new RegExp(`${parserType}-EXPORT-(?:SOURCE|RAW)-SENTINEL`),
+    `${parserType} export ignores source-only and raw section values`
+  );
+}
+
+const searchCopyParityText = searchScopedExport.map((section) => serializeSectionForCopy(section)).join('\n\n---\n\n');
+assert.equal(searchScopedExportText, searchCopyParityText, 'search, copy, and export share the same visible section content');
+const clearedSearchExportText = serializeSectionsForExport(
+  searchScopedExportSource.map((section) => getVisibleSectionForCopy(section, { allSections: searchScopedExportSource }))
+);
+assert.match(clearedSearchExportText, /FILTERED_EXPORT_SENTINEL/, 'clearing search restores eligible visible export content');
+
+const largeStackshotExportText = serializeSectionsForExport(
+  largeRoutedStackshotSections.map((section) => getVisibleSectionForCopy(section, { allSections: largeRoutedStackshotSections }))
+);
+assert.match(largeStackshotExportText, /LargeStackProcess149/, 'Stackshot export includes capped visible process rows');
+assert.doesNotMatch(largeStackshotExportText, /LargeStackProcess0/, 'Stackshot export excludes process rows beyond the parser cap');
+
+const largeCoreAnalyticsExportText = serializeSectionsForExport(
+  largeCoreAnalyticsSections.map((section) => getVisibleSectionForCopy(section, { allSections: largeCoreAnalyticsSections }))
+);
+assert.match(largeCoreAnalyticsExportText, /100 of/, 'CoreAnalytics export retains rendered-row cap summaries');
+assert.doesNotMatch(largeCoreAnalyticsExportText, /com\.example\.event\.199/, 'CoreAnalytics export excludes rows beyond the parser cap');
+
+const twoReportComparisonExport = serializeSectionsForExport(twoReportComparison);
+const threeReportComparisonExport = serializeSectionsForExport(threeReportComparison);
+assert.equal(twoReportComparisonExport, serializeSectionsForExport(twoReportComparison), 'two-report comparison export is deterministic');
+assert.equal(threeReportComparisonExport, serializeSectionsForExport(threeReportComparison), 'three-report comparison export is deterministic');
+assert.match(twoReportComparisonExport, /Comparison Mode: Sanitized only/, 'comparison export remains sanitized only');
+assert.ok(
+  threeReportComparisonExport.indexOf('Report 1') < threeReportComparisonExport.indexOf('Report 2') &&
+    threeReportComparisonExport.indexOf('Report 2') < threeReportComparisonExport.indexOf('Report 3'),
+  'comparison export preserves report insertion order'
+);
+assert.doesNotMatch(
+  serializeSectionsForExport(tablePrivateComparison),
+  new RegExp(comparisonTableLeakSentinel),
+  'comparison export excludes hidden source tables and raw content'
+);
+
+const repeatedDownloadBlobs = [];
+const repeatedDownloadUrls = [];
+const repeatedRevokedUrls = [];
+const repeatedDownloadLinks = [];
+const repeatedDownloadDocument = {
+  createElement() {
+    const link = { click() {}, remove() {} };
+    repeatedDownloadLinks.push(link);
+    return link;
+  },
+  body: { append() {} },
+};
+const repeatedDownloadUrlApi = {
+  createObjectURL(blob) {
+    repeatedDownloadBlobs.push(blob);
+    const objectUrl = `blob:visible-export-${repeatedDownloadBlobs.length}`;
+    repeatedDownloadUrls.push(objectUrl);
+    return objectUrl;
+  },
+  revokeObjectURL(objectUrl) {
+    repeatedRevokedUrls.push(objectUrl);
+  },
+};
+assert.equal(
+  downloadTextFile(twoReportComparisonExport, 'ios-diagnostic-comparison.txt', {
+    documentRef: repeatedDownloadDocument,
+    urlRef: repeatedDownloadUrlApi,
+  }),
+  true,
+  'comparison export starts a local plain-text download'
+);
+assert.equal(
+  downloadTextFile(searchScopedExportText, 'ios-diagnostic-export.txt', {
+    documentRef: repeatedDownloadDocument,
+    urlRef: repeatedDownloadUrlApi,
+  }),
+  true,
+  'repeated single-report export starts a new local download'
+);
+assert.deepEqual(repeatedRevokedUrls, repeatedDownloadUrls, 'every export object URL is revoked without retention');
+assert.deepEqual(
+  repeatedDownloadLinks.map((link) => link.download),
+  ['ios-diagnostic-comparison.txt', 'ios-diagnostic-export.txt'],
+  'comparison and single-report exports keep generic filenames'
+);
+assert.equal(await repeatedDownloadBlobs[0].text(), twoReportComparisonExport, 'comparison Blob content exactly matches visible export serialization');
+assert.equal(await repeatedDownloadBlobs[1].text(), searchScopedExportText, 'single-report Blob content exactly matches visible export serialization');
 assert.throws(
   () => createComparisonSections([comparisonReportOne]),
   /Comparison requires 2 or 3 reports\./,
