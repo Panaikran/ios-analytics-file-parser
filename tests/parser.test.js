@@ -3955,6 +3955,54 @@ const privateComparisonOutput = JSON.stringify(
 );
 assert.doesNotMatch(privateComparisonOutput, new RegExp(comparisonLeakSentinel), 'comparison ignores source text, raw notes, and non-allowlisted fields');
 assert.doesNotMatch(privateComparisonOutput, new RegExp(nestedLeakSentinel), 'comparison never stringifies nested field values');
+const comparisonTableLeakSentinel = 'HIDDEN-TABLE-SENTINEL-24680';
+const tablePrivateComparisonEntry = comparisonEntry(
+  [{ label: 'OS Version', value: 'iOS 18.0' }],
+  {
+    sections: [{
+      id: 'panic-summary',
+      title: 'Panic Summary',
+      fields: [{ label: 'OS Version', value: 'iOS 18.0' }],
+      table: [{ hidden: comparisonTableLeakSentinel }],
+      raw: comparisonTableLeakSentinel,
+    }],
+  }
+);
+const tablePrivateComparison = createComparisonSections([tablePrivateComparisonEntry, tablePrivateComparisonEntry]);
+assert.doesNotMatch(JSON.stringify(tablePrivateComparison), new RegExp(comparisonTableLeakSentinel), 'comparison excludes source tables and raw section text');
+assert.equal(filterSectionsByQuery(tablePrivateComparison, comparisonTableLeakSentinel).totalMatches, 0, 'comparison search cannot reach excluded table data');
+assert.doesNotMatch(serializeSectionsForCopy(tablePrivateComparison), new RegExp(comparisonTableLeakSentinel), 'comparison copy cannot reach excluded table data');
+
+const supportedComparisonCases = [
+  ['ips', fullIpsText],
+  ['crash', fullCrashText],
+  ['ips-watchdog-stackshot', watchdogText],
+  ['jetsam', jetsamText],
+  ['panic', panicText],
+  ['analytics', analyticsText],
+  ['coreanalytics', coreAnalyticsMediumText],
+  ['accessory-crash', accessoryCrashParserFixture],
+  ['resource-cpu', cpuResourceParserFixture],
+  ['resource-diskwrites', diskWritesParserFixture],
+  ['resource-stackshot', stackshotParserFixture],
+];
+
+for (const [parserType, fixture] of supportedComparisonCases) {
+  const classification = classifyDiagnostic(fixture);
+  const sections = parseInput(fixture);
+  const entries = [
+    { classification: { parserType: classification.parserType, supported: classification.supported }, sections },
+    { classification: { parserType: classification.parserType, supported: classification.supported }, sections },
+  ];
+  const beforeComparison = JSON.stringify(entries);
+  const comparison = createComparisonSections(entries);
+
+  assert.equal(classification.parserType, parserType, `${parserType} keeps its parser type for comparison`);
+  assert.equal(validateComparison(entries).valid, true, `${parserType} accepts compatible sanitized reports`);
+  assert.deepEqual(comparison, createComparisonSections(entries), `${parserType} comparison output is deterministic`);
+  assert.equal(JSON.stringify(entries), beforeComparison, `${parserType} comparison does not retain or mutate parser output`);
+  assert.equal(comparison[0].fields.find((field) => field.label === 'Comparison Mode')?.value, 'Sanitized only', `${parserType} comparison remains sanitized only`);
+}
 assert.throws(
   () => createComparisonSections([comparisonReportOne]),
   /Comparison requires 2 or 3 reports\./,
