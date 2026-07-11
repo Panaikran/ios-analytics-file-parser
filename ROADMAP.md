@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: active `v1.2.0` planning
+Status: `v1.2.0` implemented and ready for manual release review
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -23,7 +23,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Stable Release Final Verification | Complete | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review completed with no blockers |
 | Stable Release Publication | Released | `v1.0.0` | Stable parser, explanation, privacy, accessibility, and PWA foundation published |
 | Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
-| Next Planning Milestone | Active planning | `v1.2.0` | Scope is being defined; no implementation work has started |
+| Sanitized Visible Export | Implemented, unreleased | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output; ready for manual release review |
 
 ## Project Constraints
 
@@ -525,11 +525,30 @@ Not included:
 
 ## Active Roadmap: v1.2.0
 
-Status: planning only.
+Status: implemented and ready for manual release review. `v1.2.0` is not released.
 
-The next milestone will be defined before implementation begins. It must preserve the stable parser and explanation contracts, local-first processing, sanitized defaults, bounded Raw Local View, memory-only reports, and the existing PWA cache boundaries.
+Goal: provide a local sanitized visible-output download without changing parser, explanation, comparison, search, copy, or privacy contracts.
 
-No v1.2.0 feature scope, parser family, or implementation slice is approved yet.
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 12A | Complete | Pure deterministic visible-export serialization contract for ordered eligible `SectionModel[]` output |
+| Slice 12B | Complete | Accessible single-report and comparison `.txt` download workflow using existing search and table-visibility rules |
+| Slice 12C | Complete | Parser-matrix, privacy, comparison, large-report, URL-lifecycle, and local-first regression hardening |
+| Slice 12D | Complete | Documentation alignment, final QA, validation, and manual release-readiness review |
+
+Implemented boundaries:
+
+- Export is sanitized-only and uses ordered sections eligible under existing search, copy, and table-visibility rules.
+- Active search affects exported sections and rows; collapsed, capped, filtered-out, unrendered, raw, and source-only content is excluded.
+- Viewport position and scrolling do not affect export eligibility.
+- Single reports use `ios-diagnostic-export.txt`; comparisons use `ios-diagnostic-comparison.txt`.
+- Downloads are local, memory-only plain text. Blob URLs are revoked after use.
+
+Not included:
+
+- Raw, original-file, JSON, CSV, or PDF export.
+- Export history, report persistence, uploads, cloud processing, analytics, or background export.
+- New parser families, parser redesign, comparison redesign, or v1.3.0 implementation work.
 
 ## Future Hardening And Exploratory Work
 
@@ -550,7 +569,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, and `PHASE_11_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, and `PHASE_12_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -565,15 +584,15 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 | MetricKit | `MXCrashDiagnostic` format support |
 | Sysdiagnose | Local sysdiagnose archive extraction and file picker |
 | Comparison | Additional comparison modes beyond the bounded, same-parser, sanitized-only workflow |
-| Sharing | Local-only share/export format that does not upload reports |
+| Sharing | Additional local-only share/export formats beyond sanitized visible `.txt` downloads |
 
 ## Next Planning Step
 
-During `v1.2.0` planning:
+Before manual `v1.2.0` release review:
 
-- Define the next milestone scope before implementation begins.
-- Preserve the released `v1.1.0` comparison boundaries and existing parser behavior.
-- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, export work, and additional comparison modes as future planning candidates.
+- Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
+- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, non-text export formats, and additional comparison modes as future planning candidates.
+- Do not approve v1.3.0 implementation scope until a separate planning pass.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

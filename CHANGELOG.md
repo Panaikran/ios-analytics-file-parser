@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.2.0 - Unreleased
+
+### Added
+
+- Sanitized Visible Export for eligible single-report and generated comparison output as local plain-text `.txt` downloads.
+- Generic filenames: `ios-diagnostic-export.txt` for single reports and `ios-diagnostic-comparison.txt` for comparisons.
+
+### Improved
+
+- Export reuses existing search, copy, and table-visibility rules, including active search filtering and rendered-row caps.
+- Raw Local View and incomplete comparison selections disable export.
+- Regression coverage now verifies all supported parser families, comparison ordering, large-report caps, hidden-data exclusion, Blob content, object URL cleanup, and local-first boundaries.
+- Browser, keyboard, mobile-containment, accessibility, service-worker, and offline-shell smoke QA completed in the available environment.
+
+### Notes
+
+- Export is sanitized-only and excludes raw, hidden, capped, filtered-out, unrendered, and source-only content.
+- No raw, original-file, JSON, CSV, or PDF export; export history; report persistence; uploads; cloud processing; analytics; or background export was added.
+- No new parser families, parser routing changes, explanation changes, comparison redesign, AI diagnosis, symbolication, `.dSYM` support, or sysdiagnose extraction was added.
+
 ## v1.1.0 - Multi-Report Comparison
 
 The `v1.1.0` release has been published.

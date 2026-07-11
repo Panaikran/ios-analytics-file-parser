@@ -23,8 +23,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.1.0` |
-| Active phase | `v1.2.0` planning |
-| Current focus | v1.2.0 roadmap definition |
+| Active phase | `v1.2.0` implemented, ready for manual release review |
+| Current focus | Sanitized Visible Export release readiness |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -50,7 +50,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.1.0` is the current stable release. The next milestone is `v1.2.0` planning; no v1.2 implementation scope has been approved yet.
+`v1.1.0` is the current stable release. `v1.2.0` Sanitized Visible Export is implemented and ready for manual release review; it has not been released yet.
 
 ## Why This Exists
 
@@ -137,6 +137,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Section jump navigation | Supported |
 | Search/filter parsed output | Supported |
 | Copy visible section content | Supported |
+| Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Multi-Report Comparison | Supported: 2-3 reports with the same parser type, sanitized only |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
@@ -218,11 +219,22 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Search results override collapsed dense-table state so matches remain visible.
 - Copy buttons on each section.
 - Copy output uses plain text and reflects currently visible content.
+- Download sanitized visible output as a local plain-text file for a single report or a generated comparison.
+- Export follows the active search and the same dense-table visibility rules as copy; viewport position and scrolling do not affect eligibility.
+- Raw Local View disables export. Comparison export is sanitized-only.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
 - Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
 - Multi-Report Comparison accepts 2 or 3 supported reports with the same `parserType`, preserves insertion order, and produces ordinary comparison sections for the existing navigation, search, and copy paths.
 - Comparison uses sanitized parsed sections only. Raw Local View remains available only for a single loaded report.
+
+### Sanitized Visible Export
+
+- Export is available only for currently eligible sanitized sections.
+- Active search limits exported sections and rows; collapsed, capped, filtered-out, unrendered, and source-only content is excluded.
+- Single reports download as `ios-diagnostic-export.txt`; comparisons download as `ios-diagnostic-comparison.txt`.
+- Downloads are created locally with a temporary object URL. No report, export, or download history is retained.
+- Raw export, original-file export, JSON, CSV, PDF, cloud sharing, uploads, and export persistence are not supported.
 
 ### CoreAnalytics Sections
 
@@ -433,6 +445,7 @@ index.html -> manifest.webmanifest
 |-- PHASE_8_SUMMARY.md
 |-- PHASE_9_SUMMARY.md
 |-- PHASE_11_SUMMARY.md
+|-- PHASE_12_SUMMARY.md
 |-- package.json
 |-- icons/
 |   |-- apple-touch-icon.png
@@ -455,6 +468,7 @@ index.html -> manifest.webmanifest
 |   |-- fileValidation.js
 |   |-- clipboard/
 |   |   |-- copyMetadata.js
+|   |   |-- downloadText.js
 |   |   |-- serializeSection.js
 |   |   `-- visibleSection.js
 |   |-- explanations/
@@ -607,6 +621,7 @@ After first successful service worker setup, these fictional examples are availa
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
+- Sanitized Visible Export is limited to visible `.txt` output. Raw, original-file, JSON, CSV, PDF, and persistent export history are not supported.
 - Examples and PWA behavior require serving the repository through a local server or GitHub Pages.
 - Current UI is dark themed; dark/light mode via `prefers-color-scheme` is not implemented.
 - Panic parsing is regex/section based and may need expansion for uncommon layouts.
@@ -633,7 +648,7 @@ After first successful service worker setup, these fictional examples are availa
 | v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
 | v1.0.0 | Released | Stable parser, explanation, privacy, accessibility, and PWA foundation |
 | v1.1.0 | Released | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
-| v1.2.0 | Active planning | Next milestone scope is being defined |
+| v1.2.0 | Implemented, unreleased | Sanitized Visible Export for eligible single-report and comparison `.txt` output; ready for manual release review |
 
 The project keeps the same constraints:
 
@@ -704,7 +719,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.1.0` is released. The active `v1.2.0` milestone is planning-only; future parser families, export work, and broader diagnostics remain separate roadmap work.
+`v1.1.0` is released. `v1.2.0` Sanitized Visible Export is implemented and ready for manual release review, but it is not released. Future parser families, non-text export formats, and broader diagnostics remain separate roadmap work.
 
 ## Screenshots / Demo
 
