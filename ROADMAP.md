@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.2.0` implemented and ready for manual release review
+Status: `v1.2.0` released; `v1.3.0` planning only
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -23,7 +23,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Stable Release Final Verification | Complete | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review completed with no blockers |
 | Stable Release Publication | Released | `v1.0.0` | Stable parser, explanation, privacy, accessibility, and PWA foundation published |
 | Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
-| Sanitized Visible Export | Implemented, unreleased | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output; ready for manual release review |
+| Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
 
 ## Project Constraints
 
@@ -523,9 +523,9 @@ Not included:
 
 `v1.1.0` release readiness completed successfully, and the release has been tagged and published on GitHub.
 
-## Active Roadmap: v1.2.0
+## Completed Milestone: v1.2.0
 
-Status: implemented and ready for manual release review. `v1.2.0` is not released.
+Status: released.
 
 Goal: provide a local sanitized visible-output download without changing parser, explanation, comparison, search, copy, or privacy contracts.
 
@@ -548,7 +548,13 @@ Not included:
 
 - Raw, original-file, JSON, CSV, or PDF export.
 - Export history, report persistence, uploads, cloud processing, analytics, or background export.
-- New parser families, parser redesign, comparison redesign, or v1.3.0 implementation work.
+- New parser families, parser redesign, comparison redesign, or structured export formats.
+
+## Next Roadmap: v1.3.0
+
+Status: planning only. No implementation is included in this release-state reconciliation.
+
+Goal: evaluate a structured sanitized export format while preserving the existing visible-export, privacy, comparison, and local-first contracts.
 
 ## Future Hardening And Exploratory Work
 
@@ -588,11 +594,11 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Before manual `v1.2.0` release review:
+For `v1.3.0` planning and implementation review:
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, non-text export formats, and additional comparison modes as future planning candidates.
-- Do not approve v1.3.0 implementation scope until a separate planning pass.
+- Keep the v1.3.0 scope limited to the approved planning proposal until each slice is reviewed.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.2.0 - Unreleased
+## v1.2.0 - Sanitized Visible Export
+
+The `v1.2.0` release has been published.
 
 ### Added
 

@@ -22,9 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.1.0` |
-| Active phase | `v1.2.0` implemented, ready for manual release review |
-| Current focus | Sanitized Visible Export release readiness |
+| Latest released version | `v1.2.0` |
+| Active phase | `v1.3.0` planning only |
+| Current focus | Structured Sanitized Export planning |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -43,6 +43,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.9.0-beta | Released: Feature Freeze / Release Candidate Preparation |
 | v1.0.0 | Released: First Stable Release |
 | v1.1.0 | Released: Multi-Report Comparison |
+| v1.2.0 | Released: Sanitized Visible Export |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -50,7 +51,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.1.0` is the current stable release. `v1.2.0` Sanitized Visible Export is implemented and ready for manual release review; it has not been released yet.
+`v1.2.0` is the current stable release. `v1.2.0` Sanitized Visible Export is available for eligible sanitized single-report and comparison output.
 
 ## Why This Exists
 
@@ -648,7 +649,7 @@ After first successful service worker setup, these fictional examples are availa
 | v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
 | v1.0.0 | Released | Stable parser, explanation, privacy, accessibility, and PWA foundation |
 | v1.1.0 | Released | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
-| v1.2.0 | Implemented, unreleased | Sanitized Visible Export for eligible single-report and comparison `.txt` output; ready for manual release review |
+| v1.2.0 | Released | Sanitized Visible Export for eligible single-report and comparison `.txt` output |
 
 The project keeps the same constraints:
 
@@ -719,7 +720,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.1.0` is released. `v1.2.0` Sanitized Visible Export is implemented and ready for manual release review, but it is not released. Future parser families, non-text export formats, and broader diagnostics remain separate roadmap work.
+`v1.2.0` is released. Future parser families, structured export formats, and broader diagnostics remain separate roadmap work.
 
 ## Screenshots / Demo
 

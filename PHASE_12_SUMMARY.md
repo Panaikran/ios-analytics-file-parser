@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 12 is the unreleased `v1.2.0` Sanitized Visible Export milestone. It adds a local plain-text download workflow above existing parsed sections without changing parser, explanation, comparison, search, copy, or privacy contracts.
+Phase 12 is the released `v1.2.0` Sanitized Visible Export milestone. It adds a local plain-text download workflow above existing parsed sections without changing parser, explanation, comparison, search, copy, or privacy contracts.
 
 ## Completed Slices
 
@@ -54,6 +54,6 @@ Browser QA in the available in-app browser verified paste parsing, sanitized sin
 
 - Slices 12A-12D are complete and frozen.
 - Automated validation and final available-browser QA pass.
-- Documentation reflects implemented scope and keeps v1.2.0 unreleased.
-- No release blockers remain for manual review.
-- Tagging and publication require a separate explicit request.
+- Documentation reflects the implemented and released v1.2.0 scope.
+- No release blockers remained before publication.
+- The `v1.2.0` tag and GitHub release have been published.
