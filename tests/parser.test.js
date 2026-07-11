@@ -37,7 +37,11 @@ import { filterSectionsByQuery } from '../src/search/filterSections.js';
 import { getSearchMetadata } from '../src/search/searchMetadata.js';
 import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
 import { downloadTextFile } from '../src/clipboard/downloadText.js';
-import { serializeSectionForCopy, serializeSectionsForExport } from '../src/clipboard/serializeSection.js';
+import {
+  serializeSectionForCopy,
+  serializeSectionsForExport,
+  serializeSectionsForJsonExport,
+} from '../src/clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
 import {
   findCrashedThreadName,
@@ -4205,6 +4209,85 @@ assert.doesNotMatch(
   new RegExp(comparisonTableLeakSentinel),
   'comparison export excludes hidden source tables and raw content'
 );
+
+const jsonExportSections = [
+  {
+    id: 'json-first',
+    title: 'First Section',
+    fields: [
+      { label: 'Safe Field', value: 'safe-value' },
+      { label: 'Nested Field', value: { secret: 'JSON-NESTED-SENTINEL' } },
+    ],
+    tableSummary: '2 visible rows',
+    tableColumns: [
+      { key: 'name', label: 'Name' },
+      { key: 'count', label: 'Count' },
+    ],
+    table: [
+      { name: 'Row 1', count: 1, hidden: 'JSON-HIDDEN-SENTINEL' },
+      { name: 'Row 2', count: 2 },
+    ],
+    chart: {
+      title: 'Safe Chart',
+      items: [
+        { label: 'A', value: 1 },
+        { label: 'Nested', value: { secret: 'JSON-CHART-SENTINEL' } },
+      ],
+    },
+    raw: 'JSON-RAW-SENTINEL',
+    sourceOnly: 'JSON-SOURCE-SENTINEL',
+  },
+  {
+    id: 'json-second',
+    title: 'Second Section',
+    fields: [{ label: 'Later Field', value: true }],
+  },
+];
+const jsonExportBefore = JSON.stringify(jsonExportSections);
+const jsonExportText = serializeSectionsForJsonExport(jsonExportSections, { mode: 'comparison' });
+const jsonExport = JSON.parse(jsonExportText);
+assert.deepEqual(
+  Object.keys(jsonExport),
+  ['format', 'version', 'mode', 'sections'],
+  'JSON export uses a stable top-level schema'
+);
+assert.equal(jsonExport.format, 'ios-analytics-visible-export', 'JSON export identifies its format');
+assert.equal(jsonExport.version, 1, 'JSON export uses schema version 1');
+assert.equal(jsonExport.mode, 'comparison', 'JSON export preserves the explicit comparison mode');
+assert.deepEqual(
+  jsonExport.sections.map((section) => section.title),
+  ['First Section', 'Second Section'],
+  'JSON export preserves section order'
+);
+assert.deepEqual(
+  jsonExport.sections[0].fields,
+  [{ label: 'Safe Field', value: 'safe-value' }],
+  'JSON export keeps scalar fields and omits nested field values'
+);
+assert.deepEqual(
+  jsonExport.sections[0].table,
+  [{ name: 'Row 1', count: 1 }, { name: 'Row 2', count: 2 }],
+  'JSON export preserves visible table rows and allowlisted columns'
+);
+assert.deepEqual(
+  jsonExport.sections[0].chart,
+  { title: 'Safe Chart', items: [{ label: 'A', value: 1 }] },
+  'JSON export keeps scalar chart values and omits nested chart values'
+);
+assert.equal(jsonExportText, serializeSectionsForJsonExport(jsonExportSections, { mode: 'comparison' }), 'JSON export is deterministic');
+assert.equal(JSON.stringify(jsonExportSections), jsonExportBefore, 'JSON export does not mutate input sections');
+for (const sentinel of [
+  'JSON-NESTED-SENTINEL',
+  'JSON-CHART-SENTINEL',
+  'JSON-HIDDEN-SENTINEL',
+  'JSON-RAW-SENTINEL',
+  'JSON-SOURCE-SENTINEL',
+]) {
+  assert.doesNotMatch(jsonExportText, new RegExp(sentinel), `JSON export excludes ${sentinel}`);
+}
+assert.equal(JSON.parse(serializeSectionsForJsonExport([])).sections.length, 0, 'JSON export handles empty arrays safely');
+assert.equal(serializeSectionsForJsonExport(null), '', 'JSON export handles malformed section collections safely');
+assert.equal(JSON.parse(serializeSectionsForJsonExport([{ title: 'Safe Empty Section', fields: null, table: [null] }])).sections.length, 1, 'JSON export handles malformed section content safely');
 
 const repeatedDownloadBlobs = [];
 const repeatedDownloadUrls = [];

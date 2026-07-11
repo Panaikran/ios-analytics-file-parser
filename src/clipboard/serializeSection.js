@@ -44,6 +44,20 @@ export function serializeSectionsForExport(sections) {
     .join('\n\n---\n\n');
 }
 
+export function serializeSectionsForJsonExport(sections, options = {}) {
+  if (!Array.isArray(sections)) return '';
+
+  const mode = options.mode === 'comparison' ? 'comparison' : 'single';
+  const payload = {
+    format: 'ios-analytics-visible-export',
+    version: 1,
+    mode,
+    sections: sections.map(normalizeJsonSection).filter(Boolean),
+  };
+
+  return JSON.stringify(payload, null, 2);
+}
+
 function serializeTable(section) {
   const columns = section.tableColumns ?? DEFAULT_TABLE_COLUMNS;
   const rows = [columns.map((column) => column.label).join('\t')];
@@ -84,6 +98,70 @@ function normalizeSection(section) {
       ? { ...section.chart, items: section.chart.items.filter(isRecord) }
       : null,
   };
+}
+
+function normalizeJsonSection(section) {
+  if (!isRecord(section) || typeof section.title !== 'string') return null;
+
+  const normalized = {
+    title: section.title,
+    fields: Array.isArray(section.fields) ? section.fields.map(normalizeJsonField).filter(Boolean) : [],
+    tableSummary: typeof section.tableSummary === 'string' ? section.tableSummary : '',
+    tableColumns: [],
+    table: [],
+    chart: null,
+  };
+
+  if (typeof section.id === 'string') normalized.id = section.id;
+
+  const columns = Array.isArray(section.tableColumns) ? section.tableColumns : DEFAULT_TABLE_COLUMNS;
+  normalized.tableColumns = columns
+    .filter((column) => isRecord(column) && typeof column.key === 'string' && typeof column.label === 'string')
+    .map((column) => ({ key: column.key, label: column.label }));
+
+  if (Array.isArray(section.table)) {
+    normalized.table = section.table
+      .filter(isRecord)
+      .map((row) => normalizeJsonRow(row, normalized.tableColumns))
+      .filter((row) => Object.keys(row).length);
+  }
+
+  if (isRecord(section.chart) && Array.isArray(section.chart.items)) {
+    const items = section.chart.items
+      .filter(isRecord)
+      .map(normalizeJsonChartItem)
+      .filter(Boolean);
+    normalized.chart = {
+      ...(typeof section.chart.title === 'string' ? { title: section.chart.title } : {}),
+      items,
+    };
+  }
+
+  return normalized;
+}
+
+function normalizeJsonField(field) {
+  if (!isRecord(field) || typeof field.label !== 'string' || !isJsonScalar(field.value)) return null;
+  return { label: field.label, value: field.value };
+}
+
+function normalizeJsonRow(row, columns) {
+  const normalized = {};
+
+  for (const column of columns) {
+    if (isJsonScalar(row[column.key])) normalized[column.key] = row[column.key];
+  }
+
+  return normalized;
+}
+
+function normalizeJsonChartItem(item) {
+  if (!isJsonScalar(item.label) || !isJsonScalar(item.value)) return null;
+  return { label: item.label, value: item.value };
+}
+
+function isJsonScalar(value) {
+  return typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value));
 }
 
 function isRecord(value) {
