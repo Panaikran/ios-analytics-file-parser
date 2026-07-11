@@ -34,6 +34,16 @@ export function serializeSectionForCopy(section) {
     .join('\n\n');
 }
 
+export function serializeSectionsForExport(sections) {
+  if (!Array.isArray(sections)) return '';
+
+  return sections
+    .filter(isExportableSection)
+    .map((section) => serializeSectionForCopy(normalizeSection(section)))
+    .filter(Boolean)
+    .join('\n\n---\n\n');
+}
+
 function serializeTable(section) {
   const columns = section.tableColumns ?? DEFAULT_TABLE_COLUMNS;
   const rows = [columns.map((column) => column.label).join('\t')];
@@ -57,4 +67,25 @@ function serializeChart(chart) {
 
 function stringifyCell(value) {
   return String(value ?? '').replace(/\r?\n/g, ' ');
+}
+
+function isExportableSection(section) {
+  return section && typeof section === 'object' && typeof section.title === 'string';
+}
+
+function normalizeSection(section) {
+  return {
+    ...section,
+    fields: Array.isArray(section.fields) ? section.fields.filter(isRecord) : [],
+    table: Array.isArray(section.table) ? section.table.filter(isRecord) : [],
+    tableColumns: Array.isArray(section.tableColumns) ? section.tableColumns.filter(isRecord) : section.tableColumns,
+    raw: null,
+    chart: isRecord(section.chart) && Array.isArray(section.chart.items)
+      ? { ...section.chart, items: section.chart.items.filter(isRecord) }
+      : null,
+  };
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object';
 }

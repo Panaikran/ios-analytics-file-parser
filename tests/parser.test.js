@@ -36,7 +36,7 @@ import {
 import { filterSectionsByQuery } from '../src/search/filterSections.js';
 import { getSearchMetadata } from '../src/search/searchMetadata.js';
 import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
-import { serializeSectionForCopy } from '../src/clipboard/serializeSection.js';
+import { serializeSectionForCopy, serializeSectionsForExport } from '../src/clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
 import {
   findCrashedThreadName,
@@ -156,7 +156,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.1\.0-slice11b-comparison-workflow-2026-07-11/, 'service worker cache version reflects Slice 11B comparison integration');
+assert.match(serviceWorkerText, /v1\.2\.0-slice12a-visible-export-contract-2026-07-11/, 'service worker cache version reflects Slice 12A visible export contract');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -3176,6 +3176,55 @@ assert.equal(
     'wired\t34',
   ].join('\n'),
   'copy serialization includes title, fields, TSV tables, raw text, and chart data'
+);
+const visibleExportSections = [
+  {
+    title: 'Report 1 Summary',
+    fields: [{ label: 'Status', value: 'Visible' }],
+  },
+  {
+    title: 'Top Processes',
+    tableSummary: '1 of 2 processes shown',
+    tableColumns: [{ key: 'process', label: 'Process' }],
+    table: [{ process: 'Visible Process' }],
+    hiddenRows: [{ process: 'HIDDEN_EXPORT_SENTINEL' }],
+    sourceText: 'RAW_EXPORT_SENTINEL',
+    raw: 'RAW_LOCAL_EXPORT_SENTINEL',
+  },
+];
+const visibleExportSnapshot = JSON.stringify(visibleExportSections);
+const visibleExportText = serializeSectionsForExport(visibleExportSections);
+assert.equal(
+  visibleExportText,
+  [
+    'Report 1 Summary',
+    '',
+    'Status: Visible',
+    '',
+    '---',
+    '',
+    'Top Processes',
+    '',
+    '1 of 2 processes shown',
+    '',
+    'Process',
+    'Visible Process',
+  ].join('\n'),
+  'visible export preserves section order, visible table rows, and stable separators'
+);
+assert.equal(serializeSectionsForExport(visibleExportSections), visibleExportText, 'visible export is deterministic for identical input');
+assert.equal(JSON.stringify(visibleExportSections), visibleExportSnapshot, 'visible export does not mutate input sections');
+assert.doesNotMatch(
+  visibleExportText,
+  /HIDDEN_EXPORT_SENTINEL|RAW_EXPORT_SENTINEL|RAW_LOCAL_EXPORT_SENTINEL/,
+  'visible export excludes hidden source values and raw local content'
+);
+assert.equal(serializeSectionsForExport([]), '', 'visible export handles empty section arrays');
+assert.equal(serializeSectionsForExport(null), '', 'visible export handles malformed section collections');
+assert.equal(
+  serializeSectionsForExport([null, {}, { title: 'Safe Empty Section', fields: null, table: [null] }]),
+  'Safe Empty Section',
+  'visible export skips malformed sections and content safely'
 );
 assert.match(
   visibleSectionSource,
