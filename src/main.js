@@ -8,7 +8,11 @@ import {
 } from './appState.js';
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import { downloadTextFile } from './clipboard/downloadText.js';
-import { serializeSectionForCopy, serializeSectionsForExport } from './clipboard/serializeSection.js';
+import {
+  serializeSectionForCopy,
+  serializeSectionsForExport,
+  serializeSectionsForJsonExport,
+} from './clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from './clipboard/visibleSection.js';
 import { createComparisonSections, validateComparison } from './comparison/comparisonModel.js';
 import { validateReportFile } from './fileValidation.js';
@@ -43,6 +47,7 @@ const clearSearchButton = document.querySelector('#clear-search');
 const searchCount = document.querySelector('#search-count');
 const exportPanel = document.querySelector('#export-panel');
 const downloadVisibleExportButton = document.querySelector('#download-visible-export');
+const downloadVisibleJsonButton = document.querySelector('#download-visible-json');
 const exportStatus = document.querySelector('#export-status');
 const sectionNavElement = document.querySelector('#section-nav');
 const emptyResults = document.querySelector('#empty-results');
@@ -82,13 +87,19 @@ function renderApp() {
   const visibleSections = searchResult.sections;
   const hasParsedSections = activeSections.length > 0;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
+  const eligibleExportSections = getEligibleExportSections(activeSections, visibleSections);
 
   inputPanel.hidden = comparisonMode;
   renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
   renderPrivacyControls(appState.sections.length > 0);
   renderComparisonControls(appState.sections.length > 0);
   renderSearchControls(searchMetadata, hasParsedSections);
-  renderExportControls(hasParsedSections, getVisibleExportText(activeSections, visibleSections));
+  renderExportControls(
+    hasParsedSections,
+    serializeSectionsForExport(eligibleExportSections),
+    serializeSectionsForJsonExport(eligibleExportSections, { mode: comparisonMode ? 'comparison' : 'single' }),
+    eligibleExportSections.length > 0
+  );
   renderSectionNav(sectionNavElement, visibleSections);
   renderSections(sectionsElement, visibleSections, {
     onCopySection: copySection,
@@ -105,21 +116,21 @@ function renderApp() {
   clearButton.disabled = !appState.sourceText && !appState.sections.length;
 }
 
-function getVisibleExportText(activeSections, visibleSections) {
-  if (!comparisonMode && (!appState.sanitize || (comparisonEntries.length > 0 && !validateComparison(comparisonEntries).valid))) return '';
+function getEligibleExportSections(activeSections, visibleSections) {
+  if (!comparisonMode && (!appState.sanitize || (comparisonEntries.length > 0 && !validateComparison(comparisonEntries).valid))) return [];
 
-  const exportSections = visibleSections.map((section) =>
+  return visibleSections.map((section) =>
     getVisibleSectionForCopy(section, {
       denseTableState,
       allSections: activeSections,
     })
   );
-  return serializeSectionsForExport(exportSections);
 }
 
-function renderExportControls(hasParsedSections, exportText) {
+function renderExportControls(hasParsedSections, exportText, exportJson, hasEligibleSections) {
   exportPanel.hidden = !hasParsedSections;
-  downloadVisibleExportButton.disabled = !exportText;
+  downloadVisibleExportButton.disabled = !hasEligibleSections || !exportText;
+  downloadVisibleJsonButton.disabled = !hasEligibleSections || !exportJson;
 
   if (!hasParsedSections) return;
   if (!comparisonMode && !appState.sanitize) {
@@ -499,12 +510,26 @@ async function copySection(section) {
 function downloadVisibleExport() {
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
   const visibleSections = filterSectionsByQuery(activeSections, searchQuery).sections;
-  const exportText = getVisibleExportText(activeSections, visibleSections);
+  const exportText = serializeSectionsForExport(getEligibleExportSections(activeSections, visibleSections));
   if (!exportText) return;
 
   downloadTextFile(
     exportText,
     comparisonMode ? 'ios-diagnostic-comparison.txt' : 'ios-diagnostic-export.txt'
+  );
+}
+
+function downloadVisibleJson() {
+  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const visibleSections = filterSectionsByQuery(activeSections, searchQuery).sections;
+  const exportSections = getEligibleExportSections(activeSections, visibleSections);
+  const exportJson = serializeSectionsForJsonExport(exportSections, { mode: comparisonMode ? 'comparison' : 'single' });
+  if (!exportSections.length || !exportJson) return;
+
+  downloadTextFile(
+    exportJson,
+    comparisonMode ? 'ios-diagnostic-comparison.json' : 'ios-diagnostic-export.json',
+    { mimeType: 'application/json;charset=utf-8' }
   );
 }
 
@@ -553,6 +578,7 @@ parsePasteButton.addEventListener('click', parsePastedText);
 searchInput.addEventListener('input', handleSearchInput);
 clearSearchButton.addEventListener('click', clearSearch);
 downloadVisibleExportButton.addEventListener('click', downloadVisibleExport);
+downloadVisibleJsonButton.addEventListener('click', downloadVisibleJson);
 
 inputPanel.addEventListener('dragover', (event) => {
   if (!event.dataTransfer?.types?.includes('Files')) return;

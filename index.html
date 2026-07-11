@@ -103,7 +103,10 @@
           <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
         </div>
         <div id="export-panel" class="export-panel" hidden>
-          <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized visible output</button>
+          <div class="export-actions">
+            <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized visible output</button>
+            <button id="download-visible-json" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized JSON</button>
+          </div>
           <p id="export-status" class="export-status">Downloads only the currently visible sanitized output.</p>
         </div>
         <nav id="section-nav" class="section-nav" aria-label="Parsed sections" hidden></nav>

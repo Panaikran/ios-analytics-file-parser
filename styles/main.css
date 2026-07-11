@@ -564,6 +564,12 @@ textarea {
   display: none;
 }
 
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .export-button {
   min-height: 44px;
   border: 1px solid var(--surface-strong);
@@ -1116,5 +1122,10 @@ textarea {
 
   .export-panel {
     align-items: stretch;
+  }
+
+  .export-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

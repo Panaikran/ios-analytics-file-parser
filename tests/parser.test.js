@@ -64,6 +64,7 @@ const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
 const metadataIpsText = await readFile(new URL('./fixtures/example-metadata.ips', import.meta.url), 'utf8');
 const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSection.js', import.meta.url), 'utf8');
+const indexHtmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const searchSource = await readFile(new URL('../src/search/filterSections.js', import.meta.url), 'utf8');
 const searchMetadataSource = await readFile(new URL('../src/search/searchMetadata.js', import.meta.url), 'utf8');
 const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata.js', import.meta.url), 'utf8');
@@ -165,7 +166,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.2\.0-slice12b-visible-export-download-2026-07-11/, 'service worker cache version reflects Slice 12B visible export download');
+assert.match(serviceWorkerText, /v1\.3\.0-slice13b-json-export-download-2026-07-11/, 'service worker cache version reflects Slice 13B JSON export download');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -197,12 +198,17 @@ assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/
 assert.match(mainScriptText, /import \{ createComparisonSections, validateComparison \} from '\.\/comparison\/comparisonModel\.js';/, 'main app reuses the pure comparison model');
 assert.match(mainScriptText, /import \{ downloadTextFile \} from '\.\/clipboard\/downloadText\.js';/, 'main app delegates downloads to the focused text-download helper');
 assert.match(mainScriptText, /serializeSectionsForExport/, 'main app reuses the visible export serializer');
+assert.match(mainScriptText, /serializeSectionsForJsonExport/, 'main app reuses the structured JSON export serializer');
 assert.match(mainScriptText, /getVisibleSectionForCopy/, 'main app reuses existing table visibility for export');
 assert.doesNotMatch(mainScriptText, /getTableView/, 'main app does not introduce a second table-visibility pipeline for export');
 assert.match(mainScriptText, /!comparisonMode && \(!appState\.sanitize/, 'Raw Local View never produces export content');
 assert.match(mainScriptText, /comparisonEntries\.length > 0 && !validateComparison\(comparisonEntries\)\.valid/, 'incomplete comparison selection never produces export content');
-assert.match(mainScriptText, /downloadVisibleExportButton\.disabled = !exportText/, 'visible export disables when no eligible output exists');
+assert.match(mainScriptText, /downloadVisibleExportButton\.disabled = !hasEligibleSections \|\| !exportText/, 'text export disables when no eligible output exists');
+assert.match(mainScriptText, /downloadVisibleJsonButton\.disabled = !hasEligibleSections \|\| !exportJson/, 'JSON export disables when no eligible output exists');
 assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.txt' : 'ios-diagnostic-export\.txt'/, 'visible export uses generic filenames only');
+assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.json' : 'ios-diagnostic-export\.json'/, 'structured JSON export uses generic filenames only');
+assert.match(mainScriptText, /mimeType: 'application\/json;charset=utf-8'/, 'structured JSON export uses the JSON Blob MIME type');
+assert.match(indexHtmlSource, /id="download-visible-json"[^>]*disabled[^>]*>Download sanitized JSON/, 'index exposes an accessible disabled JSON export action');
 assert.doesNotMatch(downloadTextSource, /(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|navigator\.clipboard)/, 'visible export download helper has no network, persistence, or clipboard behavior');
 assert.doesNotMatch(serializeSectionSource, /(?:document|window|scroll)/, 'visible export serialization is independent of DOM viewport and scroll state');
 assert.match(mainScriptText, /let comparisonEntries = \[\];[^]*let comparisonSections = \[\];[^]*let comparisonMode = false;/, 'comparison state remains separate from single-report app state');
@@ -3308,8 +3314,11 @@ const searchScopedExport = filterSectionsByQuery(searchScopedExportSource, 'Visi
   getVisibleSectionForCopy(section, { allSections: searchScopedExportSource })
 );
 const searchScopedExportText = serializeSectionsForExport(searchScopedExport);
+const searchScopedExportJson = serializeSectionsForJsonExport(searchScopedExport);
 assert.match(searchScopedExportText, /Visible Search Row/, 'visible export includes active-search rows');
 assert.doesNotMatch(searchScopedExportText, /FILTERED_EXPORT_SENTINEL/, 'visible export excludes filtered-out rows');
+assert.match(searchScopedExportJson, /Visible Search Row/, 'structured JSON export includes active-search rows');
+assert.doesNotMatch(searchScopedExportJson, /FILTERED_EXPORT_SENTINEL/, 'structured JSON export excludes filtered-out rows');
 
 const cappedExportSource = [{
   id: 'process-table',
@@ -4195,6 +4204,7 @@ assert.match(largeCoreAnalyticsExportText, /100 of/, 'CoreAnalytics export retai
 assert.doesNotMatch(largeCoreAnalyticsExportText, /com\.example\.event\.199/, 'CoreAnalytics export excludes rows beyond the parser cap');
 
 const twoReportComparisonExport = serializeSectionsForExport(twoReportComparison);
+const twoReportComparisonJson = serializeSectionsForJsonExport(twoReportComparison, { mode: 'comparison' });
 const threeReportComparisonExport = serializeSectionsForExport(threeReportComparison);
 assert.equal(twoReportComparisonExport, serializeSectionsForExport(twoReportComparison), 'two-report comparison export is deterministic');
 assert.equal(threeReportComparisonExport, serializeSectionsForExport(threeReportComparison), 'three-report comparison export is deterministic');
@@ -4321,6 +4331,15 @@ assert.equal(
   'comparison export starts a local plain-text download'
 );
 assert.equal(
+  downloadTextFile(twoReportComparisonJson, 'ios-diagnostic-comparison.json', {
+    documentRef: repeatedDownloadDocument,
+    urlRef: repeatedDownloadUrlApi,
+    mimeType: 'application/json;charset=utf-8',
+  }),
+  true,
+  'comparison structured JSON export starts a local download'
+);
+assert.equal(
   downloadTextFile(searchScopedExportText, 'ios-diagnostic-export.txt', {
     documentRef: repeatedDownloadDocument,
     urlRef: repeatedDownloadUrlApi,
@@ -4328,14 +4347,27 @@ assert.equal(
   true,
   'repeated single-report export starts a new local download'
 );
+assert.equal(
+  downloadTextFile(searchScopedExportJson, 'ios-diagnostic-export.json', {
+    documentRef: repeatedDownloadDocument,
+    urlRef: repeatedDownloadUrlApi,
+    mimeType: 'application/json;charset=utf-8',
+  }),
+  true,
+  'single-report structured JSON export starts a local download'
+);
 assert.deepEqual(repeatedRevokedUrls, repeatedDownloadUrls, 'every export object URL is revoked without retention');
 assert.deepEqual(
   repeatedDownloadLinks.map((link) => link.download),
-  ['ios-diagnostic-comparison.txt', 'ios-diagnostic-export.txt'],
-  'comparison and single-report exports keep generic filenames'
+  ['ios-diagnostic-comparison.txt', 'ios-diagnostic-comparison.json', 'ios-diagnostic-export.txt', 'ios-diagnostic-export.json'],
+  'comparison, text, and JSON exports keep generic filenames'
 );
 assert.equal(await repeatedDownloadBlobs[0].text(), twoReportComparisonExport, 'comparison Blob content exactly matches visible export serialization');
-assert.equal(await repeatedDownloadBlobs[1].text(), searchScopedExportText, 'single-report Blob content exactly matches visible export serialization');
+assert.equal(await repeatedDownloadBlobs[1].text(), twoReportComparisonJson, 'comparison JSON Blob content matches the structured serializer');
+assert.equal(await repeatedDownloadBlobs[2].text(), searchScopedExportText, 'single-report Blob content exactly matches visible export serialization');
+assert.equal(await repeatedDownloadBlobs[3].text(), searchScopedExportJson, 'single-report JSON Blob content matches the structured serializer');
+assert.equal(repeatedDownloadBlobs[1].type, 'application/json;charset=utf-8', 'comparison JSON export uses the JSON MIME type');
+assert.equal(repeatedDownloadBlobs[3].type, 'application/json;charset=utf-8', 'single-report JSON export uses the JSON MIME type');
 assert.throws(
   () => createComparisonSections([comparisonReportOne]),
   /Comparison requires 2 or 3 reports\./,
