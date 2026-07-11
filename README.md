@@ -22,9 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.0.0` |
-| Active phase | `v1.1.0` development |
-| Current focus | Multi-Report Comparison release readiness |
+| Latest released version | `v1.1.0` |
+| Active phase | `v1.2.0` planning |
+| Current focus | v1.2.0 roadmap definition |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -41,7 +41,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.7.0-alpha | Released: Human-Readable Diagnostic Explanations |
 | v0.8.0-alpha | Released: Release Hardening and QA Polish |
 | v0.9.0-beta | Released: Feature Freeze / Release Candidate Preparation |
-| v1.1.0 | Unreleased: Multi-Report Comparison |
+| v1.0.0 | Released: First Stable Release |
+| v1.1.0 | Released: Multi-Report Comparison |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -49,7 +50,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.0.0` is the current stable release. `v1.1.0` adds bounded, sanitized-only Multi-Report Comparison and remains unreleased until a separate release action is approved.
+`v1.1.0` is the current stable release. The next milestone is `v1.2.0` planning; no v1.2 implementation scope has been approved yet.
 
 ## Why This Exists
 
@@ -136,7 +137,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Section jump navigation | Supported |
 | Search/filter parsed output | Supported |
 | Copy visible section content | Supported |
-| Multi-Report Comparison | Supported in unreleased `v1.1.0`: 2-3 reports with the same parser type, sanitized only |
+| Multi-Report Comparison | Supported: 2-3 reports with the same parser type, sanitized only |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
 | Panic kext collapse | Supported |
@@ -631,7 +632,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
 | v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
 | v1.0.0 | Released | Stable parser, explanation, privacy, accessibility, and PWA foundation |
-| v1.1.0 | Unreleased | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
+| v1.1.0 | Released | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
+| v1.2.0 | Active planning | Next milestone scope is being defined |
 
 The project keeps the same constraints:
 
@@ -702,7 +704,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.0.0` is released. The active `v1.1.0` milestone adds only Multi-Report Comparison; future parser families, export work, and broader diagnostics remain separate roadmap work.
+`v1.1.0` is released. The active `v1.2.0` milestone is planning-only; future parser families, export work, and broader diagnostics remain separate roadmap work.
 
 ## Screenshots / Demo
 

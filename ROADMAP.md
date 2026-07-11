@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: active `v1.1.0` Multi-Report Comparison release readiness
+Status: active `v1.2.0` planning
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -22,7 +22,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Feature Freeze / Release Candidate Preparation | Released | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
 | Stable Release Final Verification | Complete | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review completed with no blockers |
 | Stable Release Publication | Released | `v1.0.0` | Stable parser, explanation, privacy, accessibility, and PWA foundation published |
-| Multi-Report Comparison | Active release readiness | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
+| Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
+| Next Planning Milestone | Active planning | `v1.2.0` | Scope is being defined; no implementation work has started |
 
 ## Project Constraints
 
@@ -520,7 +521,15 @@ Not included:
 - Fuzzy matching, confidence scores, diagnosis, or root-cause inference.
 - Source-text retention, raw comparison, report persistence, exports, new parser families, backend, cloud processing, uploads, or analytics.
 
-Release readiness is complete once final validation and browser QA pass. Tagging and publishing remain separate manual actions.
+`v1.1.0` release readiness completed successfully, and the release has been tagged and published on GitHub.
+
+## Active Roadmap: v1.2.0
+
+Status: planning only.
+
+The next milestone will be defined before implementation begins. It must preserve the stable parser and explanation contracts, local-first processing, sanitized defaults, bounded Raw Local View, memory-only reports, and the existing PWA cache boundaries.
+
+No v1.2.0 feature scope, parser family, or implementation slice is approved yet.
 
 ## Future Hardening And Exploratory Work
 
@@ -560,11 +569,11 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Before publishing `v1.1.0`:
+During `v1.2.0` planning:
 
-- Review the pending `v1.1.0` release documentation.
-- Keep `v1.1.0` tagging, release creation, package metadata changes, and publishing as explicit manual release actions.
-- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, export work, and additional comparison modes as future work, not `v1.1.0` blockers.
+- Define the next milestone scope before implementation begins.
+- Preserve the released `v1.1.0` comparison boundaries and existing parser behavior.
+- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, export work, and additional comparison modes as future planning candidates.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 11 is the `v1.1.0` Multi-Report Comparison milestone. It adds one local, deterministic workflow above the existing parser pipeline without changing parser contracts, routing, explanations, or report storage behavior.
+Phase 11 is the released `v1.1.0` Multi-Report Comparison milestone. It adds one local, deterministic workflow above the existing parser pipeline without changing parser contracts, routing, explanations, or report storage behavior.
 
 ## Completed Slices
 
@@ -59,4 +59,4 @@ Browser QA in the available Chromium environment verified the comparison workflo
 - Browser QA completed in the available environment; unavailable browser lanes are documented.
 - Documentation matches the implemented comparison boundaries.
 - No release blockers remain.
-- `v1.1.0` tagging and publication remain separate manual actions.
+- `v1.1.0` has been tagged and published on GitHub.

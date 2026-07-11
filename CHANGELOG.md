@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.1.0 - Unreleased
+## v1.1.0 - Multi-Report Comparison
+
+The `v1.1.0` release has been published.
 
 ### Added
 
