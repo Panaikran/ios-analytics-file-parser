@@ -53,6 +53,7 @@ import {
   createExplanationSection,
   getDiagnosticExplanation,
 } from '../src/explanations/diagnosticExplanations.js';
+import { createComparisonSections, validateComparison } from '../src/comparison/comparisonModel.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
@@ -66,6 +67,7 @@ const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/rend
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
 const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
+const comparisonModelSource = await readFile(new URL('../src/comparison/comparisonModel.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -3686,6 +3688,249 @@ assert.equal(
   sanitizeText('timestamp 2026-06-21 10:56:49.4455 +0700 code 2343432205'),
   'timestamp 2026-06-21 10:56:49.4455 +0700 code 2343432205',
   'does not redact timestamps or numeric termination codes as phone numbers'
+);
+
+function comparisonEntry(fields, {
+  parserType = 'panic',
+  supported = true,
+  sections = null,
+  sourceText = '',
+} = {}) {
+  return {
+    classification: { parserType, supported },
+    sections: sections ?? [
+      {
+        id: 'panic-summary',
+        title: 'Panic Summary',
+        fields,
+      },
+    ],
+    sourceText,
+  };
+}
+
+const comparisonReportOne = comparisonEntry([
+  { label: 'Timestamp', value: '2026-07-01 10:00:00' },
+  { label: 'OS Version', value: 'iOS 18.0' },
+  { label: 'Device', value: 'iPhone15,2' },
+  { label: 'Bug Type', value: '210' },
+  { label: 'Primary Reason', value: 'CPU usage exceeded' },
+]);
+const comparisonReportTwo = comparisonEntry([
+  { label: 'Timestamp', value: '2026-07-02 09:00:00' },
+  { label: 'OS Version', value: 'iOS 18.0' },
+  { label: 'Device', value: 'iPhone16,1' },
+  { label: 'Bug Type', value: '210' },
+  { label: 'Primary Reason', value: 'CPU usage exceeded' },
+]);
+
+assert.doesNotMatch(
+  comparisonModelSource,
+  /\b(?:document|window|navigator|fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|caches|serviceWorker)\b|filterSections|serializeSection|renderSection/,
+  'comparison model remains independent of browser, network, storage, search, copy, and rendering APIs'
+);
+
+assert.deepEqual(
+  validateComparison([comparisonReportOne, comparisonReportTwo]),
+  {
+    valid: true,
+    code: 'ok',
+    message: 'Reports are compatible for comparison.',
+    reportCount: 2,
+    parserType: 'panic',
+    reportIndex: null,
+  },
+  'comparison validation accepts two supported reports with the same parser type'
+);
+assert.equal(validateComparison([]).code, 'too-few-reports', 'comparison validation rejects fewer than two reports');
+assert.equal(
+  validateComparison([comparisonReportOne]).code,
+  'too-few-reports',
+  'comparison validation rejects one report'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, comparisonReportTwo, comparisonReportOne, comparisonReportTwo]).code,
+  'too-many-reports',
+  'comparison validation rejects more than three reports'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, comparisonEntry([], { parserType: 'jetsam' })]).code,
+  'mixed-parser-types',
+  'comparison validation rejects mixed parser types'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, null]).code,
+  'malformed-entry',
+  'comparison validation rejects malformed entries'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, { classification: { supported: true }, sections: [] }]).code,
+  'missing-parser-type',
+  'comparison validation rejects missing parser types'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, comparisonEntry([], { supported: false })]).code,
+  'unsupported-report',
+  'comparison validation rejects unsupported parser metadata'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, comparisonEntry([], { parserType: 'future-parser' })]).code,
+  'unsupported-report',
+  'comparison validation rejects unknown parser types even when metadata claims support'
+);
+assert.equal(
+  validateComparison([comparisonReportOne, { classification: { parserType: 'panic', supported: true }, sections: {} }]).code,
+  'invalid-sections',
+  'comparison validation rejects non-array sections'
+);
+assert.equal(
+  validateComparison([
+    comparisonReportOne,
+    comparisonEntry([], { sections: [{ id: 'panic-summary', title: 'Panic Summary', fields: {} }] }),
+  ]).code,
+  'invalid-sections',
+  'comparison validation rejects malformed section fields'
+);
+
+const twoReportComparison = createComparisonSections([comparisonReportOne, comparisonReportTwo]);
+assert.deepEqual(
+  twoReportComparison.map((section) => section.id),
+  [
+    'comparison-overview',
+    'comparison-report-summaries',
+    'comparison-common-fields',
+    'comparison-differences',
+    'comparison-recurring-indicators',
+    'comparison-notes',
+  ],
+  'comparison sections have stable output ordering'
+);
+assert.ok(
+  twoReportComparison.every((section) =>
+    ['id', 'title', 'priority', 'fields', 'raw', 'table', 'tableColumns', 'tableSummary', 'chart']
+      .every((key) => Object.hasOwn(section, key))
+  ),
+  'comparison output uses the ordinary SectionModel shape'
+);
+assert.deepEqual(
+  twoReportComparison[1].table.map((row) => row.report),
+  ['Report 1', 'Report 2'],
+  'comparison report summaries preserve insertion order'
+);
+assert.deepEqual(
+  twoReportComparison[2].table.map((row) => row.field),
+  ['OS Version', 'Bug Type', 'Primary Reason'],
+  'comparison common fields preserve source field order'
+);
+assert.deepEqual(
+  twoReportComparison[3].table.map((row) => row.field),
+  ['Timestamp', 'Device'],
+  'comparison differences contain changed fields in source order'
+);
+assert.deepEqual(
+  twoReportComparison[4].table,
+  [
+    {
+      indicator: 'Primary Reason',
+      value: 'CPU usage exceeded',
+      reports: 'Report 1, Report 2',
+    },
+  ],
+  'comparison recurring indicators require matching allowlisted values'
+);
+
+const comparisonReportThree = comparisonEntry([
+  { label: 'Timestamp', value: '2026-06-30 08:00:00' },
+  { label: 'OS Version', value: 'iOS 18.0' },
+  { label: 'Device', value: 'iPhone14,5' },
+  { label: 'Bug Type', value: '210' },
+  { label: 'Primary Reason', value: ' CPU   usage exceeded ' },
+]);
+const threeReportComparison = createComparisonSections([
+  comparisonReportOne,
+  comparisonReportTwo,
+  comparisonReportThree,
+]);
+assert.deepEqual(
+  threeReportComparison[1].table.map((row) => row.report),
+  ['Report 1', 'Report 2', 'Report 3'],
+  'three-report comparison never sorts reports by timestamp or metadata'
+);
+assert.deepEqual(
+  threeReportComparison[3].tableColumns.map((column) => column.label),
+  ['Section', 'Field', 'Report 1', 'Report 2', 'Report 3', 'Status'],
+  'three-report differences expose columns in insertion order'
+);
+assert.equal(
+  threeReportComparison[4].table[0].reports,
+  'Report 1, Report 2, Report 3',
+  'recurring indicator normalization collapses whitespace without fuzzy matching'
+);
+
+const missingFieldComparison = createComparisonSections([
+  comparisonReportOne,
+  comparisonEntry([
+    { label: 'Timestamp', value: '2026-07-02 09:00:00' },
+    { label: 'OS Version', value: 'iOS 18.0' },
+    { label: 'Bug Type', value: '210' },
+    { label: 'Primary Reason', value: 'Different reason' },
+  ]),
+]);
+const missingDeviceRow = missingFieldComparison[3].table.find((row) => row.field === 'Device');
+assert.equal(missingDeviceRow.report2, 'Not present', 'comparison represents missing fields explicitly');
+assert.equal(missingDeviceRow.status, 'Missing', 'comparison distinguishes missing values from changed values');
+
+const duplicateComparison = createComparisonSections([comparisonReportOne, comparisonReportOne]);
+assert.equal(duplicateComparison[3].table.length, 0, 'duplicate reports produce no differences');
+assert.deepEqual(
+  duplicateComparison,
+  createComparisonSections([comparisonReportOne, comparisonReportOne]),
+  'duplicate report comparison output is deterministic'
+);
+
+const numericComparison = createComparisonSections([
+  comparisonEntry([{ label: 'Bug Type', value: 210 }]),
+  comparisonEntry([{ label: 'Bug Type', value: 210 }]),
+]);
+assert.equal(
+  numericComparison[2].table.find((row) => row.field === 'Bug Type')?.value,
+  '210',
+  'comparison preserves approved numeric scalar fields'
+);
+
+const comparisonLeakSentinel = 'PRIVATE-SOURCE-SENTINEL-12345';
+const nestedLeakSentinel = 'NESTED-SENTINEL-67890';
+const privateComparisonEntry = comparisonEntry(
+  [
+    { label: 'OS Version', value: 'iOS 18.0' },
+    { label: 'Primary Reason', value: { nested: nestedLeakSentinel } },
+    { label: 'Private Value', value: comparisonLeakSentinel },
+  ],
+  {
+    sourceText: comparisonLeakSentinel,
+    sections: [
+      {
+        id: 'panic-summary',
+        title: 'Panic Summary',
+        fields: [
+          { label: 'OS Version', value: 'iOS 18.0' },
+          { label: 'Primary Reason', value: { nested: nestedLeakSentinel } },
+          { label: 'Private Value', value: comparisonLeakSentinel },
+        ],
+        raw: comparisonLeakSentinel,
+      },
+    ],
+  }
+);
+const privateComparisonOutput = JSON.stringify(
+  createComparisonSections([privateComparisonEntry, privateComparisonEntry])
+);
+assert.doesNotMatch(privateComparisonOutput, new RegExp(comparisonLeakSentinel), 'comparison ignores source text, raw notes, and non-allowlisted fields');
+assert.doesNotMatch(privateComparisonOutput, new RegExp(nestedLeakSentinel), 'comparison never stringifies nested field values');
+assert.throws(
+  () => createComparisonSections([comparisonReportOne]),
+  /Comparison requires 2 or 3 reports\./,
+  'comparison section creation refuses invalid input'
 );
 
 const initialState = createInitialAppState();
