@@ -101,38 +101,38 @@ function normalizeSection(section) {
 }
 
 function normalizeJsonSection(section) {
-  if (!isRecord(section) || typeof section.title !== 'string') return null;
+  if (!isRecord(section) || !hasOwn(section, 'title') || typeof section.title !== 'string') return null;
 
   const normalized = {
     title: section.title,
-    fields: Array.isArray(section.fields) ? section.fields.map(normalizeJsonField).filter(Boolean) : [],
-    tableSummary: typeof section.tableSummary === 'string' ? section.tableSummary : '',
+    fields: hasOwn(section, 'fields') && Array.isArray(section.fields) ? section.fields.map(normalizeJsonField).filter(Boolean) : [],
+    tableSummary: hasOwn(section, 'tableSummary') && typeof section.tableSummary === 'string' ? section.tableSummary : '',
     tableColumns: [],
     table: [],
     chart: null,
   };
 
-  if (typeof section.id === 'string') normalized.id = section.id;
+  if (hasOwn(section, 'id') && isSafeJsonKey(section.id)) normalized.id = section.id;
 
-  const columns = Array.isArray(section.tableColumns) ? section.tableColumns : DEFAULT_TABLE_COLUMNS;
+  const columns = hasOwn(section, 'tableColumns') && Array.isArray(section.tableColumns) ? section.tableColumns : DEFAULT_TABLE_COLUMNS;
   normalized.tableColumns = columns
-    .filter((column) => isRecord(column) && typeof column.key === 'string' && typeof column.label === 'string')
+    .filter((column) => isRecord(column) && hasOwn(column, 'key') && hasOwn(column, 'label') && isSafeJsonKey(column.key) && typeof column.label === 'string')
     .map((column) => ({ key: column.key, label: column.label }));
 
-  if (Array.isArray(section.table)) {
+  if (hasOwn(section, 'table') && Array.isArray(section.table)) {
     normalized.table = section.table
       .filter(isRecord)
       .map((row) => normalizeJsonRow(row, normalized.tableColumns))
       .filter((row) => Object.keys(row).length);
   }
 
-  if (isRecord(section.chart) && Array.isArray(section.chart.items)) {
+  if (hasOwn(section, 'chart') && isRecord(section.chart) && hasOwn(section.chart, 'items') && Array.isArray(section.chart.items)) {
     const items = section.chart.items
       .filter(isRecord)
       .map(normalizeJsonChartItem)
       .filter(Boolean);
     normalized.chart = {
-      ...(typeof section.chart.title === 'string' ? { title: section.chart.title } : {}),
+      ...(hasOwn(section.chart, 'title') && typeof section.chart.title === 'string' ? { title: section.chart.title } : {}),
       items,
     };
   }
@@ -141,7 +141,7 @@ function normalizeJsonSection(section) {
 }
 
 function normalizeJsonField(field) {
-  if (!isRecord(field) || typeof field.label !== 'string' || !isJsonScalar(field.value)) return null;
+  if (!isRecord(field) || !hasOwn(field, 'label') || !hasOwn(field, 'value') || typeof field.label !== 'string' || !isJsonScalar(field.value)) return null;
   return { label: field.label, value: field.value };
 }
 
@@ -149,19 +149,27 @@ function normalizeJsonRow(row, columns) {
   const normalized = {};
 
   for (const column of columns) {
-    if (isJsonScalar(row[column.key])) normalized[column.key] = row[column.key];
+    if (hasOwn(row, column.key) && isJsonScalar(row[column.key])) normalized[column.key] = row[column.key];
   }
 
   return normalized;
 }
 
 function normalizeJsonChartItem(item) {
-  if (!isJsonScalar(item.label) || !isJsonScalar(item.value)) return null;
+  if (!hasOwn(item, 'label') || !hasOwn(item, 'value') || !isJsonScalar(item.label) || !isJsonScalar(item.value)) return null;
   return { label: item.label, value: item.value };
 }
 
 function isJsonScalar(value) {
   return typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value));
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function isSafeJsonKey(value) {
+  return typeof value === 'string' && !['__proto__', 'constructor', 'prototype'].includes(value);
 }
 
 function isRecord(value) {

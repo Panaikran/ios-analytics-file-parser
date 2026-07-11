@@ -4299,6 +4299,88 @@ assert.equal(JSON.parse(serializeSectionsForJsonExport([])).sections.length, 0, 
 assert.equal(serializeSectionsForJsonExport(null), '', 'JSON export handles malformed section collections safely');
 assert.equal(JSON.parse(serializeSectionsForJsonExport([{ title: 'Safe Empty Section', fields: null, table: [null] }])).sections.length, 1, 'JSON export handles malformed section content safely');
 
+for (const [parserType, fixture] of supportedComparisonCases) {
+  const sections = parseInput(fixture);
+  const visibleSections = sections.map((section) => getVisibleSectionForCopy(section, { allSections: sections }));
+  const beforeSections = JSON.stringify(sections);
+  const serialized = serializeSectionsForJsonExport(visibleSections);
+  const payload = JSON.parse(serialized);
+
+  assert.equal(payload.version, 1, `${parserType} JSON export keeps schema version 1`);
+  assert.equal(payload.mode, 'single', `${parserType} JSON export defaults to single-report mode`);
+  assert.deepEqual(
+    payload.sections.map((section) => section.title),
+    visibleSections.map((section) => section.title),
+    `${parserType} JSON export preserves section order`
+  );
+  assert.equal(serialized, serializeSectionsForJsonExport(visibleSections), `${parserType} JSON export is deterministic`);
+  assert.equal(JSON.stringify(sections), beforeSections, `${parserType} JSON export does not mutate parser output`);
+}
+
+const threeReportComparisonJson = JSON.parse(serializeSectionsForJsonExport(threeReportComparison, { mode: 'comparison' }));
+const twoReportComparisonPayload = JSON.parse(twoReportComparisonJson);
+assert.equal(twoReportComparisonPayload.mode, 'comparison', 'two-report JSON comparison uses comparison mode');
+assert.equal(twoReportComparisonPayload.sections.length > 0, true, 'two-report JSON comparison includes generated sections');
+assert.equal(threeReportComparisonJson.mode, 'comparison', 'three-report JSON comparison uses comparison mode');
+assert.deepEqual(
+  threeReportComparisonJson.sections.map((section) => section.title),
+  threeReportComparison.map((section) => section.title),
+  'three-report JSON comparison preserves generated section order'
+);
+assert.equal(
+  JSON.stringify(threeReportComparisonJson),
+  JSON.stringify(JSON.parse(serializeSectionsForJsonExport(threeReportComparison, { mode: 'comparison' }))),
+  'three-report JSON comparison is deterministic'
+);
+
+const inheritedField = Object.create({ label: 'Inherited Field', value: 'INHERITED-FIELD-SENTINEL' });
+const inheritedColumn = Object.create({ key: 'inherited', label: 'Inherited' });
+const prototypeKeyRow = {};
+Object.defineProperties(prototypeKeyRow, {
+  safe: { value: 'safe-row', enumerable: true },
+  constructor: { value: 'CONSTRUCTOR-SENTINEL', enumerable: true },
+  prototype: { value: 'PROTOTYPE-SENTINEL', enumerable: true },
+});
+const cyclicValue = {};
+cyclicValue.self = cyclicValue;
+const hardenedJsonSource = [{
+  id: '__proto__',
+  title: 'Hardened Section',
+  fields: [
+    inheritedField,
+    { label: 'Cyclic Field', value: cyclicValue },
+    { label: 'Function Field', value() {} },
+    { label: 'Symbol Field', value: Symbol('JSON-SYMBOL-SENTINEL') },
+  ],
+  tableColumns: [
+    { key: 'safe', label: 'Safe' },
+    inheritedColumn,
+    { key: '__proto__', label: 'Prototype Key' },
+    { key: 'constructor', label: 'Constructor Key' },
+    { key: 'prototype', label: 'Prototype Property' },
+  ],
+  table: [prototypeKeyRow],
+  raw: 'JSON-HARDENED-RAW-SENTINEL',
+  sourceText: 'JSON-HARDENED-SOURCE-SENTINEL',
+}];
+const hardenedJsonText = serializeSectionsForJsonExport(hardenedJsonSource);
+const hardenedJson = JSON.parse(hardenedJsonText);
+const hardenedSection = hardenedJson.sections[0];
+assert.deepEqual(hardenedSection.tableColumns, [{ key: 'safe', label: 'Safe' }], 'JSON export rejects inherited and prototype-style table columns');
+assert.deepEqual(hardenedSection.table, [{ safe: 'safe-row' }], 'JSON export rejects inherited and prototype-style row values');
+assert.deepEqual(hardenedSection.fields, [], 'JSON export rejects inherited, cyclic, function, and symbol field values');
+assert.equal(Object.prototype.hasOwnProperty.call(hardenedSection, '__proto__'), false, 'JSON export does not emit prototype-style section keys');
+for (const sentinel of [
+  'INHERITED-FIELD-SENTINEL',
+  'CONSTRUCTOR-SENTINEL',
+  'PROTOTYPE-SENTINEL',
+  'JSON-HARDENED-RAW-SENTINEL',
+  'JSON-HARDENED-SOURCE-SENTINEL',
+  'JSON-SYMBOL-SENTINEL',
+]) {
+  assert.doesNotMatch(hardenedJsonText, new RegExp(sentinel), `JSON export excludes ${sentinel}`);
+}
+
 const repeatedDownloadBlobs = [];
 const repeatedDownloadUrls = [];
 const repeatedRevokedUrls = [];
