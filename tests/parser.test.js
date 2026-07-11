@@ -36,6 +36,7 @@ import {
 import { filterSectionsByQuery } from '../src/search/filterSections.js';
 import { getSearchMetadata } from '../src/search/searchMetadata.js';
 import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
+import { downloadTextFile } from '../src/clipboard/downloadText.js';
 import { serializeSectionForCopy, serializeSectionsForExport } from '../src/clipboard/serializeSection.js';
 import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
 import {
@@ -62,6 +63,7 @@ const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSec
 const searchSource = await readFile(new URL('../src/search/filterSections.js', import.meta.url), 'utf8');
 const searchMetadataSource = await readFile(new URL('../src/search/searchMetadata.js', import.meta.url), 'utf8');
 const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata.js', import.meta.url), 'utf8');
+const downloadTextSource = await readFile(new URL('../src/clipboard/downloadText.js', import.meta.url), 'utf8');
 const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
@@ -106,6 +108,8 @@ assert.match(indexHtmlText, /id="add-to-comparison"[^>]*aria-describedby="compar
 assert.match(indexHtmlText, /id="compare-reports"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Compare starts disabled and references status feedback');
 assert.match(indexHtmlText, /id="clear-comparison"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Clear comparison starts disabled and references status feedback');
 assert.match(indexHtmlText, /id="comparison-status"[^>]*role="status"[^>]*aria-live="polite"/, 'comparison workflow exposes calm status announcements');
+assert.match(indexHtmlText, /id="download-visible-export"[^>]*aria-describedby="export-status"[^>]*disabled/, 'visible export starts disabled with an accessible status description');
+assert.match(indexHtmlText, /id="export-status"/, 'visible export provides a concise scope description');
 assert.deepEqual(
   {
     name: manifest.name,
@@ -156,7 +160,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.2\.0-slice12a-visible-export-contract-2026-07-11/, 'service worker cache version reflects Slice 12A visible export contract');
+assert.match(serviceWorkerText, /v1\.2\.0-slice12b-visible-export-download-2026-07-11/, 'service worker cache version reflects Slice 12B visible export download');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -168,6 +172,7 @@ assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/,
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseResourceStackshot\.js/, 'service worker precaches the Stackshot Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/explanations\/diagnosticExplanations\.js/, 'service worker precaches the diagnostic explanations helper');
 assert.match(serviceWorkerText, /\.\/src\/comparison\/comparisonModel\.js/, 'service worker precaches the comparison model');
+assert.match(serviceWorkerText, /\.\/src\/clipboard\/downloadText\.js/, 'service worker precaches the visible export download helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.match(parserIndexSource, /getDiagnosticExplanation/, 'parseInput imports diagnostic explanation helpers');
@@ -185,6 +190,14 @@ assert.match(parserIndexSource, /type === 'resource-stackshot'[^]*parseResourceS
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(mainScriptText, /import \{ createComparisonSections, validateComparison \} from '\.\/comparison\/comparisonModel\.js';/, 'main app reuses the pure comparison model');
+assert.match(mainScriptText, /import \{ downloadTextFile \} from '\.\/clipboard\/downloadText\.js';/, 'main app delegates downloads to the focused text-download helper');
+assert.match(mainScriptText, /serializeSectionsForExport/, 'main app reuses the visible export serializer');
+assert.match(mainScriptText, /getVisibleSectionForCopy/, 'main app reuses existing table visibility for export');
+assert.match(mainScriptText, /!comparisonMode && \(!appState\.sanitize/, 'Raw Local View never produces export content');
+assert.match(mainScriptText, /comparisonEntries\.length > 0 && !validateComparison\(comparisonEntries\)\.valid/, 'incomplete comparison selection never produces export content');
+assert.match(mainScriptText, /downloadVisibleExportButton\.disabled = !exportText/, 'visible export disables when no eligible output exists');
+assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.txt' : 'ios-diagnostic-export\.txt'/, 'visible export uses generic filenames only');
+assert.doesNotMatch(downloadTextSource, /(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|navigator\.clipboard)/, 'visible export download helper has no network, persistence, or clipboard behavior');
 assert.match(mainScriptText, /let comparisonEntries = \[\];[^]*let comparisonSections = \[\];[^]*let comparisonMode = false;/, 'comparison state remains separate from single-report app state');
 assert.match(mainScriptText, /parseInput\(appState\.sourceText, \{ sanitize: true \}\)/, 'Add to comparison always reparses sanitized sections');
 assert.match(mainScriptText, /validateComparison\(comparisonEntries\)[^]*compareReportsButton\.disabled = !validation\.valid;/, 'Compare enablement delegates to comparison validation');
@@ -3226,6 +3239,82 @@ assert.equal(
   'Safe Empty Section',
   'visible export skips malformed sections and content safely'
 );
+let downloadBlob = null;
+let downloadLink = null;
+let downloadClicked = false;
+let downloadRemoved = false;
+let revokedObjectUrl = null;
+const downloadDocument = {
+  createElement(tagName) {
+    assert.equal(tagName, 'a', 'visible export creates a temporary download link');
+    return {
+      click() {
+        downloadClicked = true;
+      },
+      remove() {
+        downloadRemoved = true;
+      },
+    };
+  },
+  body: {
+    append(link) {
+      downloadLink = link;
+    },
+  },
+};
+const downloadUrlApi = {
+  createObjectURL(blob) {
+    downloadBlob = blob;
+    return 'blob:visible-export';
+  },
+  revokeObjectURL(objectUrl) {
+    revokedObjectUrl = objectUrl;
+  },
+};
+assert.equal(
+  downloadTextFile('Visible export content', 'ios-diagnostic-export.txt', {
+    documentRef: downloadDocument,
+    urlRef: downloadUrlApi,
+  }),
+  true,
+  'visible export starts a local plain-text download'
+);
+assert.equal(downloadBlob.type, 'text/plain;charset=utf-8', 'visible export uses a UTF-8-compatible plain-text Blob');
+assert.equal(await downloadBlob.text(), 'Visible export content', 'visible export Blob contains only supplied serialized text');
+assert.deepEqual(
+  { href: downloadLink.href, download: downloadLink.download, hidden: downloadLink.hidden },
+  { href: 'blob:visible-export', download: 'ios-diagnostic-export.txt', hidden: true },
+  'visible export uses a generic filename and temporary object URL'
+);
+assert.equal(downloadClicked, true, 'visible export triggers the user-initiated link');
+assert.equal(downloadRemoved, true, 'visible export removes its temporary link');
+assert.equal(revokedObjectUrl, 'blob:visible-export', 'visible export revokes its object URL after use');
+assert.equal(downloadTextFile('', 'ios-diagnostic-export.txt', { documentRef: downloadDocument, urlRef: downloadUrlApi }), false, 'visible export rejects empty text');
+
+const searchScopedExportSource = [{
+  id: 'process-table',
+  title: 'Processes',
+  tableColumns: [{ key: 'process', label: 'Process' }],
+  table: [{ process: 'Visible Search Row' }, { process: 'FILTERED_EXPORT_SENTINEL' }],
+}];
+const searchScopedExport = filterSectionsByQuery(searchScopedExportSource, 'Visible Search Row').sections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: searchScopedExportSource })
+);
+const searchScopedExportText = serializeSectionsForExport(searchScopedExport);
+assert.match(searchScopedExportText, /Visible Search Row/, 'visible export includes active-search rows');
+assert.doesNotMatch(searchScopedExportText, /FILTERED_EXPORT_SENTINEL/, 'visible export excludes filtered-out rows');
+
+const cappedExportSource = [{
+  id: 'process-table',
+  title: 'Capped Processes',
+  tableColumns: [{ key: 'process', label: 'Process' }],
+  table: Array.from({ length: 60 }, (_, index) => ({ process: `Export Process ${index + 1}` })),
+}];
+const cappedExportSections = cappedExportSource.map((section) => getVisibleSectionForCopy(section, { allSections: cappedExportSource }));
+const cappedExportText = serializeSectionsForExport(cappedExportSections);
+assert.match(cappedExportText, /50 of 60 rows shown/, 'visible export preserves the existing capped-table summary');
+assert.match(cappedExportText, /Export Process 50/, 'visible export includes rendered capped rows');
+assert.doesNotMatch(cappedExportText, /Export Process 51|Export Process 60/, 'visible export excludes rows beyond the active table cap');
 assert.match(
   visibleSectionSource,
   /getTableView/,

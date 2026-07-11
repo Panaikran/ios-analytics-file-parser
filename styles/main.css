@@ -548,6 +548,55 @@ textarea {
   display: none;
 }
 
+.export-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 12px;
+}
+
+.export-panel[hidden] {
+  display: none;
+}
+
+.export-button {
+  min-height: 44px;
+  border: 1px solid var(--surface-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.export-button:hover,
+.export-button:focus-visible {
+  border-color: rgba(48, 209, 88, 0.65);
+  outline: 2px solid rgba(48, 209, 88, 0.25);
+  outline-offset: 2px;
+}
+
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.export-status {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .search-field {
   display: grid;
   flex: 1 1 280px;
@@ -1032,6 +1081,7 @@ textarea {
   .parse-paste,
   .privacy-toggle,
   .clear-search,
+  .export-button,
   .comparison-button,
   .comparison-list__remove,
   .offline-status__button {
@@ -1043,6 +1093,7 @@ textarea {
   .parse-paste,
   .privacy-toggle,
   .clear-search,
+  .export-button,
   .comparison-button,
   .comparison-list__remove,
   .offline-status__button {
@@ -1060,6 +1111,10 @@ textarea {
   }
 
   .search-panel {
+    align-items: stretch;
+  }
+
+  .export-panel {
     align-items: stretch;
   }
 }

@@ -7,7 +7,9 @@ import {
   withStatus,
 } from './appState.js';
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
-import { serializeSectionForCopy } from './clipboard/serializeSection.js';
+import { downloadTextFile } from './clipboard/downloadText.js';
+import { serializeSectionForCopy, serializeSectionsForExport } from './clipboard/serializeSection.js';
+import { getVisibleSectionForCopy } from './clipboard/visibleSection.js';
 import { createComparisonSections, validateComparison } from './comparison/comparisonModel.js';
 import { validateReportFile } from './fileValidation.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from './parsers/classifyDiagnostic.js';
@@ -39,6 +41,9 @@ const searchPanel = document.querySelector('#search-panel');
 const searchInput = document.querySelector('#result-search');
 const clearSearchButton = document.querySelector('#clear-search');
 const searchCount = document.querySelector('#search-count');
+const exportPanel = document.querySelector('#export-panel');
+const downloadVisibleExportButton = document.querySelector('#download-visible-export');
+const exportStatus = document.querySelector('#export-status');
 const sectionNavElement = document.querySelector('#section-nav');
 const emptyResults = document.querySelector('#empty-results');
 const sectionsElement = document.querySelector('#sections');
@@ -83,6 +88,7 @@ function renderApp() {
   renderPrivacyControls(appState.sections.length > 0);
   renderComparisonControls(appState.sections.length > 0);
   renderSearchControls(searchMetadata, hasParsedSections);
+  renderExportControls(hasParsedSections, getVisibleExportText(activeSections, visibleSections));
   renderSectionNav(sectionNavElement, visibleSections);
   renderSections(sectionsElement, visibleSections, {
     onCopySection: copySection,
@@ -97,6 +103,39 @@ function renderApp() {
   });
   emptyResults.hidden = !emptySearch;
   clearButton.disabled = !appState.sourceText && !appState.sections.length;
+}
+
+function getVisibleExportText(activeSections, visibleSections) {
+  if (!comparisonMode && (!appState.sanitize || (comparisonEntries.length > 0 && !validateComparison(comparisonEntries).valid))) return '';
+
+  const exportSections = visibleSections.map((section) =>
+    getVisibleSectionForCopy(section, {
+      denseTableState,
+      allSections: activeSections,
+    })
+  );
+  return serializeSectionsForExport(exportSections);
+}
+
+function renderExportControls(hasParsedSections, exportText) {
+  exportPanel.hidden = !hasParsedSections;
+  downloadVisibleExportButton.disabled = !exportText;
+
+  if (!hasParsedSections) return;
+  if (!comparisonMode && !appState.sanitize) {
+    exportStatus.textContent = 'Export is unavailable in Raw Local View.';
+    return;
+  }
+  if (!comparisonMode && comparisonEntries.length > 0 && !validateComparison(comparisonEntries).valid) {
+    exportStatus.textContent = 'Finish or clear the comparison selection before downloading.';
+    return;
+  }
+
+  exportStatus.textContent = exportText
+    ? comparisonMode
+      ? 'Downloads only the currently visible sanitized comparison output.'
+      : 'Downloads only the currently visible sanitized output.'
+    : 'No visible sanitized output to download.';
 }
 
 function renderPrivacyControls(hasParsedSections) {
@@ -457,6 +496,18 @@ async function copySection(section) {
   }
 }
 
+function downloadVisibleExport() {
+  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const visibleSections = filterSectionsByQuery(activeSections, searchQuery).sections;
+  const exportText = getVisibleExportText(activeSections, visibleSections);
+  if (!exportText) return;
+
+  downloadTextFile(
+    exportText,
+    comparisonMode ? 'ios-diagnostic-comparison.txt' : 'ios-diagnostic-export.txt'
+  );
+}
+
 function toggleThreadGroup(sectionId, thread, expanded) {
   denseTableState = {
     ...denseTableState,
@@ -501,6 +552,7 @@ fileInput.addEventListener('change', async (event) => {
 parsePasteButton.addEventListener('click', parsePastedText);
 searchInput.addEventListener('input', handleSearchInput);
 clearSearchButton.addEventListener('click', clearSearch);
+downloadVisibleExportButton.addEventListener('click', downloadVisibleExport);
 
 inputPanel.addEventListener('dragover', (event) => {
   if (!event.dataTransfer?.types?.includes('Files')) return;
