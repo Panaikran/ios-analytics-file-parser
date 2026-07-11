@@ -23,8 +23,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.0.0` |
-| Active phase | None |
-| Current v1.0 focus | None |
+| Active phase | `v1.1.0` development |
+| Current focus | Multi-Report Comparison release readiness |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -41,6 +41,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v0.7.0-alpha | Released: Human-Readable Diagnostic Explanations |
 | v0.8.0-alpha | Released: Release Hardening and QA Polish |
 | v0.9.0-beta | Released: Feature Freeze / Release Candidate Preparation |
+| v1.1.0 | Unreleased: Multi-Report Comparison |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -48,7 +49,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-RC1 verification has completed successfully and the project is ready for the upcoming `v1.0.0` stable release. The `v1.0.0` release has not been tagged or published yet.
+`v1.0.0` is the current stable release. `v1.1.0` adds bounded, sanitized-only Multi-Report Comparison and remains unreleased until a separate release action is approved.
 
 ## Why This Exists
 
@@ -135,6 +136,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Section jump navigation | Supported |
 | Search/filter parsed output | Supported |
 | Copy visible section content | Supported |
+| Multi-Report Comparison | Supported in unreleased `v1.1.0`: 2-3 reports with the same parser type, sanitized only |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
 | Panic kext collapse | Supported |
@@ -218,6 +220,8 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
 - Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
+- Multi-Report Comparison accepts 2 or 3 supported reports with the same `parserType`, preserves insertion order, and produces ordinary comparison sections for the existing navigation, search, and copy paths.
+- Comparison uses sanitized parsed sections only. Raw Local View remains available only for a single loaded report.
 
 ### CoreAnalytics Sections
 
@@ -334,6 +338,7 @@ The project is a static, local-first browser app.
 - `src/parsers/detect.js` remains a compatibility wrapper around classifier legacy type names.
 - `src/parsers/index.js` routes `parseInput()` through `classification.parserType` and inserts one safe explanation section when applicable.
 - `src/explanations/diagnosticExplanations.js` contains deterministic, local-only explanation rules for already-parsed supported diagnostics.
+- `src/comparison/comparisonModel.js` validates compatible sanitized reports and emits deterministic comparison `SectionModel[]` output.
 - `src/parsers/` parses supported report formats.
 - `src/privacy/sanitize.js` applies default sanitization.
 - `src/models/sectionModel.js` documents the shared section shape.
@@ -374,6 +379,12 @@ src/explanations/diagnosticExplanations.js
   |
   |-- inspect parsed safe SectionModel[] fields only
   |-- emit at most one explanation SectionModel
+  v
+src/comparison/comparisonModel.js
+  |
+  |-- validate 2-3 supported reports with the same parserType
+  |-- compare sanitized allowlisted fields in insertion order
+  |-- emit comparison SectionModel[]
   v
 src/search/filterSections.js
   |
@@ -420,6 +431,7 @@ index.html -> manifest.webmanifest
 |-- PHASE_7_SUMMARY.md
 |-- PHASE_8_SUMMARY.md
 |-- PHASE_9_SUMMARY.md
+|-- PHASE_11_SUMMARY.md
 |-- package.json
 |-- icons/
 |   |-- apple-touch-icon.png
@@ -446,6 +458,8 @@ index.html -> manifest.webmanifest
 |   |   `-- visibleSection.js
 |   |-- explanations/
 |   |   `-- diagnosticExplanations.js
+|   |-- comparison/
+|   |   `-- comparisonModel.js
 |   |-- models/
 |   |   |-- reportSize.js
 |   |   `-- sectionModel.js
@@ -559,6 +573,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 7 Summary](PHASE_7_SUMMARY.md)
 - [Phase 8 Summary](PHASE_8_SUMMARY.md)
 - [Phase 9 Summary](PHASE_9_SUMMARY.md)
+- [Phase 11 Summary](PHASE_11_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -586,6 +601,7 @@ After first successful service worker setup, these fictional examples are availa
 - Stackshot full stack rendering, frame symbol rendering, frame address rendering, and symbolication are not supported.
 - App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are recognized for safe unsupported messages only; they are not parsed into sections yet.
 - Human-readable explanations are conservative and generic; they do not symbolicate, inspect full raw stacks, or identify the exact faulty function.
+- Comparison accepts only 2 or 3 reports that share a supported `parserType`; mixed types, raw-mode reports, fuzzy matching, and source-text comparison are not supported.
 - No AI diagnosis or exact root-cause analysis is provided.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
@@ -614,7 +630,8 @@ After first successful service worker setup, these fictional examples are availa
 | v0.7.0-alpha | Released | Human-readable deterministic explanations for supported diagnostics |
 | v0.8.0-alpha | Released | Release hardening, UI/accessibility polish, browser/mobile QA, platform hardening, and documentation alignment |
 | v0.9.0-beta | Released | Feature Freeze / Release Candidate Preparation: documentation reconciliation, regression audit, browser/mobile/accessibility QA, and release-candidate polish |
-| v1.0.0 RC1 | Complete | Final verification passed; stable `v1.0.0` publication is pending manual release action |
+| v1.0.0 | Released | Stable parser, explanation, privacy, accessibility, and PWA foundation |
+| v1.1.0 | Unreleased | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
 
 The project keeps the same constraints:
 
@@ -685,7 +702,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-The `v1.0.0 RC1` Final Verification phase is complete. It was not feature work; it was limited to final regression checks, browser/accessibility/PWA verification, documentation consistency, and release-blocker review. Stable `v1.0.0` publication remains a separate manual release action.
+`v1.0.0` is released. The active `v1.1.0` milestone adds only Multi-Report Comparison; future parser families, export work, and broader diagnostics remain separate roadmap work.
 
 ## Screenshots / Demo
 

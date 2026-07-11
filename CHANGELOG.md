@@ -1,10 +1,27 @@
 # Changelog
 
+## v1.1.0 - Unreleased
+
+### Added
+
+- Deterministic Multi-Report Comparison for 2 or 3 supported reports sharing the same `parserType`.
+- Comparison sections for overview, report summaries, common fields, differences, recurring indicators, and comparison notes.
+- Comparison workflow controls that reuse the existing section renderer, navigation, search, and copy paths.
+
+### Improved
+
+- Comparison is sanitized-only, preserves insertion order, and keeps Raw Local View limited to single-report mode.
+- Regression coverage for compatibility validation, deterministic ordering, parser-family comparison, hidden-data exclusion, search, copy, and cleanup boundaries.
+- Browser, mobile, accessibility, offline-shell, and service-worker verification for the comparison workflow.
+
+### Notes
+
+- Comparison does not support mixed parser types, fuzzy matching, raw source text, report persistence, AI diagnosis, or root-cause inference.
+- No new parser families, parser routing changes, backend, uploads, analytics, cloud storage, or report persistence were added.
+
 ## v1.0.0 - First Stable Release
 
-Stable release candidate documentation for the  `v1.0.0` release.
-
-The `v1.0.0` release has been published.
+The first stable release was published after RC1 verification.
 
 ### Included
 

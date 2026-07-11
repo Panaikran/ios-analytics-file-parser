@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: updated for pending `v1.0.0` stable release publication
+Status: active `v1.1.0` Multi-Report Comparison release readiness
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -21,7 +21,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Release Hardening and QA Polish | Released | `v0.8.0-alpha` | UI/accessibility polish, documentation foundation, browser/mobile QA, platform hardening, and release-readiness alignment |
 | Feature Freeze / Release Candidate Preparation | Released | `v0.9.0-beta` | Final regression review, browser/mobile/accessibility QA, privacy verification, documentation polish, and stable-release preparation |
 | Stable Release Final Verification | Complete | `v1.0.0 RC1` | Final regression verification, documentation consistency, browser/accessibility/PWA verification, and release-blocker review completed with no blockers |
-| Stable Release Publication | Pending manual release | `v1.0.0` | Project is ready for stable release publication; tagging and publishing require separate explicit approval |
+| Stable Release Publication | Released | `v1.0.0` | Stable parser, explanation, privacy, accessibility, and PWA foundation published |
+| Multi-Report Comparison | Active release readiness | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
 
 ## Project Constraints
 
@@ -280,7 +281,7 @@ Future work beyond the classification/parser-family sequence:
 - Keep browser/mobile checks manual unless browser automation is explicitly approved.
 - Do not migrate the test runner unless the cost is justified and approved.
 
-## Active Roadmap: v0.7.0-alpha
+## Completed Roadmap: v0.7.0-alpha
 
 Theme: Human-Readable Diagnostic Explanations.
 
@@ -324,9 +325,9 @@ Still out of scope for `v0.7.0-alpha`:
 - Full stack rendering.
 - Backend, cloud storage, analytics, or report persistence.
 
-## Planned Path To v1.0
+## Completed Path To v1.0
 
-With `v0.6.0-alpha`, `v0.7.0-alpha`, `v0.8.0-alpha`, and `v0.9.0-beta` released, and `v1.0.0 RC1` verification complete, this path now focuses on manual stable-release publication. It prioritizes documentation accuracy, privacy, browser/PWA confidence, and release stability over adding more parser families.
+`v1.0.0` is released following the completed RC1 verification. The completed path prioritized documentation accuracy, privacy, browser/PWA confidence, and release stability over adding more parser families.
 
 ### v0.7.0-alpha: Human-Readable Diagnostic Explanations
 
@@ -450,7 +451,7 @@ Scope:
 - Final documentation consistency audit.
 - Release-blocker review.
 
-Result: RC1 verification completed successfully with no unresolved release blockers. The project is ready for the upcoming `v1.0.0` stable release, which has not been tagged or published yet.
+Result: RC1 verification completed successfully with no unresolved release blockers. `v1.0.0` was subsequently published as the stable release.
 
 Not included:
 
@@ -491,6 +492,36 @@ Do not block `v1.0.0` on:
 
 These can become future `v1.1`, `v1.2`, or `v2.0` work if explicitly planned.
 
+## Active Roadmap: v1.1.0
+
+Theme: Multi-Report Comparison.
+
+Goal: compare a small set of already-supported diagnostics without changing parser contracts, retaining reports, or widening privacy boundaries.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 11A | Complete | Pure deterministic comparison model with compatibility validation and ordinary comparison `SectionModel[]` output |
+| Slice 11B | Complete | Compact comparison workflow that reuses the existing renderer, navigation, search, copy, and accessibility patterns |
+| Slice 11C | Complete | Parser, privacy, local-first, search/copy, cleanup, mobile, and PWA regression hardening |
+| Slice 11D | Complete | Final browser QA, documentation alignment, validation, and release-readiness review |
+
+Supported comparison boundaries:
+
+- Compare exactly 2 or 3 reports.
+- Reports must share a supported `parserType`.
+- Each report is parsed independently and only sanitized `SectionModel[]` data enters comparison.
+- Insertion order is preserved as Report 1, Report 2, and Report 3.
+- Comparison output is ordinary `SectionModel[]`, so existing navigation, search, and copy behavior applies.
+- Raw Local View remains single-report only.
+
+Not included:
+
+- Mixed parser comparison.
+- Fuzzy matching, confidence scores, diagnosis, or root-cause inference.
+- Source-text retention, raw comparison, report persistence, exports, new parser families, backend, cloud processing, uploads, or analytics.
+
+Release readiness is complete once final validation and browser QA pass. Tagging and publishing remain separate manual actions.
+
 ## Future Hardening And Exploratory Work
 
 These items remain outside the current v1.0 stabilization path unless explicitly approved later.
@@ -510,7 +541,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, and `PHASE_9_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, and `PHASE_11_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -524,16 +555,16 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 | Panic analysis | Optional panic repair hint rules for repeated panic-full signatures |
 | MetricKit | `MXCrashDiagnostic` format support |
 | Sysdiagnose | Local sysdiagnose archive extraction and file picker |
-| Comparison | Diff view for comparing two reports side by side |
+| Comparison | Additional comparison modes beyond the bounded, same-parser, sanitized-only workflow |
 | Sharing | Local-only share/export format that does not upload reports |
 
 ## Next Planning Step
 
-Before publishing `v1.0.0`:
+Before publishing `v1.1.0`:
 
-- Review the pending release documentation.
-- Keep `v1.0.0` tagging, release creation, package metadata changes, and publishing as explicit manual release actions.
-- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, and broader Accessory/Firmware diagnostics as future parser-family work, not `v1.0.0` blockers.
+- Review the pending `v1.1.0` release documentation.
+- Keep `v1.1.0` tagging, release creation, package metadata changes, and publishing as explicit manual release actions.
+- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, export work, and additional comparison modes as future work, not `v1.1.0` blockers.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`
