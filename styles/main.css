@@ -249,6 +249,10 @@ h1 {
   padding: 22px;
 }
 
+.input-panel[hidden] {
+  display: none;
+}
+
 .input-panel--drag-over {
   border-color: rgba(48, 209, 88, 0.6);
   background: #181f1a;
@@ -436,6 +440,96 @@ textarea {
 
 .privacy-warning {
   color: var(--warning);
+}
+
+.comparison-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 14px;
+}
+
+.comparison-panel[hidden] {
+  display: none;
+}
+
+.comparison-panel__header h2,
+.comparison-panel__header p,
+.comparison-status {
+  margin: 0;
+}
+
+.comparison-panel__header h2 {
+  font-size: 1rem;
+}
+
+.comparison-panel__header p,
+.comparison-status {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.comparison-list {
+  display: grid;
+  gap: 8px;
+}
+
+.comparison-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.comparison-list__item span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.comparison-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.comparison-button,
+.comparison-list__remove {
+  min-height: 44px;
+  border: 1px solid var(--surface-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  padding: 9px 12px;
+}
+
+.comparison-button--primary {
+  background: var(--text);
+  color: var(--background);
+  font-weight: 650;
+}
+
+.comparison-button:hover,
+.comparison-button:focus-visible,
+.comparison-list__remove:hover,
+.comparison-list__remove:focus-visible {
+  border-color: rgba(48, 209, 88, 0.65);
+  outline: 2px solid rgba(48, 209, 88, 0.25);
+  outline-offset: 2px;
+}
+
+.comparison-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .search-panel {
@@ -938,6 +1032,8 @@ textarea {
   .parse-paste,
   .privacy-toggle,
   .clear-search,
+  .comparison-button,
+  .comparison-list__remove,
   .offline-status__button {
     max-width: 100%;
   }
@@ -947,8 +1043,20 @@ textarea {
   .parse-paste,
   .privacy-toggle,
   .clear-search,
+  .comparison-button,
+  .comparison-list__remove,
   .offline-status__button {
     white-space: normal;
+  }
+
+  .comparison-list__item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .comparison-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .search-panel {

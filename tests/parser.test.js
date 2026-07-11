@@ -101,6 +101,11 @@ assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Scre
 assert.match(indexHtmlText, /<div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden><\/div>/, 'offline status supports accessible text and actions');
 assert.match(indexHtmlText, /id="privacy-toggle"[^>]*aria-describedby="privacy-mode-label"/, 'privacy toggle is associated with the current privacy mode label');
 assert.match(indexHtmlText, /id="result-search"[^>]*aria-describedby="search-count"/, 'search input is associated with calm search status text');
+assert.match(indexHtmlText, /<section id="comparison-panel" class="comparison-panel" aria-labelledby="comparison-title" hidden>/, 'comparison workflow uses a compact labeled region');
+assert.match(indexHtmlText, /id="add-to-comparison"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Add to comparison starts disabled and references status feedback');
+assert.match(indexHtmlText, /id="compare-reports"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Compare starts disabled and references status feedback');
+assert.match(indexHtmlText, /id="clear-comparison"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Clear comparison starts disabled and references status feedback');
+assert.match(indexHtmlText, /id="comparison-status"[^>]*role="status"[^>]*aria-live="polite"/, 'comparison workflow exposes calm status announcements');
 assert.deepEqual(
   {
     name: manifest.name,
@@ -151,7 +156,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v0\.8\.0-alpha-slice8d-platform-hardening-2026-07-02/, 'service worker cache version reflects Slice 8D platform hardening');
+assert.match(serviceWorkerText, /v1\.1\.0-slice11b-comparison-workflow-2026-07-11/, 'service worker cache version reflects Slice 11B comparison integration');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -162,6 +167,7 @@ assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'servi
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/, 'service worker precaches the Disk Writes Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseResourceStackshot\.js/, 'service worker precaches the Stackshot Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/explanations\/diagnosticExplanations\.js/, 'service worker precaches the diagnostic explanations helper');
+assert.match(serviceWorkerText, /\.\/src\/comparison\/comparisonModel\.js/, 'service worker precaches the comparison model');
 assert.match(serviceWorkerText, /\.\/src\/search\/searchMetadata\.js/, 'service worker precaches the search metadata helper');
 assert.match(parserIndexSource, /import \{ classifyDiagnostic \} from '\.\/classifyDiagnostic\.js';/, 'parseInput imports diagnostic classification metadata');
 assert.match(parserIndexSource, /getDiagnosticExplanation/, 'parseInput imports diagnostic explanation helpers');
@@ -178,6 +184,17 @@ assert.match(parserIndexSource, /type === 'resource-diskwrites'[^]*parseDiskWrit
 assert.match(parserIndexSource, /type === 'resource-stackshot'[^]*parseResourceStackshot\(input, options\)/, 'parseInput routes Stackshot Resource input through the Stackshot Resource parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
+assert.match(mainScriptText, /import \{ createComparisonSections, validateComparison \} from '\.\/comparison\/comparisonModel\.js';/, 'main app reuses the pure comparison model');
+assert.match(mainScriptText, /let comparisonEntries = \[\];[^]*let comparisonSections = \[\];[^]*let comparisonMode = false;/, 'comparison state remains separate from single-report app state');
+assert.match(mainScriptText, /parseInput\(appState\.sourceText, \{ sanitize: true \}\)/, 'Add to comparison always reparses sanitized sections');
+assert.match(mainScriptText, /validateComparison\(comparisonEntries\)[^]*compareReportsButton\.disabled = !validation\.valid;/, 'Compare enablement delegates to comparison validation');
+assert.match(mainScriptText, /comparisonEntries\.length >= 3/, 'comparison workflow enforces the three-report limit');
+assert.match(mainScriptText, /comparisonSections = createComparisonSections\(comparisonEntries\)/, 'Compare delegates section generation to the pure comparison model');
+assert.match(mainScriptText, /function removeComparisonReport\(index\)/, 'comparison workflow supports removing reports');
+assert.match(mainScriptText, /function clearComparison\(\)/, 'comparison workflow supports clearing comparison state');
+assert.match(mainScriptText, /const activeSections = comparisonMode \? comparisonSections : appState\.sections;/, 'renderer, search, and copy share the active SectionModel array');
+assert.match(mainScriptText, /privacyPanel\.hidden = comparisonMode \|\| !hasParsedSections;/, 'Raw Local View controls remain unavailable in comparison mode');
+assert.match(mainScriptText, /inputPanel\.hidden = comparisonMode;/, 'comparison mode hides the source input panel and its raw report text');
 assert.match(
   mainScriptText,
   /Unsupported or unknown report format\. Try a \.ips, \.crash, panic-full, JetsamEvent, or analytics text file\./,
@@ -227,6 +244,8 @@ assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
 assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
+assert.match(styleText, /\.comparison-button,\s*\.comparison-list__remove\s*{[^}]*min-height:\s*44px;/s, 'comparison controls have practical touch targets');
+assert.match(styleText, /@media \(max-width:\s*480px\)[^]*\.comparison-actions\s*{[^}]*flex-direction:\s*column;/s, 'comparison actions stack at narrow mobile widths');
 assert.match(styleText, /\.thread-group__toggle,\s*\.table-toggle,\s*\.table-control-button\s*{[^}]*min-height:\s*44px;/s, 'dense table controls have practical mobile touch targets');
 assert.match(styleText, /\.frame-table:not\(\.frame-table--compact\) th,\s*\.frame-table:not\(\.frame-table--compact\) td\s*{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s, 'non-compact report tables wrap long text inside their scroll containers');
 assert.doesNotMatch(
@@ -3179,9 +3198,9 @@ assert.equal(
   'render path no longer duplicates dense-table row decision helpers'
 );
 assert.match(mainScriptText, /getCoreAnalyticsView/, 'main app computes the CoreAnalytics overview view model');
-assert.match(mainScriptText, /getCoreAnalyticsView\(appState\.sections\)/, 'CoreAnalytics overview uses original parsed sections, not search-filtered sections');
+assert.match(mainScriptText, /getCoreAnalyticsView\(activeSections\)/, 'CoreAnalytics overview uses active unfiltered report or comparison sections');
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
-assert.match(mainScriptText, /getSearchMetadata\(searchResult, appState\.sections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, original sections, and CoreAnalytics view');
+assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
 assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
 assert.match(mainScriptText, /statusMessageForSearch\(searchMetadata\)/, 'search status text is derived from metadata');
 assert.match(mainScriptText, /Search and copy operate on rendered capped rows only\./, 'CoreAnalytics capped search wording is available in status text');
@@ -3838,6 +3857,15 @@ assert.deepEqual(
   ],
   'comparison recurring indicators require matching allowlisted values'
 );
+const comparisonSearch = filterSectionsByQuery(twoReportComparison, 'iPhone16,1');
+assert.deepEqual(
+  comparisonSearch.sections.map((section) => section.id),
+  ['comparison-report-summaries', 'comparison-differences'],
+  'existing search filters generated comparison sections without a comparison-specific engine'
+);
+const comparisonCopy = serializeSectionForCopy(sectionById(twoReportComparison, 'comparison-differences'));
+assert.match(comparisonCopy, /Report 1\tReport 2/, 'existing copy serializes comparison report columns as plain text');
+assert.match(comparisonCopy, /iPhone15,2\tiPhone16,1/, 'existing copy includes visible sanitized comparison values');
 
 const comparisonReportThree = comparisonEntry([
   { label: 'Timestamp', value: '2026-06-30 08:00:00' },

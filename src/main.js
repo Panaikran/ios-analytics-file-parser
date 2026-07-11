@@ -8,6 +8,7 @@ import {
 } from './appState.js';
 import { EXAMPLE_REPORTS } from '../examples/manifest.js';
 import { serializeSectionForCopy } from './clipboard/serializeSection.js';
+import { createComparisonSections, validateComparison } from './comparison/comparisonModel.js';
 import { validateReportFile } from './fileValidation.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from './parsers/classifyDiagnostic.js';
 import { parseInput } from './parsers/index.js';
@@ -28,6 +29,12 @@ const privacyPanel = document.querySelector('#privacy-panel');
 const privacyModeLabel = document.querySelector('#privacy-mode-label');
 const privacyToggle = document.querySelector('#privacy-toggle');
 const privacyWarning = document.querySelector('#privacy-warning');
+const comparisonPanel = document.querySelector('#comparison-panel');
+const comparisonList = document.querySelector('#comparison-list');
+const addToComparisonButton = document.querySelector('#add-to-comparison');
+const compareReportsButton = document.querySelector('#compare-reports');
+const clearComparisonButton = document.querySelector('#clear-comparison');
+const comparisonStatus = document.querySelector('#comparison-status');
 const searchPanel = document.querySelector('#search-panel');
 const searchInput = document.querySelector('#result-search');
 const clearSearchButton = document.querySelector('#clear-search');
@@ -43,6 +50,10 @@ const UPDATE_READY_MESSAGE = 'Update ready. Reload when done with the current re
 const EXAMPLE_UNAVAILABLE_OFFLINE_MESSAGE = 'Example unavailable offline. Reconnect once to refresh offline examples.';
 
 let appState = createInitialAppState();
+let comparisonEntries = [];
+let comparisonSections = [];
+let comparisonMode = false;
+let comparisonMessage = 'No reports added.';
 let searchQuery = '';
 let searchTimer = null;
 let denseTableState = createInitialDenseTableState();
@@ -59,15 +70,18 @@ function createInitialDenseTableState() {
 }
 
 function renderApp() {
-  const searchResult = filterSectionsByQuery(appState.sections, searchQuery);
-  const coreAnalyticsView = getCoreAnalyticsView(appState.sections);
-  const searchMetadata = getSearchMetadata(searchResult, appState.sections, { coreAnalyticsView });
+  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const searchResult = filterSectionsByQuery(activeSections, searchQuery);
+  const coreAnalyticsView = getCoreAnalyticsView(activeSections);
+  const searchMetadata = getSearchMetadata(searchResult, activeSections, { coreAnalyticsView });
   const visibleSections = searchResult.sections;
-  const hasParsedSections = appState.sections.length > 0;
+  const hasParsedSections = activeSections.length > 0;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
 
-  renderStatus(statusElement, statusMessageForSearch(searchMetadata), appState.statusTone);
-  renderPrivacyControls(hasParsedSections);
+  inputPanel.hidden = comparisonMode;
+  renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
+  renderPrivacyControls(appState.sections.length > 0);
+  renderComparisonControls(appState.sections.length > 0);
   renderSearchControls(searchMetadata, hasParsedSections);
   renderSectionNav(sectionNavElement, visibleSections);
   renderSections(sectionsElement, visibleSections, {
@@ -77,7 +91,7 @@ function renderApp() {
     onShowMoreRows: showMoreRows,
     onShowAllRows: showAllRows,
     onToggleDenseTable: toggleDenseTable,
-    allSections: appState.sections,
+    allSections: activeSections,
     coreAnalyticsView,
     searchActive: searchMetadata.searchActive,
   });
@@ -86,7 +100,7 @@ function renderApp() {
 }
 
 function renderPrivacyControls(hasParsedSections) {
-  privacyPanel.hidden = !hasParsedSections;
+  privacyPanel.hidden = comparisonMode || !hasParsedSections;
   privacyModeLabel.textContent = appState.sanitize
     ? 'Privacy mode: Sanitized view'
     : 'Privacy mode: Raw local view — not uploaded';
@@ -95,7 +109,116 @@ function renderPrivacyControls(hasParsedSections) {
   privacyWarning.hidden = appState.sanitize;
 }
 
+function renderComparisonControls(hasCurrentReport) {
+  comparisonPanel.hidden = !hasCurrentReport && comparisonEntries.length === 0;
+  comparisonStatus.textContent = comparisonMessage;
+  addToComparisonButton.disabled = comparisonMode || !hasCurrentReport || comparisonEntries.length >= 3;
+
+  const validation = validateComparison(comparisonEntries);
+  compareReportsButton.disabled = !validation.valid;
+  clearComparisonButton.disabled = comparisonEntries.length === 0;
+
+  const items = comparisonEntries.map((entry, index) => {
+    const item = document.createElement('div');
+    item.className = 'comparison-list__item';
+    item.setAttribute('role', 'listitem');
+
+    const label = document.createElement('span');
+    label.textContent = `Report ${index + 1} - ${entry.classification.parserType}`;
+
+    const removeButton = document.createElement('button');
+    removeButton.className = 'comparison-list__remove';
+    removeButton.type = 'button';
+    removeButton.textContent = 'Remove report';
+    removeButton.setAttribute('aria-label', `Remove Report ${index + 1}`);
+    removeButton.addEventListener('click', () => removeComparisonReport(index));
+
+    item.append(label, removeButton);
+    return item;
+  });
+
+  comparisonList.replaceChildren(...items);
+}
+
+function addCurrentReportToComparison() {
+  if (comparisonMode || !appState.sourceText || !appState.sections.length || comparisonEntries.length >= 3) return;
+
+  try {
+    const classification = classifyDiagnostic(appState.sourceText);
+    const sections = parseInput(appState.sourceText, { sanitize: true });
+    const entry = {
+      classification: {
+        parserType: classification.parserType,
+        supported: classification.supported,
+      },
+      sections,
+    };
+    const nextEntries = [...comparisonEntries, entry];
+    const validationEntries = nextEntries.length === 1 ? [entry, entry] : nextEntries;
+    const validation = validateComparison(validationEntries);
+
+    if (!validation.valid) {
+      comparisonMessage = validation.message;
+      renderApp();
+      return;
+    }
+
+    comparisonEntries = nextEntries;
+    comparisonMessage = `Added Report ${comparisonEntries.length}. ${comparisonEntries.length < 2 ? 'Add one more compatible report to compare.' : 'Ready to compare.'}`;
+  } catch {
+    comparisonMessage = 'Could not add this report to comparison.';
+  }
+
+  renderApp();
+}
+
+function removeComparisonReport(index) {
+  if (index < 0 || index >= comparisonEntries.length) return;
+
+  comparisonEntries = comparisonEntries.filter((_, entryIndex) => entryIndex !== index);
+  exitComparisonMode();
+  clearSearchState();
+  resetDenseTableState();
+  comparisonMessage = comparisonEntries.length
+    ? `${comparisonEntries.length} report${comparisonEntries.length === 1 ? '' : 's'} selected.`
+    : 'No reports added.';
+  renderApp();
+}
+
+function clearComparison() {
+  if (!comparisonEntries.length) return;
+
+  comparisonEntries = [];
+  exitComparisonMode();
+  clearSearchState();
+  resetDenseTableState();
+  comparisonMessage = 'Comparison cleared.';
+  renderApp();
+}
+
+function compareReports() {
+  const validation = validateComparison(comparisonEntries);
+  if (!validation.valid) {
+    comparisonMessage = validation.message;
+    renderApp();
+    return;
+  }
+
+  comparisonSections = createComparisonSections(comparisonEntries);
+  comparisonMode = true;
+  comparisonMessage = `Comparing ${comparisonEntries.length} ${validation.parserType} reports. Sanitized only.`;
+  clearSearchState();
+  resetDenseTableState();
+  renderApp();
+}
+
+function exitComparisonMode() {
+  comparisonMode = false;
+  comparisonSections = [];
+}
+
 function showParsedReport(text, sourceLabel) {
+  exitComparisonMode();
   const sourceText = String(text ?? '');
   const classification = classifyDiagnostic(sourceText);
   const detectedType = classification.legacyType;
@@ -135,6 +258,7 @@ function showParsedReport(text, sourceLabel) {
 
 function clearReport() {
   appState = createInitialAppState();
+  exitComparisonMode();
   denseTableState = createInitialDenseTableState();
   clearSearchState();
   fileInput.value = '';
@@ -167,6 +291,7 @@ function reparseCurrentSourceWithPrivacyMode(sanitize) {
 }
 
 function togglePrivacyMode() {
+  if (comparisonMode) return;
   reparseCurrentSourceWithPrivacyMode(!appState.sanitize);
 }
 
@@ -196,7 +321,7 @@ function renderSearchControls(searchMetadata, hasParsedSections) {
 }
 
 function statusMessageForSearch(searchMetadata) {
-  if (!searchMetadata.searchActive) return appState.statusMessage;
+  if (!searchMetadata.searchActive) return comparisonMode ? comparisonMessage : appState.statusMessage;
   return searchStatusText(searchMetadata);
 }
 
@@ -397,6 +522,9 @@ inputPanel.addEventListener('drop', async (event) => {
 
 clearButton.addEventListener('click', clearReport);
 privacyToggle.addEventListener('click', togglePrivacyMode);
+addToComparisonButton.addEventListener('click', addCurrentReportToComparison);
+compareReportsButton.addEventListener('click', compareReports);
+clearComparisonButton.addEventListener('click', clearComparison);
 
 function setOfflineStatus(message, tone = 'info', action = null) {
   if (!offlineStatus) return;
