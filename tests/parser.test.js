@@ -50,7 +50,7 @@ import {
   isLargeKextTable,
 } from '../src/ui/denseTables.js';
 import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
-import { getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
+import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
 import {
@@ -79,6 +79,7 @@ const downloadTextSource = await readFile(new URL('../src/clipboard/downloadText
 const serializeSectionSource = await readFile(new URL('../src/clipboard/serializeSection.js', import.meta.url), 'utf8');
 const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.meta.url), 'utf8');
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
+const coreAnalyticsViewSource = await readFile(new URL('../src/ui/coreAnalyticsView.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
 const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
@@ -174,7 +175,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.3\.0-slice13b-json-export-download-2026-07-11/, 'service worker cache version reflects Slice 13B JSON export download');
+assert.match(serviceWorkerText, /v1\.4\.0-slice14c-coreanalytics-facet-contract-2026-07-12/, 'service worker cache version reflects the Slice 14C precached view-model change');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -3383,6 +3384,11 @@ assert.doesNotMatch(
   /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
   'CoreAnalytics overview renderer stays DOM-only without parser, search, storage, clipboard, or source-text access'
 );
+assert.doesNotMatch(
+  coreAnalyticsViewSource,
+  /document|window|navigator|filterSectionsByQuery|serializeSection|parseInput|sourceText/,
+  'CoreAnalytics facet view model stays pure without DOM, search, serialization, parser, or source-text access'
+);
 assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
 const plainCopySection = {
   id: 'plain-copy',
@@ -3806,7 +3812,106 @@ assert.deepEqual(
 );
 assert.equal(coreAnalyticsView.size.metrics.sections, 6, 'CoreAnalytics view includes report size summary by default');
 
+const coreAnalyticsFacetOptions = getCoreAnalyticsFacetOptions(coreAnalyticsView);
+assert.deepEqual(
+  coreAnalyticsFacetOptions.map(({ key, label }) => ({ key, label })),
+  [
+    { key: 'message', label: 'Top Messages' },
+    { key: 'name', label: 'Top Names' },
+    { key: 'aggregationPeriod', label: 'Aggregation Periods' },
+    { key: 'sampling', label: 'Sampling Values' },
+  ],
+  'CoreAnalytics facet options preserve the existing group order and labels'
+);
+assert.deepEqual(
+  coreAnalyticsFacetOptions[0].options.slice(0, 3),
+  [
+    { value: 'com.example.launch', query: 'com.example.launch', count: 3 },
+    { value: 'com.example.session', query: 'com.example.session', count: 3 },
+    { value: 'com.example.network', query: 'com.example.network', count: 2 },
+  ],
+  'CoreAnalytics facet options preserve deterministic visible value ordering and counts'
+);
+assert.equal(
+  coreAnalyticsFacetOptions[0].options[0].value,
+  coreAnalyticsFacetOptions[0].options[0].query,
+  'CoreAnalytics facet options map the visible value directly to the existing search query'
+);
+assert.equal(
+  filterSectionsByQuery(coreAnalyticsSections, coreAnalyticsFacetOptions[0].options[0].query).totalMatches,
+  coreAnalyticsSearch.totalMatches,
+  'CoreAnalytics facet query values use the existing substring search behavior'
+);
+
+const duplicateFacetValue = {};
+duplicateFacetValue.self = duplicateFacetValue;
+const inheritedFacetOption = Object.create({ value: 'INHERITED-FACET-SENTINEL', count: 1 });
+const customFacetView = {
+  isCoreAnalytics: true,
+  facets: {
+    values: {
+      message: [
+        { value: 'Same visible value', count: 2 },
+        { value: 'Same visible value', count: 9 },
+        { value: '  ', count: 1 },
+        { value: { nested: 'NESTED-FACET-SENTINEL' }, count: 1 },
+        { value: duplicateFacetValue, count: 1 },
+        inheritedFacetOption,
+        { value: '__proto__', count: 1 },
+        { value: 'constructor', count: 1 },
+        { value: 'prototype', count: 1 },
+      ],
+      name: [{ value: 'Same visible value', count: 4 }],
+      aggregationPeriod: [],
+      sampling: [],
+    },
+  },
+};
+const customFacetRowsBefore = customFacetView.facets.values.message.slice();
+const customFacetOptions = getCoreAnalyticsFacetOptions(customFacetView);
+assert.deepEqual(
+  customFacetOptions.find(({ key }) => key === 'message').options,
+  [{ value: 'Same visible value', query: 'Same visible value', count: 2 }],
+  'CoreAnalytics facet options deduplicate visible values and exclude unsafe values'
+);
+assert.deepEqual(
+  customFacetOptions.find(({ key }) => key === 'name').options,
+  [{ value: 'Same visible value', query: 'Same visible value', count: 4 }],
+  'CoreAnalytics facet options keep identical text separate across categories'
+);
+assert.deepEqual(
+  customFacetView.facets.values.message,
+  customFacetRowsBefore,
+  'CoreAnalytics facet option generation does not mutate input rows'
+);
+assert.equal(duplicateFacetValue.self, duplicateFacetValue, 'cyclic facet values remain untouched and excluded safely');
+
+const missingFacetView = {
+  isCoreAnalytics: true,
+  facets: { values: { message: [{ value: 'Only visible value', count: 1 }] } },
+};
+const nonCoreAnalyticsView = getCoreAnalyticsView(ipsSections);
+assert.deepEqual(
+  getCoreAnalyticsFacetOptions(missingFacetView).map(({ key, options }) => ({ key, options })),
+  [
+    { key: 'message', options: [{ value: 'Only visible value', query: 'Only visible value', count: 1 }] },
+    { key: 'name', options: [] },
+    { key: 'aggregationPeriod', options: [] },
+    { key: 'sampling', options: [] },
+  ],
+  'CoreAnalytics facet options handle missing optional categories with stable empty groups'
+);
+assert.deepEqual(getCoreAnalyticsFacetOptions(nonCoreAnalyticsView), [], 'non-CoreAnalytics views do not expose facet options');
+assert.deepEqual(getCoreAnalyticsFacetOptions({ isCoreAnalytics: true, facets: { values: null } }), [], 'malformed CoreAnalytics facet views fail safely');
+
 const largeCoreAnalyticsView = getCoreAnalyticsView(largeCoreAnalyticsSections);
+const largeCoreAnalyticsFacetOptions = getCoreAnalyticsFacetOptions(largeCoreAnalyticsView);
+assert.equal(
+  largeCoreAnalyticsFacetOptions.find(({ key }) => key === 'message').options.some(({ value }) => value === 'SyntheticMetricGroup-249'),
+  false,
+  'CoreAnalytics facet options cannot expose values outside the existing 100-row cap'
+);
+
 assert.equal(largeCoreAnalyticsView.tables.eventTypes.capped, true, 'CoreAnalytics view marks capped grouped event tables');
 assert.equal(largeCoreAnalyticsView.tables.sampleRecords.capped, true, 'CoreAnalytics view marks capped sample record tables');
 assert.deepEqual(
@@ -3815,7 +3920,6 @@ assert.deepEqual(
   'CoreAnalytics view parses capped grouped event counts'
 );
 
-const nonCoreAnalyticsView = getCoreAnalyticsView(ipsSections);
 assert.equal(nonCoreAnalyticsView.isCoreAnalytics, false, 'CoreAnalytics view returns false for non-CoreAnalytics reports');
 assert.deepEqual(nonCoreAnalyticsView.tables.eventTypes.rows, [], 'CoreAnalytics view returns empty table models for non-CoreAnalytics reports');
 assert.deepEqual(nonCoreAnalyticsView.facets.values.message, [], 'CoreAnalytics view returns empty facets for non-CoreAnalytics reports');

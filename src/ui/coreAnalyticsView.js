@@ -10,6 +10,12 @@ export const CORE_ANALYTICS_SECTION_IDS = Object.freeze({
 });
 
 const FACET_KEYS = Object.freeze(['message', 'name', 'aggregationPeriod', 'sampling']);
+const FACET_LABELS = Object.freeze({
+  message: 'Top Messages',
+  name: 'Top Names',
+  aggregationPeriod: 'Aggregation Periods',
+  sampling: 'Sampling Values',
+});
 const FACET_SOURCE = 'rendered/capped rows only';
 
 export function getCoreAnalyticsView(sections, options = {}) {
@@ -45,6 +51,36 @@ export function getCoreAnalyticsView(sections, options = {}) {
     warnings: parserNotes.items.map((field) => field.value).filter(Boolean),
     size: options.includeSize === false ? null : summarizeReportSize(safeSections),
   };
+}
+
+export function getCoreAnalyticsFacetOptions(view) {
+  if (!isRecord(view) || view.isCoreAnalytics !== true || !isRecord(view.facets) || !isRecord(view.facets.values)) {
+    return [];
+  }
+
+  return FACET_KEYS.map((key) => {
+    const values = hasOwn(view.facets.values, key) && Array.isArray(view.facets.values[key])
+      ? view.facets.values[key]
+      : [];
+    const seen = new Set();
+    const options = [];
+
+    for (const item of values) {
+      if (!isRecord(item) || !hasOwn(item, 'value') || !hasOwn(item, 'count')) continue;
+
+      const value = normalizeFacetValue(item.value);
+      if (!value || seen.has(value) || !Number.isFinite(item.count) || item.count < 1) continue;
+
+      seen.add(value);
+      options.push({ value, query: value, count: item.count });
+    }
+
+    return {
+      key,
+      label: FACET_LABELS[key],
+      options,
+    };
+  });
 }
 
 function createEmptyView(sections, resolvedSections, options) {
@@ -137,7 +173,7 @@ function createFacets(tableModels) {
   for (const table of tableModels) {
     for (const row of table.rows ?? []) {
       for (const key of FACET_KEYS) {
-        const value = normalizeFacetValue(row?.[key]);
+        const value = isRecord(row) && hasOwn(row, key) ? normalizeFacetValue(row[key]) : '';
         if (!value) continue;
         countsByKey[key].set(value, (countsByKey[key].get(value) ?? 0) + 1);
       }
@@ -158,6 +194,21 @@ function createFacets(tableModels) {
 }
 
 function normalizeFacetValue(value) {
+  if (
+    !['string', 'boolean'].includes(typeof value) &&
+    !(typeof value === 'number' && Number.isFinite(value))
+  ) {
+    return '';
+  }
+
   const text = String(value ?? '').trim();
-  return text || '';
+  return text && !['__proto__', 'constructor', 'prototype'].includes(text) ? text : '';
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
