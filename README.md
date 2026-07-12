@@ -23,8 +23,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.3.0` |
-| Active phase | `v1.4.0` planning only |
-| Current focus | v1.4.0 scope review |
+| Active phase | `v1.4.0` CoreAnalytics Investigation Workflow |
+| Current focus | Implemented; ready for manual release review |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -45,7 +45,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.1.0 | Released: Multi-Report Comparison |
 | v1.2.0 | Released: Sanitized Visible Export |
 | v1.3.0 | Released: Structured Sanitized Export |
-| v1.4.0 | Planning only: scope not approved |
+| v1.4.0 | Implemented: CoreAnalytics Investigation Workflow; unreleased |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -53,7 +53,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.3.0` is the current stable release. v1.4.0 planning has started, but no v1.4.0 implementation scope has been approved.
+`v1.3.0` is the current stable release. The v1.4.0 CoreAnalytics Investigation Workflow is implemented and ready for manual release review, but it has not been tagged or published.
 
 ## Why This Exists
 
@@ -163,6 +163,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Large-report size helpers | Supported |
 | Shared table-view model | Supported |
 | CoreAnalytics overview panel | Supported |
+| CoreAnalytics Investigation Workflow | Implemented in `v1.4.0`: sanitized rendered/capped facet controls using the existing search path |
 | Search/copy scope wording for capped rows | Supported |
 | Diagnostic classification layer | Released in `v0.6.0-alpha` |
 | Friendly messages for recognized unsupported diagnostics | Released in `v0.6.0-alpha` |
@@ -198,6 +199,9 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Panic backtrace and loaded kext tables.
 - Generic analytics fallback grouping for unstructured analytics text.
 - CoreAnalytics `.ips.ca.synced` summary, configuration, record overview, event type grouping, capped sample records, and parser notes.
+- CoreAnalytics Investigation Workflow exposes Top Messages, Top Names, Aggregation Periods, and Sampling Values as accessible controls for the existing sanitized rendered/capped view.
+- Activating a CoreAnalytics facet places its exact visible value into the existing substring search field. Only one facet query is active at a time; manual search editing and Clear Search reset selected appearance.
+- CoreAnalytics facet controls do not expose raw or uncapped records and do not appear in Raw Local View or comparison mode. Existing CoreAnalytics table caps remain unchanged.
 - AccessoryCrash `bug_type: 305` summary, accessory information, application information, crashlog overview, panic/fault notes, and parser notes.
 - AccessoryCrash crashlogs are summarized; raw nested crashlog bodies are not rendered.
 - AccessoryCrash sanitized mode redacts or omits identifier-heavy fields by default.
@@ -228,6 +232,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Text and JSON export share the same visible-section contract. Raw Local View disables both exports, and comparison export is sanitized-only.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
+- CoreAnalytics facet filtering uses the same search, copy, text-export, and JSON-export visibility rules as manual search. Keyboard focus is restored to the selected facet after filtering rerenders.
 - Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
 - Multi-Report Comparison accepts 2 or 3 supported reports with the same `parserType`, preserves insertion order, and produces ordinary comparison sections for the existing navigation, search, and copy paths.
 - Comparison uses sanitized parsed sections only. Raw Local View remains available only for a single loaded report.
@@ -291,6 +296,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - Page padding accounts for mobile Safari safe-area and bottom toolbar behavior.
 - v0.5 mobile polish improves narrow-width containment, CoreAnalytics chip wrapping, search/copy feedback wrapping, and practical touch targets for dense-table controls.
 - v0.8 UI and accessibility polish improves spacing consistency, readable wrapping, touch target sizing, focus visibility, accessible names, reduced-motion guardrails, and mobile/table containment without redesigning the app.
+- v1.4 CoreAnalytics controls use native keyboard-operable buttons, category-and-value accessible names, selected-state semantics, focus restoration, and practical 44px touch targets across narrow layouts.
 
 ## Running Locally
 
@@ -726,7 +732,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.3.0` is released. Future parser families, additional export formats, and broader diagnostics remain separate roadmap work. No v1.4.0 implementation scope is approved yet.
+`v1.3.0` is released. The v1.4.0 CoreAnalytics Investigation Workflow is implemented and ready for manual release review, but remains unreleased. Future parser families, additional export formats, and broader diagnostics remain separate roadmap work; no v1.5.0 implementation scope is approved.
 
 ## Screenshots / Demo
 

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.3.0` released; `v1.4.0` planning only
+Status: `v1.3.0` released; `v1.4.0` implemented and ready for manual release review, unreleased
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -25,7 +25,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
 | Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
-| Next Milestone | Planning only | `v1.4.0` | Scope not approved |
+| CoreAnalytics Investigation Workflow | Implemented; ready for manual release review | `v1.4.0` (unreleased) | Interactive sanitized rendered/capped facets through the existing substring-search path |
+| Next Milestone | Planning only | `v1.5.0` | Scope not approved |
 
 ## Project Constraints
 
@@ -582,9 +583,24 @@ Not included:
 
 ## Active Roadmap: v1.4.0
 
-Status: planning only. No v1.4.0 implementation scope is approved.
+Status: implemented and ready for manual release review. `v1.4.0` remains unreleased.
 
-The next milestone requires a separate planning and review pass. No feature, parser family, export format, or architectural change is committed to v1.4.0 by this roadmap state.
+Theme: CoreAnalytics Investigation Workflow. The milestone makes existing sanitized and capped CoreAnalytics facet data easier to investigate without changing parser output, search semantics, comparison behavior, export contracts, or the local-first architecture.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 14A | Complete | Deterministic fictional large-report Node workloads and parse/search/comparison/export/clear baselines |
+| Slice 14B | Complete | Chrome browser performance and UX baselines using the retained stress workloads and harness |
+| Slice 14C | Complete | Pure CoreAnalytics facet view-model contract from sanitized rendered/capped rows |
+| Slice 14D | Complete | Accessible interactive facet controls using the existing search-input path |
+| Slice 14E | Complete | Privacy, search/copy/export parity, repeated-workflow, focus-restoration, and regression hardening |
+| Slice 14F | Complete | Browser QA, documentation reconciliation, and manual release-readiness preparation |
+
+The Slice 14A and 14B measurements did not demonstrate a user-visible performance bottleneck. Speculative optimization, virtualization, workers, renderer replacement, and state-management redesign remain deferred. The performance fixtures and browser harness remain regression infrastructure.
+
+MetricKit remains deferred because its exact serialized legacy payload shape did not pass the authoritative fixture gate. It is not part of v1.4.0 support.
+
+No v1.5.0 implementation scope is approved.
 
 ## Future Hardening And Exploratory Work
 
@@ -605,7 +621,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, and `PHASE_12_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, and `PHASE_14_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -617,19 +633,18 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 | Symbolication | Client-side `.dSYM` symbolication for resolving raw addresses without a backend |
 | Diagnostics | Confidence-based diagnosis rules for known crash signatures |
 | Panic analysis | Optional panic repair hint rules for repeated panic-full signatures |
-| MetricKit | `MXCrashDiagnostic` format support |
+| MetricKit | `MXCrashDiagnostic` format support, deferred pending an authoritative serialized fixture contract |
 | Sysdiagnose | Local sysdiagnose archive extraction and file picker |
 | Comparison | Additional comparison modes beyond the bounded, same-parser, sanitized-only workflow |
 | Sharing | Additional local-only share/export formats beyond sanitized visible `.txt` and `.json` downloads |
 
 ## Next Planning Step
 
-For `v1.4.0` planning review:
+After manual review and publication of v1.4.0, begin a separate v1.5.0 planning pass. No v1.5.0 implementation scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
-- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
+- Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
 - Preserve the released v1.3.0 JSON schema and export boundaries.
-- Do not approve v1.4.0 implementation scope until a separate planning pass.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

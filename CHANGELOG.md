@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.4.0 — CoreAnalytics Investigation Workflow (Unreleased)
+
+### Added
+
+- Deterministic large-report Node baselines and retained fictional stress fixtures for CoreAnalytics and Stackshot regression testing.
+- Chrome browser performance and UX baselines with a reusable browser harness; no user-visible performance bottleneck was demonstrated, so speculative optimization remains deferred.
+- A pure CoreAnalytics facet view-model contract derived from sanitized, rendered, capped rows.
+- Accessible CoreAnalytics facet controls for Top Messages, Top Names, Aggregation Periods, and Sampling Values.
+
+### Improved
+
+- Facet activation reuses the existing substring-search input path and populates the exact visible value.
+- Manual search editing and Clear Search reset selected-facet appearance.
+- Keyboard focus is restored to the selected facet after the shared results rerender.
+- Search, copy, text export, and JSON export preserve the same filtered visible-content contract.
+- Raw Local View and comparison mode expose no CoreAnalytics facet controls.
+- Privacy, capped-row, non-CoreAnalytics, repeated-workflow, accessibility, responsive, and export-parity regression coverage was strengthened.
+- Service-worker cache metadata was updated for the precached UI changes.
+
+### Notes
+
+- Facets use sanitized rendered/capped CoreAnalytics values only. They do not provide raw, uncapped, exact-match, fuzzy, semantic, compound, or multi-select filtering.
+- MetricKit remains deferred pending an authoritative serialized fixture contract. No new parser family, performance optimization, backend, upload, analytics, telemetry, persistence, AI diagnosis, symbolication, `.dSYM`, or sysdiagnose support was added.
+
 ## v1.3.0 — Structured Sanitized Export
 
 The `v1.3.0` release has been published.
