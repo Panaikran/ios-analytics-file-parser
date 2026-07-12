@@ -175,7 +175,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.4\.0-slice14d-coreanalytics-investigation-ui-2026-07-12/, 'service worker cache version reflects the Slice 14D precached UI change');
+assert.match(serviceWorkerText, /v1\.4\.0-slice14e-coreanalytics-hardening-2026-07-12/, 'service worker cache version reflects the Slice 14E precached UI fix');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -3365,6 +3365,16 @@ assert.match(mainScriptText, /getCoreAnalyticsView\(activeSections\)/, 'CoreAnal
 assert.match(mainScriptText, /getCoreAnalyticsFacetOptions\(coreAnalyticsView\)/, 'main app derives facet controls from the Slice 14C contract');
 assert.match(mainScriptText, /searchInput\.dispatchEvent\(new Event\('input', \{ bubbles: true \}\)\)/, 'facet activation reuses the existing search input event path');
 assert.match(mainScriptText, /selectedCoreAnalyticsFacetQuery: searchQuery/, 'facet appearance is derived from the existing search query');
+assert.match(mainScriptText, /const coreAnalyticsFacetOptions = !comparisonMode && appState\.sanitize/, 'facet controls are limited to sanitized single-report mode');
+assert.match(mainScriptText, /const restoreCoreAnalyticsFacetFocus = document\.activeElement\?\.matches\('\.coreanalytics-overview__chip'\) === true/, 'facet focus is captured before the shared results rerender');
+assert.match(mainScriptText, /document\.querySelector\('\.coreanalytics-overview__chip\[aria-pressed=\"true\"\]'\)\?\.focus\(\)/, 'facet focus is restored after the shared results rerender');
+const facetHandlerSource = mainScriptText.match(/function selectCoreAnalyticsFacet\(option\) \{[^]*?\n\}/)?.[0] ?? '';
+assert.match(facetHandlerSource, /searchInput\.value = option\.query/, 'facet activation writes the exact contract query to the search input');
+assert.match(facetHandlerSource, /searchInput\.dispatchEvent\(new Event\('input'/, 'facet activation delegates filtering to the search input event');
+assert.doesNotMatch(facetHandlerSource, /filterSectionsByQuery|serializeSections|table|row|sourceText/, 'facet activation does not implement a parallel filtering or export path');
+assert.match(mainScriptText, /function clearSearchState\(\) \{[^]*searchQuery = ''[^]*searchInput\.value = ''/, 'clear search resets both the query and input value');
+assert.match(mainScriptText, /function clearSearch\(\) \{[^]*clearSearchState\(\)[^]*renderApp\(\)[^]*searchInput\.focus\(\)/, 'Clear Search re-renders and preserves keyboard focus');
+assert.match(mainScriptText, /function clearReport\(\) \{[^]*exitComparisonMode\(\)[^]*clearSearchState\(\)/, 'Clear Report clears comparison mode and facet-driven search state');
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
 assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
 assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
@@ -3374,6 +3384,7 @@ assert.match(mainScriptText, /Some source records are not rendered\./, 'large re
 assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
 assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
 assert.match(renderAppSource, /facetOptions:\s*options\.coreAnalyticsFacetOptions/, 'CoreAnalytics overview receives contract facet options from the app state path');
+assert.match(renderAppSource, /selectedFacetQuery:\s*options\.selectedCoreAnalyticsFacetQuery/, 'CoreAnalytics overview derives selected appearance from the current search query');
 assert.match(renderSectionText, /getCopyMetadata/, 'render path computes copy metadata for feedback');
 assert.match(renderSectionText, /copyFeedbackText\(copyMetadata\)/, 'copy success feedback is derived from copy metadata');
 assert.match(renderSectionText, /Copied visible section content\./, 'copy feedback reports full visible section copy');
@@ -3385,6 +3396,7 @@ assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rend
 assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
 assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\(interactive \? 'button' : 'span'\)/, 'CoreAnalytics facet options render as native buttons when the contract is active');
 assert.match(renderCoreAnalyticsOverviewSource, /aria-pressed/, 'CoreAnalytics facet buttons expose selected appearance semantics');
+assert.match(renderCoreAnalyticsOverviewSource, /item\.query === selectedFacetQuery/, 'selected facet appearance follows the exact active query');
 assert.doesNotMatch(
   renderCoreAnalyticsOverviewSource,
   /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
@@ -3850,6 +3862,32 @@ assert.equal(
   coreAnalyticsSearch.totalMatches,
   'CoreAnalytics facet query values use the existing substring search behavior'
 );
+const selectedCoreAnalyticsFacet = coreAnalyticsFacetOptions[0].options[0];
+const facetDrivenSearch = filterSectionsByQuery(coreAnalyticsSections, selectedCoreAnalyticsFacet.query);
+const manualSearchForFacet = filterSectionsByQuery(coreAnalyticsSections, 'com.example.launch');
+assert.deepEqual(facetDrivenSearch, manualSearchForFacet, 'facet-driven search matches the existing manual substring search result');
+const facetVisibleSections = facetDrivenSearch.sections.map((section) => getVisibleSectionForCopy(section));
+const manualVisibleSections = manualSearchForFacet.sections.map((section) => getVisibleSectionForCopy(section));
+assert.equal(
+  serializeSectionsForExport(facetVisibleSections),
+  serializeSectionsForExport(manualVisibleSections),
+  'facet-driven text export uses the same filtered visible sections as manual search'
+);
+assert.equal(
+  serializeSectionsForJsonExport(facetVisibleSections),
+  serializeSectionsForJsonExport(manualVisibleSections),
+  'facet-driven JSON export uses the same filtered visible sections as manual search'
+);
+assert.deepEqual(
+  filterSectionsByQuery(coreAnalyticsSections, coreAnalyticsFacetOptions[0].options[1].query).sections,
+  filterSectionsByQuery(coreAnalyticsSections, coreAnalyticsFacetOptions[0].options[1].value).sections,
+  'selecting another facet replaces the active query without changing substring semantics'
+);
+
+const facetAccessibleNames = coreAnalyticsFacetOptions
+  .flatMap((group) => group.options.map((option) => `${group.label}: ${option.value}, ${option.count} occurrences`))
+  .join('\n');
+assert.doesNotMatch(facetAccessibleNames, /22222222-3333-4444-5555-666666666666|DEVICE-COREANALYTICS-0002|BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF|SESSION-COREANALYTICS-0002/, 'facet accessible names contain only sanitized visible values');
 
 const duplicateFacetValue = {};
 duplicateFacetValue.self = duplicateFacetValue;
@@ -3919,6 +3957,47 @@ assert.equal(
   false,
   'CoreAnalytics facet options cannot expose values outside the existing 100-row cap'
 );
+const cappedCoreAnalyticsSentinel = 'SyntheticMetricGroup-249';
+const cappedCoreAnalyticsSearch = filterSectionsByQuery(largeCoreAnalyticsSections, cappedCoreAnalyticsSentinel);
+const cappedCoreAnalyticsVisibleSections = cappedCoreAnalyticsSearch.sections.map((section) => getVisibleSectionForCopy(section));
+assert.equal(cappedCoreAnalyticsSearch.totalMatches, 0, 'capped-out CoreAnalytics values are not searchable');
+assert.doesNotMatch(serializeSectionsForExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from text export');
+assert.doesNotMatch(serializeSectionsForJsonExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from JSON export');
+assert.doesNotMatch(serializeSectionsForCopy(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from copy output');
+
+const nonCoreAnalyticsFacetCases = [
+  ['App Crash', fullIpsText],
+  ['Legacy Crash', fullCrashText],
+  ['Watchdog', watchdogText],
+  ['Jetsam', jetsamText],
+  ['Panic', panicText],
+  ['Generic Analytics', analyticsText],
+  ['AccessoryCrash', accessoryCrashParserFixture],
+  ['CPU Resource', cpuResourceParserFixture],
+  ['Disk Writes Resource', diskWritesParserFixture],
+  ['Stackshot Resource', stackshotParserFixture],
+];
+for (const [label, fixture] of nonCoreAnalyticsFacetCases) {
+  const sections = parseInput(fixture);
+  assert.deepEqual(
+    getCoreAnalyticsFacetOptions(getCoreAnalyticsView(sections)),
+    [],
+    `${label} does not expose CoreAnalytics facet controls`
+  );
+}
+
+const usableCoreAnalyticsFacetOptions = coreAnalyticsFacetOptions.flatMap((group) => group.options);
+const coreAnalyticsBeforeRepeatedWorkflow = JSON.stringify(coreAnalyticsSections);
+for (let cycle = 0; cycle < 20; cycle += 1) {
+  const option = usableCoreAnalyticsFacetOptions[cycle % usableCoreAnalyticsFacetOptions.length];
+  const filtered = filterSectionsByQuery(coreAnalyticsSections, option.query);
+  const visible = filtered.sections.map((section) => getVisibleSectionForCopy(section));
+  serializeSectionForCopy(visible[0]);
+  serializeSectionsForExport(visible);
+  serializeSectionsForJsonExport(visible);
+  filterSectionsByQuery(coreAnalyticsSections, '');
+}
+assert.equal(JSON.stringify(coreAnalyticsSections), coreAnalyticsBeforeRepeatedWorkflow, 'repeated facet/search/export cycles do not mutate CoreAnalytics sections');
 
 assert.equal(largeCoreAnalyticsView.tables.eventTypes.capped, true, 'CoreAnalytics view marks capped grouped event tables');
 assert.equal(largeCoreAnalyticsView.tables.sampleRecords.capped, true, 'CoreAnalytics view marks capped sample record tables');

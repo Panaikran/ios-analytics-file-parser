@@ -80,6 +80,7 @@ function createInitialDenseTableState() {
 }
 
 function renderApp() {
+  const restoreCoreAnalyticsFacetFocus = document.activeElement?.matches('.coreanalytics-overview__chip') === true;
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
   const searchResult = filterSectionsByQuery(activeSections, searchQuery);
   const coreAnalyticsView = getCoreAnalyticsView(activeSections);
@@ -118,6 +119,9 @@ function renderApp() {
     selectedCoreAnalyticsFacetQuery: searchQuery,
     searchActive: searchMetadata.searchActive,
   });
+  if (restoreCoreAnalyticsFacetFocus) {
+    document.querySelector('.coreanalytics-overview__chip[aria-pressed="true"]')?.focus();
+  }
   emptyResults.hidden = !emptySearch;
   clearButton.disabled = !appState.sourceText && !appState.sections.length;
 }
