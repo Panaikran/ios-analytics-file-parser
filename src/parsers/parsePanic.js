@@ -2,8 +2,11 @@ import { createSection } from '../models/sectionModel.js';
 import { createSanitizer } from '../privacy/sanitize.js';
 import { parseIpsContainer } from './parseIpsContainer.js';
 
+const PANIC_ADDRESS_PATTERN = /\b0x[0-9a-f]{8,}\b/gi;
+
 export function parsePanic(input, options = {}) {
   const sanitizeText = createSanitizer(options);
+  const sanitizePanic = (value) => sanitizePanicValue(value, sanitizeText, options);
   const context = normalizePanicInput(input);
   const lines = context.panicText.split(/\r?\n/);
   const panicLine = lines.find((line) => /^panic\(/i.test(line)) ?? lines.find(Boolean) ?? '';
@@ -13,13 +16,13 @@ export function parsePanic(input, options = {}) {
       id: 'panic-string',
       title: 'Panic String',
       priority: 'critical',
-      raw: sanitizeText(panicLine || context.panicText),
+      raw: sanitizePanic(panicLine || context.panicText),
     }),
     createSection({
       id: 'panic-flags',
       title: 'Panic Flags',
       priority: 'warning',
-      fields: compactFields([['Flags', context.body?.panicFlags ?? findColonValue(lines, 'Panic flags')]], sanitizeText),
+      fields: compactFields([['Flags', context.body?.panicFlags ?? findColonValue(lines, 'Panic flags')]], sanitizePanic),
     }),
     createSection({
       id: 'kernel-backtrace',
@@ -33,7 +36,7 @@ export function parsePanic(input, options = {}) {
         { key: 'fp', label: 'FP' },
         { key: 'rawLine', label: 'Raw' },
       ],
-      table: parseBacktrace(lines, sanitizeText),
+      table: parseBacktrace(lines, sanitizePanic),
     }),
     createSection({
       id: 'loaded-kexts',
@@ -45,7 +48,7 @@ export function parsePanic(input, options = {}) {
         { key: 'range', label: 'Range' },
         { key: 'kind', label: 'Kind' },
       ],
-      table: parseKexts(lines, sanitizeText),
+      table: parseKexts(lines, sanitizePanic),
     }),
     createSection({
       id: 'system-info',
@@ -58,7 +61,7 @@ export function parsePanic(input, options = {}) {
         ['Date', context.metadata?.timestamp ?? context.body?.date],
         ['Bug Type', context.metadata?.bug_type ?? context.body?.bug_type],
         ['Incident ID', context.metadata?.incident_id ?? context.body?.incident],
-      ], sanitizeText),
+      ], sanitizePanic),
     }),
   ];
 }
@@ -85,7 +88,7 @@ function findColonValue(lines, label) {
   return line?.slice(line.indexOf(':') + 1).trim() ?? '';
 }
 
-function parseBacktrace(lines, sanitizeText) {
+function parseBacktrace(lines, sanitizePanic) {
   const rows = [];
   let inTraditionalBacktrace = false;
 
@@ -101,9 +104,9 @@ function parseBacktrace(lines, sanitizeText) {
         frame: rows.length,
         address: '',
         returnAddress: '',
-        lr: lrFpMatch[1],
-        fp: lrFpMatch[2],
-        rawLine: sanitizeText(line.trim()),
+        lr: sanitizePanic(lrFpMatch[1]),
+        fp: sanitizePanic(lrFpMatch[2]),
+        rawLine: sanitizePanic(line.trim()),
       });
       continue;
     }
@@ -119,11 +122,11 @@ function parseBacktrace(lines, sanitizeText) {
       if (addressMatch) {
         rows.push({
           frame: rows.length,
-          address: addressMatch[1],
-          returnAddress: addressMatch[2],
+          address: sanitizePanic(addressMatch[1]),
+          returnAddress: sanitizePanic(addressMatch[2]),
           lr: '',
           fp: '',
-          rawLine: sanitizeText(trimmed),
+          rawLine: sanitizePanic(trimmed),
         });
       }
     }
@@ -132,7 +135,7 @@ function parseBacktrace(lines, sanitizeText) {
   return rows;
 }
 
-function parseKexts(lines, sanitizeText) {
+function parseKexts(lines, sanitizePanic) {
   const rows = [];
   let inLoadedKexts = false;
 
@@ -149,9 +152,9 @@ function parseKexts(lines, sanitizeText) {
     const backtraceMatch = trimmed.match(/^(?:dependency:\s*)?(com\.[^(]+)\(([^)]+)\)\[[^\]]+\]@(0x[0-9a-fA-F]+->0x[0-9a-fA-F]+)/);
     if (backtraceMatch) {
       rows.push({
-        name: sanitizeText(backtraceMatch[1]),
-        version: sanitizeText(backtraceMatch[2]),
-        range: backtraceMatch[3],
+        name: sanitizePanic(backtraceMatch[1]),
+        version: sanitizePanic(backtraceMatch[2]),
+        range: sanitizePanic(backtraceMatch[3]),
         kind: trimmed.startsWith('dependency:') ? 'dependency' : 'backtrace',
       });
       continue;
@@ -161,8 +164,8 @@ function parseKexts(lines, sanitizeText) {
       const loadedMatch = trimmed.match(/^(com\.\S+)\s+(.+)$/);
       if (loadedMatch) {
         rows.push({
-          name: sanitizeText(loadedMatch[1]),
-          version: sanitizeText(loadedMatch[2]),
+          name: sanitizePanic(loadedMatch[1]),
+          version: sanitizePanic(loadedMatch[2]),
           range: '',
           kind: 'loaded',
         });
@@ -171,6 +174,11 @@ function parseKexts(lines, sanitizeText) {
   }
 
   return rows;
+}
+
+function sanitizePanicValue(value, sanitizeText, options) {
+  const text = sanitizeText(value);
+  return options.sanitize === false ? text : text.replace(PANIC_ADDRESS_PATTERN, '[address redacted]');
 }
 
 function compactFields(entries, sanitizeText) {

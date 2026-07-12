@@ -336,6 +336,7 @@ assert.ok(
   EXAMPLE_REPORTS.every((example) => !/tests[\\/]fixtures/.test(example.path)),
   'production manifest does not reference test fixtures'
 );
+const parsedProductionExamples = [];
 for (const example of EXAMPLE_REPORTS) {
   assert.match(example.path, /^\.\/examples\//, 'production example files live in examples/');
   assert.doesNotMatch(example.path, /tests\/fixtures/, 'production UI does not load test fixtures');
@@ -344,7 +345,9 @@ for (const example of EXAMPLE_REPORTS) {
 
   const exampleText = await readFile(new URL(`../${example.path.slice(2)}`, import.meta.url), 'utf8');
   assert.equal(detectFileType(exampleText), example.type, `${example.label} production example detects correctly`);
-  assert.ok(parseInput(exampleText).length > 0, `${example.label} production example parses into sections`);
+  const sections = parseInput(exampleText);
+  assert.ok(sections.length > 0, `${example.label} production example parses into sections`);
+  parsedProductionExamples.push({ example, sourceText: exampleText, sections });
   assert.match(serviceWorkerText, new RegExp(example.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${example.label} is explicitly precached`);
 }
 
@@ -464,6 +467,154 @@ for (const example of NEW_PRODUCTION_EXAMPLE_CONTRACTS) {
   assert.deepEqual(parseInput(exampleText), sections, `${example.label} parsing is deterministic`);
   assert.equal(JSON.stringify(sections), outputSnapshot, `${example.label} parsed output remains unchanged after repeated parsing`);
 }
+
+function workflowVisibleSections(sections, query = '') {
+  const searchResult = filterSectionsByQuery(sections, query);
+  return {
+    searchResult,
+    visibleSections: searchResult.sections.map((section) =>
+      getVisibleSectionForCopy(section, { allSections: sections })
+    ),
+  };
+}
+
+const productionExampleByType = new Map(parsedProductionExamples.map((run) => [run.example.type, run]));
+for (const run of parsedProductionExamples) {
+  const broadQuery = run.sections[0]?.title.split(/\s+/)[0] ?? run.example.type;
+  const narrowQuery = run.sections[0]?.title ?? run.example.type;
+  const noResultQuery = `__missing-${run.example.type}__`;
+  const broadSearch = workflowVisibleSections(run.sections, broadQuery);
+  const narrowSearch = workflowVisibleSections(run.sections, narrowQuery);
+  const noResultSearch = workflowVisibleSections(run.sections, noResultQuery);
+  const clearedSearch = workflowVisibleSections(run.sections);
+
+  assert.ok(broadSearch.searchResult.totalMatches > 0, `${run.example.label} supports broad search`);
+  assert.ok(narrowSearch.searchResult.totalMatches > 0, `${run.example.label} supports narrow search`);
+  assert.equal(noResultSearch.searchResult.totalMatches, 0, `${run.example.label} supports no-result search`);
+  assert.deepEqual(clearedSearch.searchResult.sections, run.sections, `${run.example.label} Clear Search restores all sections`);
+  assert.deepEqual(
+    createSectionNavItems(narrowSearch.searchResult.sections).map((item) => item.id),
+    narrowSearch.searchResult.sections.map((section) => section.id),
+    `${run.example.label} navigation follows the visible filtered section order`
+  );
+
+  const copy = narrowSearch.visibleSections.map(serializeSectionForCopy).join('\n\n---\n\n');
+  const textExport = serializeSectionsForExport(narrowSearch.visibleSections);
+  const jsonExport = JSON.parse(serializeSectionsForJsonExport(narrowSearch.visibleSections));
+  assert.ok(copy, `${run.example.label} has visible copy content`);
+  assert.ok(textExport, `${run.example.label} has visible text export content`);
+  assert.equal(jsonExport.version, 1, `${run.example.label} JSON export keeps schema version 1`);
+  assert.equal(jsonExport.mode, 'single', `${run.example.label} JSON export remains single-report mode`);
+  assert.equal(jsonExport.sections.length, narrowSearch.visibleSections.length, `${run.example.label} JSON export follows filtered sections`);
+  assert.doesNotMatch(
+    `${copy}\n${textExport}\n${JSON.stringify(jsonExport)}`,
+    forbiddenProductionExamplePattern,
+    `${run.example.label} workflow outputs remain sanitized`
+  );
+
+  const outputSnapshot = JSON.stringify(run.sections);
+  workflowVisibleSections(run.sections, broadQuery);
+  assert.equal(JSON.stringify(run.sections), outputSnapshot, `${run.example.label} search and export do not mutate parsed output`);
+}
+
+const exampleSwitchOrder = [
+  'ips',
+  'coreanalytics',
+  'resource-stackshot',
+  'resource-cpu',
+  'resource-diskwrites',
+  'accessory-crash',
+];
+let switchingState = createInitialAppState();
+for (const parserType of exampleSwitchOrder) {
+  const run = productionExampleByType.get(parserType);
+  const nextState = withParsedReport(startNewReportState(switchingState), {
+    sourceText: run.sourceText,
+    sourceLabel: run.example.sourceLabel,
+    detectedType: run.example.type,
+    sections: run.sections,
+  });
+
+  assert.equal(nextState.sanitize, true, `${run.example.label} switching restores sanitized mode`);
+  assert.equal(nextState.sourceLabel, run.example.sourceLabel, `${run.example.label} switching updates source label`);
+  assert.deepEqual(nextState.sections, run.sections, `${run.example.label} switching replaces prior report sections`);
+  assert.deepEqual(filterSectionsByQuery(nextState.sections).sections, run.sections, `${run.example.label} switching starts with cleared search`);
+  switchingState = createInitialAppState();
+  assert.deepEqual(switchingState.sections, [], `${run.example.label} Clear Report removes prior sections`);
+  assert.equal(switchingState.sourceText, '', `${run.example.label} Clear Report removes prior source text`);
+}
+
+const coreAnalyticsProductionRun = productionExampleByType.get('coreanalytics');
+const coreAnalyticsProductionFacetOptions = getCoreAnalyticsFacetOptions(getCoreAnalyticsView(coreAnalyticsProductionRun.sections));
+assert.ok(
+  coreAnalyticsProductionFacetOptions.some((group) => group.options.length > 0),
+  'production CoreAnalytics exposes facets from its sanitized rendered rows'
+);
+for (const run of parsedProductionExamples) {
+  const options = getCoreAnalyticsFacetOptions(getCoreAnalyticsView(run.sections));
+  if (run.example.type === 'coreanalytics') continue;
+  assert.deepEqual(options, [], `${run.example.label} does not expose CoreAnalytics facets`);
+}
+const productionFacet = coreAnalyticsProductionFacetOptions.find((group) => group.options.length > 0)?.options[0];
+assert.deepEqual(
+  filterSectionsByQuery(coreAnalyticsProductionRun.sections, productionFacet.query).sections,
+  filterSectionsByQuery(coreAnalyticsProductionRun.sections, productionFacet.value).sections,
+  'production CoreAnalytics facet activation preserves ordinary substring search'
+);
+
+function comparisonEntryForExample(run) {
+  const classification = classifyDiagnostic(run.sourceText);
+  return {
+    classification: { parserType: classification.parserType, supported: classification.supported },
+    sections: run.sections,
+  };
+}
+
+const comparisonExampleRun = productionExampleByType.get('coreanalytics');
+const comparisonExampleEntries = [comparisonExampleRun, comparisonExampleRun, comparisonExampleRun].map(comparisonEntryForExample);
+assert.equal(validateComparison(comparisonExampleEntries).valid, true, 'same-parser production examples remain comparison-compatible');
+const comparisonExampleSections = createComparisonSections(comparisonExampleEntries);
+const comparisonExampleVisibleSections = comparisonExampleSections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: comparisonExampleSections })
+);
+const comparisonExampleJson = JSON.parse(serializeSectionsForJsonExport(comparisonExampleVisibleSections, { mode: 'comparison' }));
+assert.equal(comparisonExampleJson.mode, 'comparison', 'production example comparison export remains comparison mode');
+assert.match(serializeSectionsForExport(comparisonExampleVisibleSections), /Report 1|Report 2|Report 3/, 'production example comparison keeps report ordering in text export');
+assert.equal(validateComparison([
+  comparisonEntryForExample(productionExampleByType.get('ips')),
+  comparisonEntryForExample(productionExampleByType.get('coreanalytics')),
+]).valid, false, 'mixed production example families remain rejected for comparison');
+assert.match(
+  mainScriptText,
+  /function clearComparison\(\) \{[^]*comparisonEntries = \[\][^]*exitComparisonMode\(\)/,
+  'clearing comparison removes selected reports and rendered comparison sections'
+);
+
+const rawCoreAnalyticsState = withPrivacyMode(
+  withParsedReport(startNewReportState(createInitialAppState()), {
+    sourceText: coreAnalyticsProductionRun.sourceText,
+    sourceLabel: coreAnalyticsProductionRun.example.sourceLabel,
+    detectedType: coreAnalyticsProductionRun.example.type,
+    sections: parseInput(coreAnalyticsProductionRun.sourceText, { sanitize: false }),
+  }),
+  false
+);
+assert.equal(rawCoreAnalyticsState.sanitize, false, 'Raw Local View remains opt-in for production examples');
+assert.match(
+  mainScriptText,
+  /const coreAnalyticsFacetOptions = !comparisonMode && appState\.sanitize[^]*\? getCoreAnalyticsFacetOptions\(coreAnalyticsView\)/,
+  'Raw Local View and comparison mode keep CoreAnalytics facets non-interactive'
+);
+assert.match(
+  mainScriptText,
+  /function renderExampleControls\(\) \{[^]*EXAMPLE_REPORTS\.map[^]*button\.type = 'button'[^]*loadExample\(example\)/,
+  'bundled examples use the existing native button workflow'
+);
+assert.match(
+  mainScriptText,
+  /async function loadExample\(example\)[^]*clearSearchState\(\)[^]*resetDenseTableState\(\)[^]*showParsedReport\(text, example\.sourceLabel\)/,
+  'example loading resets search and dense-table state before parsing the next report'
+);
 
 function mockFile(name, type = '', size = 1024) {
   return { name, type, size };
@@ -3793,7 +3944,7 @@ assert.deepEqual(
 );
 assert.equal(fieldValue(sectionById(panicSections, EXPLANATION_SECTION_ID), 'Category'), 'System panic report', 'panic-full parseInput appends explanation when no summary section exists');
 assert.match(sectionById(panicSections, 'panic-string').raw, /userspace watchdog timeout/);
-assert.equal(sectionById(panicSections, 'kernel-backtrace').table[0].returnAddress, '0xfffffff007123456');
+assert.equal(sectionById(panicSections, 'kernel-backtrace').table[0].returnAddress, '[address redacted]');
 assert.equal(sectionById(panicSections, 'loaded-kexts').table[0].name, 'com.apple.driver.ExampleKext');
 
 const jsonPanicSections = parseInput(jsonPanicText);
@@ -3809,8 +3960,19 @@ assert.equal(fieldValue(sectionById(jsonPanicSections, 'system-info'), 'OS / Bui
 assert.equal(fieldValue(sectionById(jsonPanicSections, 'system-info'), 'Product'), 'iPhone17,1');
 assert.equal(fieldValue(sectionById(jsonPanicSections, 'system-info'), 'Bug Type'), '210');
 assert.equal(fieldValue(sectionById(jsonPanicSections, 'system-info'), 'Incident ID'), '[identifier redacted]');
-assert.equal(sectionById(jsonPanicSections, 'kernel-backtrace').table[0].lr, '0xfffffff05046e9cc');
-assert.equal(sectionById(jsonPanicSections, 'kernel-backtrace').table[0].fp, '0xffffffef16ceb5f0');
+assert.equal(sectionById(jsonPanicSections, 'kernel-backtrace').table[0].lr, '[address redacted]');
+assert.equal(sectionById(jsonPanicSections, 'kernel-backtrace').table[0].fp, '[address redacted]');
+assert.doesNotMatch(
+  JSON.stringify(jsonPanicSections),
+  /0xfffffff051260638|0xfffffff05046e9cc|0xffffffef16ceb5f0|0xfffffff007123456/,
+  'panic sanitized output excludes raw panic and backtrace addresses'
+);
+const rawJsonPanicSections = parseInput(jsonPanicText, { sanitize: false });
+assert.equal(
+  sectionById(rawJsonPanicSections, 'kernel-backtrace').table[0].lr,
+  '0xfffffff05046e9cc',
+  'Raw Local View preserves the existing bounded panic address behavior'
+);
 assert.equal(sectionById(jsonPanicSections, 'loaded-kexts').table[0].name, 'com.apple.driver.AppleARMPlatform');
 assert.equal(sectionById(jsonPanicSections, 'loaded-kexts').table[1].name, 'com.apple.iokit.IOReportFamily');
 assert.ok(
