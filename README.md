@@ -25,9 +25,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.4.0` |
-| Active phase | `v1.5.0` release readiness |
-| Current focus | Complete Supported Diagnostic Examples |
+| Latest released version | `v1.5.0` |
+| Active phase | `v1.6.0` planning only |
+| Current focus | v1.6.0 scope review |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -49,7 +49,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.2.0 | Released: Sanitized Visible Export |
 | v1.3.0 | Released: Structured Sanitized Export |
 | v1.4.0 | Released: CoreAnalytics Investigation Workflow |
-| v1.5.0 | Implementation complete: ready for release review; not yet released |
+| v1.5.0 | Released: Complete Supported Diagnostic Examples |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -57,7 +57,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.4.0` is the latest stable release. The v1.5.0 Complete Supported Diagnostic Examples milestone is implemented and ready for explicit tag and GitHub Release approval. It has not been tagged or published.
+`v1.5.0` is the latest stable release. Complete Supported Diagnostic Examples was tagged and published as a non-prerelease GitHub Release. v1.6.0 remains planning-only with no approved implementation scope.
 
 ## Why This Exists
 
@@ -686,7 +686,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.2.0 | Released | Sanitized Visible Export for eligible single-report and comparison `.txt` output |
 | v1.3.0 | Released | Structured Sanitized Export for eligible single-report and comparison `.json` output |
 | v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
-| v1.5.0 | Ready for release review | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
+| v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 
 The project keeps the same constraints:
 
@@ -757,7 +757,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.4.0` is released. v1.5.0 implementation is complete and remains unreleased pending explicit tag and GitHub Release approval. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future work.
+`v1.5.0` is released and fully closed. v1.6.0 has no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

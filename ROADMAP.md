@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.4.0` released; `v1.5.0` implemented and ready for release review
+Status: `v1.5.0` released and fully closed; `v1.6.0` planning only
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -26,7 +26,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
-| Complete Supported Diagnostic Examples | Ready for release review | Not yet tagged | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
+| Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Next Milestone | Planning only | `v1.6.0` | Scope not approved |
 
 ## Project Constraints
@@ -601,10 +601,10 @@ The Slice 14A and 14B measurements did not demonstrate a user-visible performanc
 
 MetricKit remains deferred because its exact serialized legacy payload shape did not pass the authoritative fixture gate. It is not part of v1.4.0 support.
 
-## Completed Roadmap: v1.5.0
+## Released Roadmap: v1.5.0
 
-Status: implementation complete and ready for release review. The milestone
-remains unreleased until an explicit tag and GitHub Release are approved.
+Status: released and fully closed. The `v1.5.0` tag and published GitHub
+Release point to `88c2c6301e9f32a86c6bb91b21924a469dd79360`.
 
 Theme: Complete Supported Diagnostic Examples. All 11 supported parser
 families have one compact fictional production example using the existing
@@ -629,8 +629,15 @@ families. The completed browser QA covered Chrome system channel
 `150.0.7871.101` on Windows, including offline loading from the explicit
 service-worker precache allowlist.
 
-The 11-family catalog and v1.5.0 implementation are complete. No v1.6.0
-implementation scope is approved.
+The 11-family catalog and v1.5.0 implementation are complete. No v1.5.0
+implementation tasks remain, and no v1.6.0 implementation scope is approved.
+
+## Active Roadmap: v1.6.0
+
+Status: planning only. No implementation scope is approved.
+
+The next milestone requires a separate planning and review pass. Do not infer
+features from deferred ideas or historical exploratory notes.
 
 ## Future Hardening And Exploratory Work
 
@@ -670,8 +677,8 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-After the explicit v1.5.0 release decision, begin a separate v1.6.0 planning
-pass. No v1.6.0 implementation scope is approved by this roadmap.
+Continue v1.6.0 planning in a separate review pass. No v1.6.0 implementation
+scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

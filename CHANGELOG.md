@@ -1,9 +1,8 @@
 # Changelog
 
-## v1.5.0 - Complete Supported Diagnostic Examples (Unreleased)
+## v1.5.0 — Complete Supported Diagnostic Examples
 
-The implementation is complete and ready for explicit release review. The tag
-and GitHub Release have not been created.
+The `v1.5.0` release has been published as a non-prerelease GitHub Release.
 
 ### Added
 

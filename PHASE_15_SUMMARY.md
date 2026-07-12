@@ -2,10 +2,12 @@
 
 ## Milestone
 
-`v1.5.0` - Complete Supported Diagnostic Examples
+`v1.5.0` — Complete Supported Diagnostic Examples
 
-Status: implementation complete and ready for explicit release review. The
-release remains unreleased; no `v1.5.0` tag or GitHub Release has been created.
+Status: released and fully closed. The `v1.5.0` tag and published, non-
+prerelease GitHub Release point to `88c2c6301e9f32a86c6bb91b21924a469dd79360`.
+This post-release reconciliation commit follows the tag and is not part of the
+tagged release.
 
 ## Objective
 
@@ -78,9 +80,9 @@ The later browser-QA retry changed no project files.
 
 ### Slice 15D - Documentation and Release Readiness
 
-Reconciles README, roadmap, changelog, and this summary with the completed
-implementation. Final deterministic validation, benchmark checks, and Chrome
-workflow QA are recorded below.
+Reconciles README, roadmap, changelog, and this summary after publication.
+Final deterministic validation, benchmark checks, and Chrome workflow QA are
+recorded below. No v1.5.0 implementation tasks remain.
 
 ## Architecture And Privacy
 
@@ -199,8 +201,10 @@ but no dedicated automated Safari or Mobile Safari harness.
 - [x] Automated validation and performance regression checks pass.
 - [x] Chrome workflow, responsive, accessibility, PWA, and offline QA pass in
       the available environment.
-- [x] Documentation reconciled without claiming publication.
-- [ ] Explicit approval to create the `v1.5.0` tag.
-- [ ] Explicit approval to publish the GitHub Release.
+- [x] Documentation reconciled after publication.
+- [x] The `v1.5.0` tag remains on the release-readiness commit.
+- [x] The published GitHub Release is a non-prerelease and non-draft.
+- [x] Post-release documentation reconciliation completed after the tag.
 
-The repository is ready for explicit `v1.5.0` tag and GitHub Release approval.
+The v1.5.0 release is complete and closed. Future work returns to planning-only
+mode for v1.6.0; no v1.6.0 implementation scope is approved.
