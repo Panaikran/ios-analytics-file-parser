@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Browser performance baseline</title>
+    <style>
+      #results {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <pre id="results">Running browser baseline...</pre>
+    <script type="module">
+      import { createComparisonSections } from '../src/comparison/comparisonModel.js';
+      import { parseInput } from '../src/parsers/index.js';
+      import { filterSectionsByQuery } from '../src/search/filterSections.js';
+      import { getCoreAnalyticsView } from '../src/ui/coreAnalyticsView.js';
+      import { renderSections } from '../src/ui/renderApp.js';
+      import { renderSectionNav } from '../src/ui/renderSectionNav.js';
+      import { createLargeCoreAnalyticsFixture, createLargeStackshotFixture } from './fixtures/largeReportWorkloads.js';
+
+      const resultsElement = document.querySelector('#results');
+      const errors = [];
+      const settleMode = document.visibilityState === 'hidden' ? 'setTimeout(0) hidden-document fallback' : 'requestAnimationFrame';
+      window.addEventListener('error', (event) => errors.push(event.message));
+      window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason)));
+
+      function nextFrame() {
+        if (document.visibilityState === 'hidden') {
+          return new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        return new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+
+      function summarizeSamples(samples) {
+        const sorted = [...samples].sort((left, right) => left - right);
+        return {
+          cycles: samples.length,
+          minMs: sorted[0],
+          medianMs: sorted[Math.floor(sorted.length / 2)],
+          p95Ms: sorted[Math.max(0, Math.ceil(sorted.length * 0.95) - 1)],
+          maxMs: sorted.at(-1),
+        };
+      }
+
+      async function measureAsync(operation, iterations = 10) {
+        for (let index = 0; index < 3; index += 1) {
+          operation();
+          await nextFrame();
+        }
+
+        const samples = [];
+        for (let index = 0; index < iterations; index += 1) {
+          const started = performance.now();
+          operation();
+          await nextFrame();
+          samples.push(performance.now() - started);
+        }
+        return summarizeSamples(samples);
+      }
+
+      function renderParsedSections(sections, { searchActive = false } = {}) {
+        const sectionRoot = document.querySelector('#sections');
+        const navRoot = document.querySelector('#section-nav');
+        const coreAnalyticsView = getCoreAnalyticsView(sections);
+        renderSectionNav(navRoot, sections);
+        renderSections(sectionRoot, sections, {
+          allSections: sections,
+          coreAnalyticsView,
+          searchActive,
+          onCopySection: () => Promise.resolve({ ok: true }),
+        });
+      }
+
+      function clearRenderedState() {
+        document.querySelector('#sections').replaceChildren();
+        document.querySelector('#section-nav').replaceChildren();
+      }
+
+      function accessibilityReport() {
+        const controls = [...document.querySelectorAll('button, input, textarea, a')];
+        const unnamed = controls
+          .filter((control) => {
+            const label = control.getAttribute('aria-label') || control.getAttribute('aria-labelledby');
+            const associatedLabel = control.id && document.querySelector(`label[for="${control.id}"]`);
+            const wrappingLabel = control.closest('label');
+            return !label && !associatedLabel && !wrappingLabel && !control.textContent.trim() && !control.getAttribute('title');
+          })
+          .map((control) => control.id || control.tagName.toLowerCase());
+        const focusFailures = controls
+          .filter((control) => !control.disabled && control.getClientRects().length > 0)
+          .filter((control) => {
+            control.focus();
+            return document.activeElement !== control;
+          })
+          .map((control) => control.id || control.tagName.toLowerCase());
+
+        return {
+          controlCount: controls.length,
+          unnamedControls: unnamed,
+          focusFailures,
+          exportControls: ['download-visible-export', 'download-visible-json'].map((id) => ({
+            id,
+            present: Boolean(document.querySelector(`#${id}`)),
+          })),
+        };
+      }
+
+      function containmentReport() {
+        return {
+          viewportWidth: window.innerWidth,
+          documentScrollWidth: document.documentElement.scrollWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+          sectionScrollWidth: document.querySelector('#sections').scrollWidth,
+          pageOverflow: document.documentElement.scrollWidth > window.innerWidth,
+        };
+      }
+
+      async function loadAppMarkup() {
+        const source = await fetch('../index.html').then((response) => response.text());
+        const template = new DOMParser().parseFromString(source, 'text/html');
+        template.body.querySelectorAll('script').forEach((script) => script.remove());
+        const resultPlaceholder = resultsElement;
+        document.body.replaceChildren(...template.body.childNodes, resultPlaceholder);
+        const stylesheet = document.createElement('link');
+        stylesheet.rel = 'stylesheet';
+        stylesheet.href = '../styles/main.css';
+        document.head.append(stylesheet);
+      }
+
+      async function benchmarkReport(text, query, parserType) {
+        let sections;
+        const parseToRender = await measureAsync(() => {
+          sections = parseInput(text);
+          renderParsedSections(sections);
+        });
+
+        const search = await measureAsync(() => {
+          const filtered = filterSectionsByQuery(sections, query).sections;
+          renderParsedSections(filtered, { searchActive: true });
+        });
+
+        const noResultsSearch = await measureAsync(() => {
+          const filtered = filterSectionsByQuery(sections, 'NO-SUCH-SYNTHETIC-TERM').sections;
+          renderParsedSections(filtered, { searchActive: true });
+        });
+
+        const clearSearch = await measureAsync(() => renderParsedSections(sections));
+        const comparisonEntry = {
+          classification: { parserType, supported: true },
+          sections,
+        };
+        const comparisonEntries = [comparisonEntry, comparisonEntry, comparisonEntry];
+        let comparisonSections;
+        const comparison = await measureAsync(() => {
+          comparisonSections = createComparisonSections(comparisonEntries);
+          renderParsedSections(comparisonSections);
+        });
+        const clearComparison = await measureAsync(() => {
+          clearRenderedState();
+          renderParsedSections(sections);
+        });
+        const clearReport = await measureAsync(() => clearRenderedState());
+
+        return {
+          parseToRender,
+          search,
+          noResultsSearch,
+          clearSearch,
+          comparison,
+          clearComparison,
+          clearReport,
+          sectionCount: sections.length,
+          renderedRows: sections.reduce((total, section) => total + (section.table?.length ?? 0), 0),
+        };
+      }
+
+      async function repeatedWorkflow(text, query, cycles = 20) {
+        const samples = [];
+        for (let index = 0; index < cycles; index += 1) {
+          const started = performance.now();
+          const sections = parseInput(text);
+          renderParsedSections(sections);
+          await nextFrame();
+          renderParsedSections(filterSectionsByQuery(sections, query).sections, { searchActive: true });
+          await nextFrame();
+          renderParsedSections(sections);
+          await nextFrame();
+          const entry = { classification: { parserType: 'coreanalytics', supported: true }, sections };
+          renderParsedSections(createComparisonSections([entry, entry]));
+          await nextFrame();
+          clearRenderedState();
+          await nextFrame();
+          samples.push(performance.now() - started);
+        }
+        await nextFrame();
+        return summarizeSamples(samples);
+      }
+
+      async function run() {
+        await loadAppMarkup();
+        await nextFrame();
+        const coreText = createLargeCoreAnalyticsFixture();
+        const stackshotText = createLargeStackshotFixture();
+        const core = await benchmarkReport(coreText, 'SyntheticMetricGroup-000', 'coreanalytics');
+        const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
+        const repeated = await repeatedWorkflow(coreText, 'SyntheticMetricGroup-000');
+        let serviceWorkerReady = false;
+        if ('serviceWorker' in navigator) {
+          try {
+            await navigator.serviceWorker.register('../service-worker.js');
+            await navigator.serviceWorker.ready;
+            serviceWorkerReady = true;
+          } catch (error) {
+            errors.push(`service worker: ${error.message}`);
+          }
+        }
+
+        resultsElement.textContent = JSON.stringify({
+          browser: navigator.userAgent,
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          settleMode,
+          workloads: {
+            coreAnalytics: { bytes: new TextEncoder().encode(coreText).length, records: 5000 },
+            stackshot: { bytes: new TextEncoder().encode(stackshotText).length, processes: 5000 },
+          },
+          core,
+          stackshot,
+          repeatedWorkflow: repeated,
+          accessibility: accessibilityReport(),
+          containment: containmentReport(),
+          pwa: {
+            serviceWorkerApiAvailable: serviceWorkerReady,
+            offlineReload: 'not measured; network interception is unavailable',
+            heapSnapshots: 'not measured; browser heap tooling is unavailable',
+          },
+          errors,
+        }, null, 2);
+        document.title = 'Browser performance baseline complete';
+      }
+
+      run().catch((error) => {
+        resultsElement.textContent = JSON.stringify({ error: error.message, errors }, null, 2);
+        document.title = 'Browser performance baseline failed';
+      });
+    </script>
+  </body>
+</html>
