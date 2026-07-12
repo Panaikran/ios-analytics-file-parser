@@ -1,5 +1,36 @@
 # Changelog
 
+## v1.5.0 - Complete Supported Diagnostic Examples (Unreleased)
+
+The implementation is complete and ready for explicit release review. The tag
+and GitHub Release have not been created.
+
+### Added
+
+- Fictional bundled production examples for CoreAnalytics, AccessoryCrash, CPU Resource, Disk Writes Resource, and Stackshot Resource.
+- A complete one-example-per-supported-family catalog covering all 11 supported parser families.
+- Explicit service-worker precaching for the five new example files.
+- Cross-family regression coverage for manifest loading, parsing, switching, search, navigation, copy, export, comparison, and clear/reset workflows.
+
+### Fixed
+
+- Sanitized Panic output no longer exposes hexadecimal address values.
+
+### Verified
+
+- All bundled examples use the existing local `parseInput()` workflow and sanitized rendering.
+- Search, CoreAnalytics facets, text export, structured JSON export, comparison, Raw Local View boundaries, responsive behavior, and offline example loading were verified.
+- Generic export filenames and comparison JSON mode remain unchanged.
+- Final Chrome workflow QA observed no external requests, console errors, page errors, or failed requests.
+
+### Notes
+
+- Examples are fictional, deterministic, compact, sanitized, and separate from internal stress fixtures.
+- MetricKit remains deferred pending an authoritative serialized fixture contract.
+- Speculative performance optimization remains deferred because established Node and browser budgets pass.
+- Firefox, Safari, and Mobile Safari were not directly validated in this Windows environment. Native screen-reader software was not directly tested.
+- No new parser family, raw export, persistence, upload, analytics, telemetry, cloud processing, AI diagnosis, symbolication, `.dSYM`, or sysdiagnose support was added.
+
 ## v1.4.0 — CoreAnalytics Investigation Workflow
 
 The `v1.4.0` release has been published.

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.4.0` released; `v1.5.0` planning only
+Status: `v1.4.0` released; `v1.5.0` implemented and ready for release review
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -26,7 +26,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
-| Next Milestone | Planning only | `v1.5.0` | Scope not approved |
+| Complete Supported Diagnostic Examples | Ready for release review | Not yet tagged | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
+| Next Milestone | Planning only | `v1.6.0` | Scope not approved |
 
 ## Project Constraints
 
@@ -600,14 +601,36 @@ The Slice 14A and 14B measurements did not demonstrate a user-visible performanc
 
 MetricKit remains deferred because its exact serialized legacy payload shape did not pass the authoritative fixture gate. It is not part of v1.4.0 support.
 
-No v1.5.0 implementation scope is approved.
+## Completed Roadmap: v1.5.0
 
-## Active Roadmap: v1.5.0
+Status: implementation complete and ready for release review. The milestone
+remains unreleased until an explicit tag and GitHub Release are approved.
 
-Status: planning only. No implementation scope is approved.
+Theme: Complete Supported Diagnostic Examples. All 11 supported parser
+families have one compact fictional production example using the existing
+manifest, loader, parser, sanitized rendering, search, export, comparison,
+accessibility, and service-worker workflows.
 
-The next milestone requires a separate planning and review pass. Do not infer
-features from the deferred ideas below.
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 15A | Complete | Five fictional production example fixtures and privacy-reviewed parser contracts |
+| Slice 15B | Complete | Manifest integration, one-example-per-family coverage, and explicit offline precaching |
+| Slice 15C | Complete | Cross-family parsing, switching, search, navigation, copy, export, comparison, privacy, and regression QA |
+| Slice 15D | Complete | Documentation, final deterministic validation, Chrome workflow QA, responsive QA, and release readiness |
+
+The five added examples are `coreanalytics.ips.ca.synced`, `accessory-crash.ips`,
+`cpu-resource.ips`, `disk-writes-resource.ips`, and `stackshot-resource.ips`.
+They remain fictional, deterministic, compact, sanitized, and separate from
+the 5,000-record stress workloads.
+
+The Slice 15C privacy pass fixed hexadecimal address exposure in sanitized
+Panic output without changing Raw Local View behavior or other parser
+families. The completed browser QA covered Chrome system channel
+`150.0.7871.101` on Windows, including offline loading from the explicit
+service-worker precache allowlist.
+
+The 11-family catalog and v1.5.0 implementation are complete. No v1.6.0
+implementation scope is approved.
 
 ## Future Hardening And Exploratory Work
 
@@ -616,7 +639,7 @@ These items remain outside the current v1.0 stabilization path unless explicitly
 | Area | Future work |
 | --- | --- |
 | CSP/header hardening | Stronger response-header CSP on a host that supports custom headers, such as Cloudflare Pages |
-| Browser QA | Optional reusable automated browser smoke tests beyond the Slice 3G release-readiness pass |
+| Browser QA | Additional browser lanes beyond the completed Chrome smoke and performance harness |
 | Release operations | Package metadata/version cleanup if release process moves beyond Git tags/docs |
 | Visual QA | Screenshot/demo capture for README and GitHub Releases |
 
@@ -628,7 +651,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, and `PHASE_14_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, and `PHASE_15_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -647,11 +670,13 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Continue v1.5.0 planning in a separate review pass. No v1.5.0 implementation scope is approved by this roadmap.
+After the explicit v1.5.0 release decision, begin a separate v1.6.0 planning
+pass. No v1.6.0 implementation scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
 - Preserve the released v1.3.0 JSON schema and export boundaries.
+- Preserve the completed v1.5.0 example catalog, privacy fix, and offline QA evidence.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

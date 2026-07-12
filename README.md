@@ -16,6 +16,9 @@ iOS Analytics File Parser is a static browser app for inspecting common iOS and 
 - AccessoryCrash and selected resource diagnostics
 - generic analytics text logs
 
+The bundled catalog contains one fictional production example for each of the
+11 supported parser families.
+
 It is intentionally local-first. Reports are parsed in the browser, sanitized by default, and displayed as structured sections, tables, charts, cautious explanation notes, and raw notes where useful.
 
 ## Release Status
@@ -23,8 +26,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.4.0` |
-| Active phase | `v1.5.0` planning only |
-| Current focus | v1.5.0 scope review |
+| Active phase | `v1.5.0` release readiness |
+| Current focus | Complete Supported Diagnostic Examples |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -46,7 +49,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.2.0 | Released: Sanitized Visible Export |
 | v1.3.0 | Released: Structured Sanitized Export |
 | v1.4.0 | Released: CoreAnalytics Investigation Workflow |
-| v1.5.0 | Planning only: scope not approved |
+| v1.5.0 | Implementation complete: ready for release review; not yet released |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -54,7 +57,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.4.0` is the current stable release. The CoreAnalytics Investigation Workflow has been tagged and published. v1.5.0 remains planning-only with no approved implementation scope.
+`v1.4.0` is the latest stable release. The v1.5.0 Complete Supported Diagnostic Examples milestone is implemented and ready for explicit tag and GitHub Release approval. It has not been tagged or published.
 
 ## Why This Exists
 
@@ -142,6 +145,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Search/filter parsed output | Supported |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
+| Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
 | Multi-Report Comparison | Supported: 2-3 reports with the same parser type, sanitized only |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
@@ -587,6 +591,19 @@ Current examples:
 - `examples/jetsam-event.ips`
 - `examples/panic-full.ips`
 - `examples/analytics.txt`
+- `examples/coreanalytics.ips.ca.synced`
+- `examples/accessory-crash.ips`
+- `examples/cpu-resource.ips`
+- `examples/disk-writes-resource.ips`
+- `examples/stackshot-resource.ips`
+
+These 11 files map one-to-one to the supported parser families: App Crash,
+Legacy Crash, Watchdog, Jetsam, Panic, Generic Analytics, CoreAnalytics,
+AccessoryCrash, CPU Resource, Disk Writes Resource, and Stackshot Resource.
+
+Use the **Try an example** controls in the app to load them through the normal
+manifest and `parseInput()` workflow. The examples are compact, deterministic,
+fictional, sanitized, and separate from internal stress fixtures.
 
 After first successful service worker setup, these fictional examples are available offline. Test fixtures live separately in `tests/fixtures/` and should not be loaded by the production UI.
 
@@ -602,6 +619,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 8 Summary](PHASE_8_SUMMARY.md)
 - [Phase 9 Summary](PHASE_9_SUMMARY.md)
 - [Phase 11 Summary](PHASE_11_SUMMARY.md)
+- [Phase 15 Summary](PHASE_15_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -611,7 +629,11 @@ After first successful service worker setup, these fictional examples are availa
 - GitHub Pages does not provide custom security headers; stronger header CSP may require a future hosting option such as Cloudflare Pages.
 - No Cloudflare/header CSP deployment is configured yet.
 - No report persistence, recent files, or history.
-- No automated browser or mobile Safari test harness.
+- `tests/browserPerformanceHarness.html` provides a reusable browser performance
+  harness, and final v1.5.0 workflow QA passed in headless Chrome on Windows.
+  There is no dedicated automated Firefox, Safari, or Mobile Safari harness.
+- Native screen-reader software and every browser/operating-system combination
+  were not directly certified.
 - Offline support covers the app shell and fictional examples after first successful load; it does not make user reports persistent.
 - Clipboard behavior depends on browser permissions and secure-context rules.
 - Very large visible search results can still require substantial DOM rerendering.
@@ -663,6 +685,8 @@ After first successful service worker setup, these fictional examples are availa
 | v1.1.0 | Released | Multi-Report Comparison: deterministic, sanitized-only comparison of 2-3 compatible reports |
 | v1.2.0 | Released | Sanitized Visible Export for eligible single-report and comparison `.txt` output |
 | v1.3.0 | Released | Structured Sanitized Export for eligible single-report and comparison `.json` output |
+| v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
+| v1.5.0 | Ready for release review | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 
 The project keeps the same constraints:
 
@@ -733,7 +757,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.4.0` is released. Future parser families, additional export formats, and broader diagnostics remain separate roadmap work; no v1.5.0 implementation scope is approved.
+`v1.4.0` is released. v1.5.0 implementation is complete and remains unreleased pending explicit tag and GitHub Release approval. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future work.
 
 ## Screenshots / Demo
 
