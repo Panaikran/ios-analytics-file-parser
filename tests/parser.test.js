@@ -175,7 +175,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.4\.0-slice14e-coreanalytics-hardening-2026-07-12/, 'service worker cache version reflects the Slice 14E precached UI fix');
+assert.match(serviceWorkerText, /v1\.5\.0-slice15b-supported-examples-2026-07-12/, 'service worker cache version reflects the Slice 15B example precache update');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -296,18 +296,56 @@ assert.doesNotMatch(
 
 assert.deepEqual(
   EXAMPLE_REPORTS.map((example) => example.type),
-  ['ips', 'crash', 'ips-watchdog-stackshot', 'jetsam', 'panic', 'analytics'],
-  'production examples cover each supported file type once'
+  [
+    'ips',
+    'crash',
+    'ips-watchdog-stackshot',
+    'jetsam',
+    'panic',
+    'analytics',
+    'coreanalytics',
+    'accessory-crash',
+    'resource-cpu',
+    'resource-diskwrites',
+    'resource-stackshot',
+  ],
+  'production examples cover each supported file type exactly once'
 );
-assert.equal(new Set(EXAMPLE_REPORTS.map((example) => example.id)).size, 6, 'production example IDs are unique');
+assert.equal(new Set(EXAMPLE_REPORTS.map((example) => example.id)).size, 11, 'production example IDs are unique');
+assert.equal(new Set(EXAMPLE_REPORTS.map((example) => example.path)).size, 11, 'production example paths are unique');
+assert.equal(new Set(EXAMPLE_REPORTS.map((example) => example.label)).size, 11, 'production example labels are unique');
+assert.ok(EXAMPLE_REPORTS.every((example) => example.label.trim()), 'production example labels are nonblank');
+assert.equal(
+  EXAMPLE_REPORTS.slice(6).map((example) => example.path).join('|'),
+  [
+    './examples/coreanalytics.ips.ca.synced',
+    './examples/accessory-crash.ips',
+    './examples/cpu-resource.ips',
+    './examples/disk-writes-resource.ips',
+    './examples/stackshot-resource.ips',
+  ].join('|'),
+  'new production examples preserve deterministic supported-family ordering and approved paths'
+);
+assert.deepEqual(
+  EXAMPLE_REPORTS.filter((example) => example.type.startsWith('resource-') || example.type === 'coreanalytics' || example.type === 'accessory-crash')
+    .map((example) => example.type),
+  ['coreanalytics', 'accessory-crash', 'resource-cpu', 'resource-diskwrites', 'resource-stackshot'],
+  'manifest contains the five newly integrated supported resource and analytics families'
+);
+assert.ok(
+  EXAMPLE_REPORTS.every((example) => !/tests[\\/]fixtures/.test(example.path)),
+  'production manifest does not reference test fixtures'
+);
 for (const example of EXAMPLE_REPORTS) {
   assert.match(example.path, /^\.\/examples\//, 'production example files live in examples/');
   assert.doesNotMatch(example.path, /tests\/fixtures/, 'production UI does not load test fixtures');
   assert.match(example.sourceLabel, /^Example: /, 'production examples use explicit source labels');
+  assert.doesNotMatch(example.label, /\d{4}-\d{2}-\d{2}|UUID|[0-9A-F]{8}-[0-9A-F-]{27}/i, 'production example labels do not expose report-derived metadata');
 
   const exampleText = await readFile(new URL(`../${example.path.slice(2)}`, import.meta.url), 'utf8');
   assert.equal(detectFileType(exampleText), example.type, `${example.label} production example detects correctly`);
   assert.ok(parseInput(exampleText).length > 0, `${example.label} production example parses into sections`);
+  assert.match(serviceWorkerText, new RegExp(example.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${example.label} is explicitly precached`);
 }
 
 const NEW_PRODUCTION_EXAMPLE_CONTRACTS = [

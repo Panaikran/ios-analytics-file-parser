@@ -2,7 +2,7 @@ const CACHE_PREFIX = 'ios-analytics-parser-';
 // Developer checklist: if any precached asset changes, bump CACHE_VERSION.
 // Precached assets include index.html, styles/main.css, src modules, examples,
 // manifest, icons, and the service-worker allowlist itself.
-const CACHE_VERSION = 'v1.4.0-slice14e-coreanalytics-hardening-2026-07-12';
+const CACHE_VERSION = 'v1.5.0-slice15b-supported-examples-2026-07-12';
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -60,6 +60,11 @@ const PRECACHE_URLS = [
   './examples/jetsam-event.ips',
   './examples/panic-full.ips',
   './examples/analytics.txt',
+  './examples/coreanalytics.ips.ca.synced',
+  './examples/accessory-crash.ips',
+  './examples/cpu-resource.ips',
+  './examples/disk-writes-resource.ips',
+  './examples/stackshot-resource.ips',
 ];
 
 const ALLOWLIST_URLS = new Set(PRECACHE_URLS.map((path) => normalizeHref(new URL(path, self.location.href))));
