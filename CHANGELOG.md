@@ -1,6 +1,8 @@
 # Changelog
 
-## v1.4.0 — CoreAnalytics Investigation Workflow (Unreleased)
+## v1.4.0 — CoreAnalytics Investigation Workflow
+
+The `v1.4.0` release has been published.
 
 ### Added
 

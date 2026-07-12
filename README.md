@@ -22,9 +22,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.3.0` |
-| Active phase | `v1.4.0` CoreAnalytics Investigation Workflow |
-| Current focus | Implemented; ready for manual release review |
+| Latest released version | `v1.4.0` |
+| Active phase | `v1.5.0` planning only |
+| Current focus | v1.5.0 scope review |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -45,7 +45,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.1.0 | Released: Multi-Report Comparison |
 | v1.2.0 | Released: Sanitized Visible Export |
 | v1.3.0 | Released: Structured Sanitized Export |
-| v1.4.0 | Implemented: CoreAnalytics Investigation Workflow; unreleased |
+| v1.4.0 | Released: CoreAnalytics Investigation Workflow |
+| v1.5.0 | Planning only: scope not approved |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -53,7 +54,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.3.0` is the current stable release. The v1.4.0 CoreAnalytics Investigation Workflow is implemented and ready for manual release review, but it has not been tagged or published.
+`v1.4.0` is the current stable release. The CoreAnalytics Investigation Workflow has been tagged and published. v1.5.0 remains planning-only with no approved implementation scope.
 
 ## Why This Exists
 
@@ -732,7 +733,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.3.0` is released. The v1.4.0 CoreAnalytics Investigation Workflow is implemented and ready for manual release review, but remains unreleased. Future parser families, additional export formats, and broader diagnostics remain separate roadmap work; no v1.5.0 implementation scope is approved.
+`v1.4.0` is released. Future parser families, additional export formats, and broader diagnostics remain separate roadmap work; no v1.5.0 implementation scope is approved.
 
 ## Screenshots / Demo
 

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.3.0` released; `v1.4.0` implemented and ready for manual release review, unreleased
+Status: `v1.4.0` released; `v1.5.0` planning only
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -25,7 +25,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Multi-Report Comparison | Released | `v1.1.0` | Deterministic, sanitized-only comparison for 2-3 compatible supported reports |
 | Sanitized Visible Export | Released | `v1.2.0` | Local plain-text export of eligible sanitized visible single-report and comparison output |
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
-| CoreAnalytics Investigation Workflow | Implemented; ready for manual release review | `v1.4.0` (unreleased) | Interactive sanitized rendered/capped facets through the existing substring-search path |
+| CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
 | Next Milestone | Planning only | `v1.5.0` | Scope not approved |
 
 ## Project Constraints
@@ -581,9 +581,9 @@ Not included:
 - Export history, report persistence, uploads, cloud processing, analytics, or background export.
 - New parser families, parser redesign, comparison redesign, or v1.4.0 implementation work.
 
-## Active Roadmap: v1.4.0
+## Completed Roadmap: v1.4.0
 
-Status: implemented and ready for manual release review. `v1.4.0` remains unreleased.
+Status: released and published on GitHub.
 
 Theme: CoreAnalytics Investigation Workflow. The milestone makes existing sanitized and capped CoreAnalytics facet data easier to investigate without changing parser output, search semantics, comparison behavior, export contracts, or the local-first architecture.
 
@@ -601,6 +601,13 @@ The Slice 14A and 14B measurements did not demonstrate a user-visible performanc
 MetricKit remains deferred because its exact serialized legacy payload shape did not pass the authoritative fixture gate. It is not part of v1.4.0 support.
 
 No v1.5.0 implementation scope is approved.
+
+## Active Roadmap: v1.5.0
+
+Status: planning only. No implementation scope is approved.
+
+The next milestone requires a separate planning and review pass. Do not infer
+features from the deferred ideas below.
 
 ## Future Hardening And Exploratory Work
 
@@ -640,7 +647,7 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-After manual review and publication of v1.4.0, begin a separate v1.5.0 planning pass. No v1.5.0 implementation scope is approved by this roadmap.
+Continue v1.5.0 planning in a separate review pass. No v1.5.0 implementation scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

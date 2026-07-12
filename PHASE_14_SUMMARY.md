@@ -4,8 +4,7 @@
 
 `v1.4.0` - CoreAnalytics Investigation Workflow
 
-Status: implemented and ready for manual release review. The release remains
-unreleased until an explicit tag and GitHub Release are created.
+Status: released and officially published on GitHub.
 
 ## Objective
 
@@ -168,8 +167,8 @@ git diff --check
   contracts remain unchanged.
 - Browser QA and responsive checks passed in the available environment.
 - Documentation reflects implemented behavior and known limitations.
-- `v1.4.0` remains unreleased.
+- `v1.4.0` has been tagged and published on GitHub.
 - No `v1.5.0` implementation scope is approved.
 
-Remaining manual release work is review, followed by explicit tag creation and
-GitHub Release publication. No tag or release was created by Phase 14.
+The v1.4.0 release is complete. Future v1.5.0 work requires a separate planning
+and review pass.
