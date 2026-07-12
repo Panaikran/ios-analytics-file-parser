@@ -175,7 +175,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.4\.0-slice14c-coreanalytics-facet-contract-2026-07-12/, 'service worker cache version reflects the Slice 14C precached view-model change');
+assert.match(serviceWorkerText, /v1\.4\.0-slice14d-coreanalytics-investigation-ui-2026-07-12/, 'service worker cache version reflects the Slice 14D precached UI change');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -3362,6 +3362,9 @@ assert.equal(
 );
 assert.match(mainScriptText, /getCoreAnalyticsView/, 'main app computes the CoreAnalytics overview view model');
 assert.match(mainScriptText, /getCoreAnalyticsView\(activeSections\)/, 'CoreAnalytics overview uses active unfiltered report or comparison sections');
+assert.match(mainScriptText, /getCoreAnalyticsFacetOptions\(coreAnalyticsView\)/, 'main app derives facet controls from the Slice 14C contract');
+assert.match(mainScriptText, /searchInput\.dispatchEvent\(new Event\('input', \{ bubbles: true \}\)\)/, 'facet activation reuses the existing search input event path');
+assert.match(mainScriptText, /selectedCoreAnalyticsFacetQuery: searchQuery/, 'facet appearance is derived from the existing search query');
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
 assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
 assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
@@ -3370,6 +3373,7 @@ assert.match(mainScriptText, /Search and copy operate on rendered capped rows on
 assert.match(mainScriptText, /Some source records are not rendered\./, 'large rendered-row search wording is available in status text');
 assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
 assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
+assert.match(renderAppSource, /facetOptions:\s*options\.coreAnalyticsFacetOptions/, 'CoreAnalytics overview receives contract facet options from the app state path');
 assert.match(renderSectionText, /getCopyMetadata/, 'render path computes copy metadata for feedback');
 assert.match(renderSectionText, /copyFeedbackText\(copyMetadata\)/, 'copy success feedback is derived from copy metadata');
 assert.match(renderSectionText, /Copied visible section content\./, 'copy feedback reports full visible section copy');
@@ -3379,6 +3383,8 @@ assert.match(renderSectionText, /Search and copy operate on rendered capped rows
 assert.match(renderCoreAnalyticsOverviewSource, /Tables show rendered capped rows only\. Full raw JSON bodies are not rendered\./, 'CoreAnalytics overview explains rendered capped rows');
 assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rendered rows only\./, 'CoreAnalytics overview explains search and copy row boundaries');
 assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
+assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\(interactive \? 'button' : 'span'\)/, 'CoreAnalytics facet options render as native buttons when the contract is active');
+assert.match(renderCoreAnalyticsOverviewSource, /aria-pressed/, 'CoreAnalytics facet buttons expose selected appearance semantics');
 assert.doesNotMatch(
   renderCoreAnalyticsOverviewSource,
   /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
@@ -3390,6 +3396,8 @@ assert.doesNotMatch(
   'CoreAnalytics facet view model stays pure without DOM, search, serialization, parser, or source-text access'
 );
 assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
+assert.match(styleText, /\.coreanalytics-overview__chip\s*\{[^}]*min-height:\s*44px;/s, 'CoreAnalytics facet controls keep practical touch targets');
+assert.match(styleText, /\.coreanalytics-overview__chip:focus-visible/, 'CoreAnalytics facet controls expose visible focus styling');
 const plainCopySection = {
   id: 'plain-copy',
   title: 'Plain Copy',

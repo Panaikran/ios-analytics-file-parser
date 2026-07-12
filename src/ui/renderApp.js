@@ -9,6 +9,9 @@ export function renderStatus(element, message, tone = 'info') {
 export function renderSections(element, sections, options = {}) {
   const overview = renderCoreAnalyticsOverview(options.coreAnalyticsView, {
     searchActive: options.searchActive === true,
+    facetOptions: options.coreAnalyticsFacetOptions,
+    onSelectFacet: options.onSelectCoreAnalyticsFacet,
+    selectedFacetQuery: options.selectedCoreAnalyticsFacetQuery,
   });
   const sectionCards = sections.map((section) => renderSection(section, options));
   element.replaceChildren(...[overview, ...sectionCards].filter(Boolean));

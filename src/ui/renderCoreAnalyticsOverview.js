@@ -14,7 +14,10 @@ const FACET_LABELS = Object.freeze({
   sampling: 'Sampling Values',
 });
 
-export function renderCoreAnalyticsOverview(view, { searchActive = false } = {}) {
+export function renderCoreAnalyticsOverview(
+  view,
+  { searchActive = false, facetOptions = null, onSelectFacet = null, selectedFacetQuery = '' } = {}
+) {
   if (!view?.isCoreAnalytics) return null;
 
   const article = document.createElement('article');
@@ -31,6 +34,9 @@ export function renderCoreAnalyticsOverview(view, { searchActive = false } = {})
     searchNote.className = 'coreanalytics-overview__note';
     searchNote.textContent = 'Overview hidden while search is active.';
     article.append(searchNote);
+
+    if (!Array.isArray(facetOptions)) return article;
+    article.append(renderFacetGroups(view, { facetOptions, onSelectFacet, selectedFacetQuery }));
     return article;
   }
 
@@ -45,7 +51,7 @@ export function renderCoreAnalyticsOverview(view, { searchActive = false } = {})
   }
 
   article.append(renderTableCounts(view));
-  article.append(renderFacetGroups(view));
+  article.append(renderFacetGroups(view, { facetOptions, onSelectFacet, selectedFacetQuery }));
 
   const notes = createNotes(view);
   if (notes.length) {
@@ -132,7 +138,7 @@ function renderTableCount(label, table) {
   return card;
 }
 
-function renderFacetGroups(view) {
+function renderFacetGroups(view, { facetOptions = null, onSelectFacet = null, selectedFacetQuery = '' } = {}) {
   const wrapper = document.createElement('section');
   wrapper.className = 'coreanalytics-overview__facets';
   wrapper.setAttribute('aria-label', 'Rendered row facets');
@@ -142,8 +148,11 @@ function renderFacetGroups(view) {
   note.textContent = 'Facets are based on rendered rows only.';
   wrapper.append(note);
 
-  for (const [key, label] of Object.entries(FACET_LABELS)) {
-    const values = view.facets?.values?.[key] ?? [];
+  const groups = Array.isArray(facetOptions)
+    ? facetOptions.map((group) => ({ key: group.key, label: group.label, values: group.options }))
+    : Object.entries(FACET_LABELS).map(([key, label]) => ({ key, label, values: view.facets?.values?.[key] ?? [] }));
+
+  for (const { label, values } of groups) {
     if (!values.length) continue;
 
     const group = document.createElement('div');
@@ -155,10 +164,20 @@ function renderFacetGroups(view) {
     const chips = document.createElement('div');
     chips.className = 'coreanalytics-overview__chips';
 
-    for (const item of values.slice(0, 6)) {
-      const chip = document.createElement('span');
+    const renderedValues = Array.isArray(facetOptions) ? values : values.slice(0, 6);
+    for (const item of renderedValues) {
+      const interactive = Array.isArray(facetOptions) && typeof onSelectFacet === 'function';
+      const chip = document.createElement(interactive ? 'button' : 'span');
       chip.className = 'coreanalytics-overview__chip';
       chip.textContent = `${item.value} (${item.count})`;
+
+      if (interactive) {
+        chip.type = 'button';
+        chip.setAttribute('aria-label', `${label}: ${item.value}, ${item.count} occurrences`);
+        chip.setAttribute('aria-pressed', String(item.query === selectedFacetQuery));
+        chip.addEventListener('click', () => onSelectFacet(item));
+      }
+
       chips.append(chip);
     }
 

@@ -20,7 +20,7 @@ import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from './parsers/c
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
-import { getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
+import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
 import { renderSectionNav } from './ui/renderSectionNav.js';
 
@@ -83,6 +83,9 @@ function renderApp() {
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
   const searchResult = filterSectionsByQuery(activeSections, searchQuery);
   const coreAnalyticsView = getCoreAnalyticsView(activeSections);
+  const coreAnalyticsFacetOptions = !comparisonMode && appState.sanitize
+    ? getCoreAnalyticsFacetOptions(coreAnalyticsView)
+    : null;
   const searchMetadata = getSearchMetadata(searchResult, activeSections, { coreAnalyticsView });
   const visibleSections = searchResult.sections;
   const hasParsedSections = activeSections.length > 0;
@@ -110,6 +113,9 @@ function renderApp() {
     onToggleDenseTable: toggleDenseTable,
     allSections: activeSections,
     coreAnalyticsView,
+    coreAnalyticsFacetOptions,
+    onSelectCoreAnalyticsFacet: selectCoreAnalyticsFacet,
+    selectedCoreAnalyticsFacetQuery: searchQuery,
     searchActive: searchMetadata.searchActive,
   });
   emptyResults.hidden = !emptySearch;
@@ -490,6 +496,13 @@ function handleSearchInput() {
     searchQuery = searchInput.value;
     renderApp();
   }, 180);
+}
+
+function selectCoreAnalyticsFacet(option) {
+  if (typeof option?.query !== 'string' || !option.query.trim()) return;
+
+  searchInput.value = option.query;
+  searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function clearSearch() {

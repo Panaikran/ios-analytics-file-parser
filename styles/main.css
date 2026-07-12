@@ -783,14 +783,26 @@ textarea {
 .coreanalytics-overview__chip {
   max-width: 100%;
   min-width: 0;
+  min-height: 44px;
   border: 1px solid var(--surface-strong);
   border-radius: 999px;
   background: #111113;
   color: var(--text);
+  cursor: pointer;
+  font: inherit;
   padding: 6px 9px;
   line-height: 1.4;
+  text-align: left;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.coreanalytics-overview__chip:hover,
+.coreanalytics-overview__chip:focus-visible,
+.coreanalytics-overview__chip[aria-pressed="true"] {
+  border-color: rgba(48, 209, 88, 0.65);
+  outline: 2px solid rgba(48, 209, 88, 0.25);
+  outline-offset: 2px;
 }
 
 .coreanalytics-overview__notes ul {
