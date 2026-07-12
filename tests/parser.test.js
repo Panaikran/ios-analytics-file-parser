@@ -59,6 +59,13 @@ import {
   getDiagnosticExplanation,
 } from '../src/explanations/diagnosticExplanations.js';
 import { createComparisonSections, validateComparison } from '../src/comparison/comparisonModel.js';
+import {
+  createLargeCoreAnalyticsFixture,
+  createLargeStackshotFixture,
+  LARGE_CORE_ANALYTICS_EVENT_COUNT,
+  LARGE_CORE_ANALYTICS_GROUP_COUNT,
+  LARGE_STACKSHOT_PROCESS_COUNT,
+} from './fixtures/largeReportWorkloads.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
@@ -76,6 +83,7 @@ const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js',
 const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
 const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
 const comparisonModelSource = await readFile(new URL('../src/comparison/comparisonModel.js', import.meta.url), 'utf8');
+const largeWorkloadSource = await readFile(new URL('./fixtures/largeReportWorkloads.js', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -4332,6 +4340,158 @@ assert.equal(
   JSON.stringify(JSON.parse(serializeSectionsForJsonExport(threeReportComparison, { mode: 'comparison' }))),
   'three-report JSON comparison is deterministic'
 );
+
+const largeGeneratedCoreAnalyticsText = createLargeCoreAnalyticsFixture();
+const largeGeneratedStackshotText = createLargeStackshotFixture();
+const workloadPrivacyPattern = /(?:\/private\/var|\/var\/mobile|0x[0-9a-f]{8,}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|(?:[0-9a-f]{2}:){5}[0-9a-f]{2})/i;
+
+assert.equal(
+  largeGeneratedCoreAnalyticsText,
+  createLargeCoreAnalyticsFixture(),
+  'large CoreAnalytics workload generation is deterministic'
+);
+assert.equal(
+  largeGeneratedStackshotText,
+  createLargeStackshotFixture(),
+  'large Stackshot workload generation is deterministic'
+);
+assert.equal(
+  largeGeneratedCoreAnalyticsText.split(/\r?\n/).length,
+  LARGE_CORE_ANALYTICS_EVENT_COUNT + 2,
+  'large CoreAnalytics workload has the declared event count'
+);
+assert.equal(
+  JSON.parse(largeGeneratedStackshotText.split(/\r?\n/)[1]).processByPid &&
+    Object.keys(JSON.parse(largeGeneratedStackshotText.split(/\r?\n/)[1]).processByPid).length,
+  LARGE_STACKSHOT_PROCESS_COUNT,
+  'large Stackshot workload has the declared process count'
+);
+assert.ok(
+  Buffer.byteLength(largeGeneratedCoreAnalyticsText) >= 1_000_000 &&
+    Buffer.byteLength(largeGeneratedCoreAnalyticsText) <= 5_000_000,
+  'large CoreAnalytics workload stays inside the 1-5 MB target range'
+);
+assert.ok(
+  Buffer.byteLength(largeGeneratedStackshotText) >= 1_000_000 &&
+    Buffer.byteLength(largeGeneratedStackshotText) <= 5_000_000,
+  'large Stackshot workload stays inside the 1-5 MB target range'
+);
+assert.doesNotMatch(largeGeneratedCoreAnalyticsText, workloadPrivacyPattern, 'large CoreAnalytics workload contains no identifier-like privacy sentinels');
+assert.doesNotMatch(largeGeneratedStackshotText, workloadPrivacyPattern, 'large Stackshot workload contains no identifier-like privacy sentinels');
+assert.doesNotMatch(
+  largeWorkloadSource,
+  /Math\.random|Date\.now|crypto|fetch\(|localStorage|sessionStorage|indexedDB|createObjectURL|cache\.put/,
+  'large workload generator has no nondeterministic, browser, storage, or network behavior'
+);
+
+const generatedCoreSections = parseInput(largeGeneratedCoreAnalyticsText);
+const generatedCoreEventTypes = sectionById(generatedCoreSections, 'coreanalytics-event-types');
+const generatedCoreSampleRecords = sectionById(generatedCoreSections, 'coreanalytics-sample-records');
+assert.equal(
+  fieldValue(sectionById(generatedCoreSections, 'coreanalytics-record-overview'), 'Total event records'),
+  String(LARGE_CORE_ANALYTICS_EVENT_COUNT),
+  'large CoreAnalytics parsing preserves the generated source record count'
+);
+assert.equal(generatedCoreEventTypes.table.length, 100, 'large CoreAnalytics event groups keep the existing 100-row cap');
+assert.equal(generatedCoreSampleRecords.table.length, 100, 'large CoreAnalytics sample records keep the existing 100-row cap');
+assert.equal(
+  generatedCoreEventTypes.tableSummary,
+  `100 of ${LARGE_CORE_ANALYTICS_GROUP_COUNT} event groups shown`,
+  'large CoreAnalytics event-group summary reports visible and total rows'
+);
+assert.equal(
+  generatedCoreSampleRecords.tableSummary,
+  `100 of ${LARGE_CORE_ANALYTICS_EVENT_COUNT} event records shown`,
+  'large CoreAnalytics sample summary reports visible and total rows'
+);
+assert.deepEqual(
+  parseInput(largeGeneratedCoreAnalyticsText),
+  generatedCoreSections,
+  'large CoreAnalytics parser output is deterministic'
+);
+
+const generatedStackshotSections = parseInput(largeGeneratedStackshotText);
+const generatedStackshotTable = sectionById(generatedStackshotSections, 'resource-stackshot-top-processes');
+assert.equal(generatedStackshotTable.table.length, 100, 'large Stackshot output keeps the existing 100-row cap');
+assert.equal(
+  generatedStackshotTable.tableSummary,
+  `100 of ${LARGE_STACKSHOT_PROCESS_COUNT} processes shown`,
+  'large Stackshot summary reports visible and total process rows'
+);
+assert.deepEqual(
+  parseInput(largeGeneratedStackshotText),
+  generatedStackshotSections,
+  'large Stackshot parser output is deterministic'
+);
+
+const generatedCoreSearchHit = filterSectionsByQuery(generatedCoreSections, 'SyntheticMetricGroup-000');
+assert.ok(generatedCoreSearchHit.totalMatches > 0, 'large CoreAnalytics search finds rendered rows');
+assert.equal(
+  filterSectionsByQuery(generatedCoreSections, 'SyntheticMetricGroup-249').totalMatches,
+  0,
+  'large CoreAnalytics search does not scan capped-out source groups'
+);
+assert.equal(
+  filterSectionsByQuery(generatedStackshotSections, 'SyntheticStackProcess-04900').totalMatches,
+  0,
+  'large Stackshot search does not scan processes outside the rendered cap'
+);
+
+const generatedCoreVisibleSections = generatedCoreSections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: generatedCoreSections })
+);
+const generatedStackshotVisibleSections = generatedStackshotSections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: generatedStackshotSections })
+);
+const generatedCoreTextExport = serializeSectionsForExport(generatedCoreVisibleSections);
+const generatedCoreJsonExport = serializeSectionsForJsonExport(generatedCoreVisibleSections);
+const generatedStackshotTextExport = serializeSectionsForExport(generatedStackshotVisibleSections);
+const generatedStackshotJsonExport = serializeSectionsForJsonExport(generatedStackshotVisibleSections);
+assert.match(generatedCoreTextExport, /100 of 5000 event records shown/, 'large CoreAnalytics text export preserves visible-row summaries');
+assert.match(generatedCoreJsonExport, /100 of 5000 event records shown/, 'large CoreAnalytics JSON export preserves visible-row summaries');
+assert.match(generatedStackshotTextExport, /100 of 5000 processes shown/, 'large Stackshot text export preserves visible-row summaries');
+assert.match(generatedStackshotJsonExport, /100 of 5000 processes shown/, 'large Stackshot JSON export preserves visible-row summaries');
+assert.doesNotMatch(generatedCoreTextExport, /SyntheticMetricGroup-249/, 'large CoreAnalytics text export excludes capped-out groups');
+assert.doesNotMatch(generatedCoreJsonExport, /SyntheticMetricGroup-249/, 'large CoreAnalytics JSON export excludes capped-out groups');
+assert.doesNotMatch(generatedStackshotTextExport, /SyntheticStackProcess-04900/, 'large Stackshot text export excludes capped-out processes');
+assert.doesNotMatch(generatedStackshotJsonExport, /SyntheticStackProcess-04900/, 'large Stackshot JSON export excludes capped-out processes');
+
+const generatedCoreSnapshot = JSON.stringify(generatedCoreSections);
+const generatedCoreEntry = {
+  classification: { parserType: 'coreanalytics', supported: true },
+  sections: generatedCoreSections,
+};
+const generatedTwoReportComparison = createComparisonSections([generatedCoreEntry, generatedCoreEntry]);
+const generatedThreeReportComparison = createComparisonSections([
+  generatedCoreEntry,
+  generatedCoreEntry,
+  generatedCoreEntry,
+]);
+assert.deepEqual(
+  generatedTwoReportComparison,
+  createComparisonSections([generatedCoreEntry, generatedCoreEntry]),
+  'large two-report comparison output is deterministic'
+);
+assert.deepEqual(
+  generatedThreeReportComparison,
+  createComparisonSections([generatedCoreEntry, generatedCoreEntry, generatedCoreEntry]),
+  'large three-report comparison output is deterministic'
+);
+assert.equal(
+  serializeSectionsForJsonExport(generatedThreeReportComparison, { mode: 'comparison' }),
+  serializeSectionsForJsonExport(generatedThreeReportComparison, { mode: 'comparison' }),
+  'large comparison JSON export is deterministic'
+);
+assert.equal(JSON.stringify(generatedCoreSections), generatedCoreSnapshot, 'large comparison and export do not mutate parser output');
+
+for (let cycle = 0; cycle < 3; cycle += 1) {
+  const cycleSections = parseInput(largeGeneratedCoreAnalyticsText);
+  const cycleVisibleSections = filterSectionsByQuery(cycleSections, 'SyntheticMetricGroup-000').sections;
+  serializeSectionsForExport(cycleVisibleSections);
+  serializeSectionsForJsonExport(cycleVisibleSections);
+  createComparisonSections([generatedCoreEntry, generatedCoreEntry, generatedCoreEntry]);
+}
+assert.equal(JSON.stringify(generatedCoreSections), generatedCoreSnapshot, 'repeated large-report workflows preserve parser output');
 
 const inheritedField = Object.create({ label: 'Inherited Field', value: 'INHERITED-FIELD-SENTINEL' });
 const inheritedColumn = Object.create({ key: 'inherited', label: 'Inherited' });
