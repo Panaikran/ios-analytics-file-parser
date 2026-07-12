@@ -1,0 +1,5 @@
+{"bug_type":"211","timestamp":"2026-06-23 07:00:00.00 +0700","os_version":"DemoOS 27.0 (27A100)","roots_installed":0,"incident_id":"DEMO-CORE-INCIDENT"}
+{"_marker":"config","configDbVersion":"100","configUuid":"DEMO-CORE-CONFIG","sessionId":"DEMO-CORE-SESSION","rolloverReason":"scheduled"}
+{"aggregationPeriod":"daily","deviceId":"DEMO-CORE-DEVICE","message":"demo.launch","name":"launchCount","numDaysAggregated":1,"sampling":"100","uuid":"DEMO-CORE-EVENT"}
+{"aggregationPeriod":"weekly","deviceId":"DEMO-CORE-DEVICE","message":"demo.network","name":"networkCount","numDaysAggregated":7,"sampling":"25","uuid":"DEMO-CORE-EVENT-2"}
+{"_marker":"end"}

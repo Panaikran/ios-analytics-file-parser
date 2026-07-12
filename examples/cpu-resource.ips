@@ -1,0 +1,15 @@
+{"bug_type":"202","timestamp":"2026-06-28 10:00:00 +0000","os_version":"DemoOS 27.0 (27A100)","device_model":"DemoPhone","incident_id":"DEMO-CPU-INCIDENT"}
+Date/Time: 2026-06-28 10:00:01 +0000
+OS Version: DemoOS 27.0 (27A100)
+Process: DemoCPUApp [123]
+Bundle ID: com.example.demo-cpu
+Action taken: none
+CPU limit: 80%
+CPU used: 94%
+CPU duration: 182 seconds
+CPU time: 88.2 seconds
+Thread Count: 12
+Window: 60 seconds
+Threshold: 80%
+Limit Status: exceeded
+Reason: demo CPU usage exceeded

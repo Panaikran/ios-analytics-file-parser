@@ -310,6 +310,123 @@ for (const example of EXAMPLE_REPORTS) {
   assert.ok(parseInput(exampleText).length > 0, `${example.label} production example parses into sections`);
 }
 
+const NEW_PRODUCTION_EXAMPLE_CONTRACTS = [
+  {
+    label: 'CoreAnalytics',
+    path: './examples/coreanalytics.ips.ca.synced',
+    type: 'coreanalytics',
+    sectionIds: [
+      'coreanalytics-summary',
+      'coreanalytics-configuration',
+      'coreanalytics-record-overview',
+      'coreanalytics-event-types',
+      'coreanalytics-sample-records',
+      'coreanalytics-parser-notes',
+    ],
+    expectedFields: [
+      ['coreanalytics-summary', 'Bug Type', '211'],
+      ['coreanalytics-summary', 'Incident ID', '[identifier redacted]'],
+    ],
+    expectedRow: ['coreanalytics-event-types', 'message', 'demo.launch'],
+  },
+  {
+    label: 'AccessoryCrash',
+    path: './examples/accessory-crash.ips',
+    type: 'accessory-crash',
+    sectionIds: [
+      'accessory-crash-summary',
+      EXPLANATION_SECTION_ID,
+      'accessory-information',
+      'accessory-crashlog-overview',
+      'accessory-panic-fault-notes',
+      'accessory-crash-parser-notes',
+    ],
+    expectedFields: [
+      ['accessory-crash-summary', 'Bug Type', '305'],
+      ['accessory-crash-summary', 'Device', 'DemoPhone'],
+    ],
+    expectedRow: ['accessory-crashlog-overview', 'process', 'DemoAccessoryHost'],
+  },
+  {
+    label: 'CPU Resource',
+    path: './examples/cpu-resource.ips',
+    type: 'resource-cpu',
+    sectionIds: [
+      'resource-cpu-summary',
+      EXPLANATION_SECTION_ID,
+      'resource-cpu-process-info',
+      'resource-cpu-usage',
+      'resource-cpu-limits',
+      'resource-cpu-parser-notes',
+    ],
+    expectedFields: [
+      ['resource-cpu-summary', 'Bug Type', '202'],
+      ['resource-cpu-usage', 'CPU Used', '94%'],
+    ],
+  },
+  {
+    label: 'Disk Writes Resource',
+    path: './examples/disk-writes-resource.ips',
+    type: 'resource-diskwrites',
+    sectionIds: [
+      'resource-diskwrites-summary',
+      EXPLANATION_SECTION_ID,
+      'resource-diskwrites-process-info',
+      'resource-diskwrites-usage',
+      'resource-diskwrites-limits',
+      'resource-diskwrites-parser-notes',
+    ],
+    expectedFields: [
+      ['resource-diskwrites-summary', 'Bug Type', '142'],
+      ['resource-diskwrites-usage', 'Logical Writes', '128 MB'],
+    ],
+  },
+  {
+    label: 'Stackshot Resource',
+    path: './examples/stackshot-resource.ips',
+    type: 'resource-stackshot',
+    sectionIds: [
+      'resource-stackshot-summary',
+      EXPLANATION_SECTION_ID,
+      'resource-stackshot-trigger-reason',
+      'resource-stackshot-process-overview',
+      'resource-stackshot-top-processes',
+      'resource-stackshot-parser-notes',
+    ],
+    expectedFields: [
+      ['resource-stackshot-summary', 'Bug Type', '288'],
+      ['resource-stackshot-summary', 'Process Count', '2'],
+    ],
+    expectedRow: ['resource-stackshot-top-processes', 'process', 'DemoForegroundApp'],
+  },
+];
+const forbiddenProductionExamplePattern =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{2}(?::[0-9a-f]{2}){5}|(?:C:\\Users\\|\/Users\/|\/private\/var\/|\/var\/mobile\/|file:\/\/\/)|\b0x[0-9a-f]{8,}\b|\b[^\s@]+@[^\s@]+\.[^\s@]+/i;
+
+for (const example of NEW_PRODUCTION_EXAMPLE_CONTRACTS) {
+  assert.match(example.path, /^\.\/examples\//, `${example.label} example stays under examples/`);
+  assert.doesNotMatch(example.path, /tests[\\/]fixtures/, `${example.label} example does not reference test fixtures`);
+
+  const exampleText = await readFile(new URL(`../${example.path.slice(2)}`, import.meta.url), 'utf8');
+  assert.ok(Buffer.byteLength(exampleText, 'utf8') <= 12 * 1024, `${example.label} example stays within bundled example size budget`);
+  assert.doesNotMatch(exampleText, forbiddenProductionExamplePattern, `${example.label} source contains no identifier/path/address sentinels`);
+
+  const sections = parseInput(exampleText);
+  assert.equal(detectFileType(exampleText), example.type, `${example.label} example detects as its intended parser type`);
+  assert.deepEqual(sections.map((section) => section.id), example.sectionIds, `${example.label} example returns expected sanitized sections`);
+  for (const [sectionId, label, value] of example.expectedFields) {
+    assert.equal(fieldValue(sectionById(sections, sectionId), label), value, `${example.label} exposes expected sanitized ${label}`);
+  }
+  if (example.expectedRow) {
+    const [sectionId, key, value] = example.expectedRow;
+    assert.equal(sectionById(sections, sectionId).table[0][key], value, `${example.label} exposes expected sanitized table data`);
+  }
+  assert.doesNotMatch(JSON.stringify(sections), forbiddenProductionExamplePattern, `${example.label} sanitized sections contain no forbidden sentinels`);
+  const outputSnapshot = JSON.stringify(sections);
+  assert.deepEqual(parseInput(exampleText), sections, `${example.label} parsing is deterministic`);
+  assert.equal(JSON.stringify(sections), outputSnapshot, `${example.label} parsed output remains unchanged after repeated parsing`);
+}
+
 function mockFile(name, type = '', size = 1024) {
   return { name, type, size };
 }

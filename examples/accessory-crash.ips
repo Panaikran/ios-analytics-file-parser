@@ -1,0 +1,2 @@
+{"bug_type":"305","timestamp":"2026-06-28 10:00:00 +0000","os_version":"DemoOS 27.0 (27A100)","device_model":"DemoPhone","incident_id":"DEMO-ACCESSORY-INCIDENT"}
+{"bug_type":"305","accessory_type":"demo-audio","accessory_os_train":"DemoAccessoryOS","accessory_os_version":"1.0","accessory_pid":42,"crashlogs":[{"process":"DemoAccessoryHost","type":"demo-reset","reason":"demo accessory reset","timestamp":"2026-06-28 10:00:01 +0000","frames":[{"symbol":"demoFrame"}]}],"faultReason":"demo transport condition"}
