@@ -7,16 +7,25 @@ export function filterSectionsByQuery(sections, query) {
       query: '',
       totalMatches: 0,
       sections,
+      navigationTargets: [],
     };
   }
 
   let totalMatches = 0;
   const filteredSections = [];
+  const navigationTargets = [];
 
   for (const section of sections) {
     const result = filterSection(section, normalizedQuery);
     totalMatches += result.matchCount;
-    if (result.matchCount > 0) filteredSections.push(result.section);
+    if (result.matchCount > 0) {
+      filteredSections.push(result.section);
+      navigationTargets.push({
+        id: section.id,
+        title: section.title,
+        position: navigationTargets.length,
+      });
+    }
   }
 
   return {
@@ -24,6 +33,7 @@ export function filterSectionsByQuery(sections, query) {
     query: normalizedQuery,
     totalMatches,
     sections: filteredSections,
+    navigationTargets,
   };
 }
 

@@ -478,6 +478,57 @@ function workflowVisibleSections(sections, query = '') {
   };
 }
 
+const navigationContractSections = [
+  {
+    id: 'navigation-first',
+    title: 'First visible section',
+    fields: [{ label: 'Category', value: 'shared-visible-value' }],
+    raw: 'explanation-only match',
+    table: [{ value: 'shared-visible-value' }, { value: 'other-visible-value' }],
+  },
+  {
+    id: 'navigation-second',
+    title: 'Second visible section',
+    fields: [{ label: 'Other field', value: 'second-only-value' }],
+    table: [{ value: 'shared-visible-value' }],
+  },
+];
+const navigationInputSnapshot = JSON.stringify(navigationContractSections);
+const sharedNavigationSearch = filterSectionsByQuery(navigationContractSections, 'shared-visible-value');
+assert.deepEqual(
+  sharedNavigationSearch.navigationTargets,
+  [
+    { id: 'navigation-first', title: 'First visible section', position: 0 },
+    { id: 'navigation-second', title: 'Second visible section', position: 1 },
+  ],
+  'search exposes one ordered target per matching section'
+);
+assert.equal(
+  sharedNavigationSearch.navigationTargets.length,
+  new Set(sharedNavigationSearch.navigationTargets.map((target) => target.id)).size,
+  'multiple matches in one section do not create duplicate navigation targets'
+);
+assert.deepEqual(
+  filterSectionsByQuery(navigationContractSections, 'explanation-only match').navigationTargets,
+  [{ id: 'navigation-first', title: 'First visible section', position: 0 }],
+  'explanation matches use the existing section-level search decision'
+);
+const noNavigationMatches = filterSectionsByQuery(navigationContractSections, 'not-visible');
+assert.deepEqual(noNavigationMatches.navigationTargets, [], 'no-result search exposes no navigation targets');
+const inactiveNavigationSearch = filterSectionsByQuery(navigationContractSections, '   ');
+assert.deepEqual(inactiveNavigationSearch.navigationTargets, [], 'inactive search exposes no navigation targets');
+assert.equal(inactiveNavigationSearch.sections, navigationContractSections, 'inactive search keeps the existing section reference');
+assert.equal(
+  JSON.stringify(navigationContractSections),
+  navigationInputSnapshot,
+  'navigation target derivation does not mutate input sections'
+);
+assert.notEqual(
+  sharedNavigationSearch.navigationTargets[0],
+  sharedNavigationSearch.sections[0],
+  'navigation targets do not expose filtered section object references'
+);
+
 const productionExampleByType = new Map(parsedProductionExamples.map((run) => [run.example.type, run]));
 for (const run of parsedProductionExamples) {
   const broadQuery = run.sections[0]?.title.split(/\s+/)[0] ?? run.example.type;
@@ -560,6 +611,12 @@ assert.deepEqual(
   filterSectionsByQuery(coreAnalyticsProductionRun.sections, productionFacet.query).sections,
   filterSectionsByQuery(coreAnalyticsProductionRun.sections, productionFacet.value).sections,
   'production CoreAnalytics facet activation preserves ordinary substring search'
+);
+const productionFacetSearch = filterSectionsByQuery(coreAnalyticsProductionRun.sections, productionFacet.query);
+assert.deepEqual(
+  productionFacetSearch.navigationTargets.map((target) => target.id),
+  productionFacetSearch.sections.map((section) => section.id),
+  'CoreAnalytics facet searches expose targets in filtered section order'
 );
 
 function comparisonEntryForExample(run) {
@@ -2058,6 +2115,11 @@ assert.deepEqual(
   'explanation-only search returns the explanation section'
 );
 assert.equal(cpuExplanationSearch.totalMatches, 1, 'explanation-only search counts explanation text matches');
+assert.deepEqual(
+  cpuExplanationSearch.navigationTargets,
+  [{ id: EXPLANATION_SECTION_ID, title: cpuExplanationSearch.sections[0].title, position: 0 }],
+  'explanation-only search exposes one section-level navigation target'
+);
 const cpuNormalSearch = filterSectionsByQuery(cpuRoutedSections, 'DemoCPUApp');
 assert.ok(sectionById(cpuNormalSearch.sections, 'resource-cpu-process-info'), 'normal parser-section search still returns process info');
 assert.equal(sectionById(cpuNormalSearch.sections, EXPLANATION_SECTION_ID), undefined, 'normal parser-section search filters out unrelated explanation text');
@@ -2603,9 +2665,17 @@ assert.equal(
   0,
   'Stackshot search cannot find process rows outside the rendered top-process cap'
 );
-assert.ok(
-  filterSectionsByQuery(largeRoutedStackshotSections, 'LargeStackProcess149').totalMatches > 0,
-  'Stackshot search can find rendered capped top-process rows'
+const largeStackshotSearch = filterSectionsByQuery(largeRoutedStackshotSections, 'LargeStackProcess149');
+assert.ok(largeStackshotSearch.totalMatches > 0, 'Stackshot search can find rendered capped top-process rows');
+assert.deepEqual(
+  largeStackshotSearch.navigationTargets.map((target) => target.id),
+  ['resource-stackshot-top-processes'],
+  'Stackshot search exposes one target for the matching visible capped table'
+);
+assert.deepEqual(
+  filterSectionsByQuery(largeRoutedStackshotSections, 'LargeStackProcess0').navigationTargets,
+  [],
+  'Stackshot rows outside the rendered cap do not create navigation targets'
 );
 const largeStackshotCopyText = serializeSectionsForCopy(largeRoutedStackshotSections);
 assert.doesNotMatch(
@@ -4278,6 +4348,7 @@ const cappedCoreAnalyticsSentinel = 'SyntheticMetricGroup-249';
 const cappedCoreAnalyticsSearch = filterSectionsByQuery(largeCoreAnalyticsSections, cappedCoreAnalyticsSentinel);
 const cappedCoreAnalyticsVisibleSections = cappedCoreAnalyticsSearch.sections.map((section) => getVisibleSectionForCopy(section));
 assert.equal(cappedCoreAnalyticsSearch.totalMatches, 0, 'capped-out CoreAnalytics values are not searchable');
+assert.deepEqual(cappedCoreAnalyticsSearch.navigationTargets, [], 'capped-out CoreAnalytics values do not create navigation targets');
 assert.doesNotMatch(serializeSectionsForExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from text export');
 assert.doesNotMatch(serializeSectionsForJsonExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from JSON export');
 assert.doesNotMatch(serializeSectionsForCopy(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from copy output');
@@ -4532,6 +4603,11 @@ assert.deepEqual(
   comparisonSearch.sections.map((section) => section.id),
   ['comparison-report-summaries', 'comparison-differences'],
   'existing search filters generated comparison sections without a comparison-specific engine'
+);
+assert.deepEqual(
+  comparisonSearch.navigationTargets.map((target) => target.id),
+  comparisonSearch.sections.map((section) => section.id),
+  'comparison search targets follow existing comparison section order'
 );
 const comparisonCopy = serializeSectionForCopy(sectionById(twoReportComparison, 'comparison-differences'));
 assert.match(comparisonCopy, /Report 1\tReport 2/, 'existing copy serializes comparison report columns as plain text');
