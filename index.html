@@ -100,6 +100,14 @@
             <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text" aria-describedby="search-count">
           </label>
           <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
+          <div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>
+            <span id="search-navigation-label" class="search-navigation__label">Search result navigation</span>
+            <div class="search-navigation__controls">
+              <button id="search-previous" class="search-navigation__button" type="button" aria-label="Previous matching section" aria-disabled="true" disabled>Previous</button>
+              <span id="search-position" class="search-navigation__position">Search navigation inactive.</span>
+              <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
+            </div>
+          </div>
           <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
         </div>
         <div id="export-panel" class="export-panel" hidden>

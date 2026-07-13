@@ -44,6 +44,10 @@ const comparisonStatus = document.querySelector('#comparison-status');
 const searchPanel = document.querySelector('#search-panel');
 const searchInput = document.querySelector('#result-search');
 const clearSearchButton = document.querySelector('#clear-search');
+const searchNavigationElement = document.querySelector('#search-navigation');
+const searchNavigationPreviousButton = document.querySelector('#search-previous');
+const searchNavigationNextButton = document.querySelector('#search-next');
+const searchNavigationPosition = document.querySelector('#search-position');
 const searchCount = document.querySelector('#search-count');
 const exportPanel = document.querySelector('#export-panel');
 const downloadVisibleExportButton = document.querySelector('#download-visible-export');
@@ -66,6 +70,9 @@ let comparisonMode = false;
 let comparisonMessage = 'No reports added.';
 let searchQuery = '';
 let searchTimer = null;
+let searchNavigationTargets = [];
+let activeNavigationIndex = -1;
+let navigationQuery = '';
 let denseTableState = createInitialDenseTableState();
 let lastOfflineStatusKey = '';
 let waitingServiceWorker = null;
@@ -92,6 +99,7 @@ function renderApp() {
   const hasParsedSections = activeSections.length > 0;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
   const eligibleExportSections = getEligibleExportSections(activeSections, visibleSections);
+  reconcileSearchNavigationState(searchResult.navigationTargets, searchResult.active && (appState.sanitize || comparisonMode));
 
   inputPanel.hidden = comparisonMode;
   renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
@@ -279,6 +287,7 @@ function exitComparisonMode() {
 
 function showParsedReport(text, sourceLabel) {
   exitComparisonMode();
+  clearSearchState();
   const sourceText = String(text ?? '');
   const classification = classifyDiagnostic(sourceText);
   const detectedType = classification.legacyType;
@@ -359,6 +368,12 @@ function resetDenseTableState() {
   denseTableState = createInitialDenseTableState();
 }
 
+function resetSearchNavigationState() {
+  searchNavigationTargets = [];
+  activeNavigationIndex = -1;
+  navigationQuery = '';
+}
+
 function clearSearchState() {
   searchQuery = '';
   if (searchTimer) {
@@ -366,6 +381,7 @@ function clearSearchState() {
     searchTimer = null;
   }
   searchInput.value = '';
+  resetSearchNavigationState();
 }
 
 function renderSearchControls(searchMetadata, hasParsedSections) {
@@ -374,10 +390,102 @@ function renderSearchControls(searchMetadata, hasParsedSections) {
 
   if (!hasParsedSections || !searchMetadata.searchActive) {
     searchCount.textContent = 'Search inactive.';
+    updateSearchNavigationControls(false);
     return;
   }
 
   searchCount.textContent = searchStatusText(searchMetadata);
+  const showSearchNavigation = searchNavigationTargets.length > 0 && (appState.sanitize || comparisonMode);
+  updateSearchNavigationControls(showSearchNavigation);
+}
+
+function reconcileSearchNavigationState(targets, navigationEligible) {
+  const nextTargets = navigationEligible && Array.isArray(targets) ? targets : [];
+  const targetListChanged = !sameNavigationTargets(searchNavigationTargets, nextTargets);
+  const queryChanged = navigationQuery !== searchQuery;
+
+  if (!nextTargets.length) {
+    searchNavigationTargets = [];
+    activeNavigationIndex = -1;
+    navigationQuery = searchQuery;
+    return;
+  }
+
+  if (targetListChanged || queryChanged || activeNavigationIndex < 0 || activeNavigationIndex >= nextTargets.length) {
+    activeNavigationIndex = 0;
+  }
+
+  searchNavigationTargets = nextTargets;
+  navigationQuery = searchQuery;
+}
+
+function sameNavigationTargets(left, right) {
+  if (left.length !== right.length) return false;
+
+  return left.every((target, index) => {
+    const nextTarget = right[index];
+    return target.id === nextTarget.id && target.title === nextTarget.title && target.position === nextTarget.position;
+  });
+}
+
+function updateSearchNavigationControls(showSearchNavigation) {
+  searchNavigationElement.hidden = !showSearchNavigation;
+  if (!showSearchNavigation) {
+    searchNavigationPreviousButton.disabled = true;
+    searchNavigationNextButton.disabled = true;
+    searchNavigationPreviousButton.setAttribute('aria-disabled', 'true');
+    searchNavigationNextButton.setAttribute('aria-disabled', 'true');
+    searchNavigationPosition.textContent = 'Search navigation inactive.';
+    return;
+  }
+
+  const previousDisabled = activeNavigationIndex <= 0;
+  const nextDisabled = activeNavigationIndex >= searchNavigationTargets.length - 1;
+  searchNavigationPreviousButton.disabled = false;
+  searchNavigationNextButton.disabled = false;
+  searchNavigationPreviousButton.setAttribute('aria-disabled', String(previousDisabled));
+  searchNavigationNextButton.setAttribute('aria-disabled', String(nextDisabled));
+  searchNavigationPosition.textContent = `Match ${activeNavigationIndex + 1} of ${searchNavigationTargets.length} ${
+    searchNavigationTargets.length === 1 ? 'section' : 'sections'
+  }`;
+}
+
+function navigateSearchResult(direction) {
+  if (!searchNavigationTargets.length) return;
+
+  const navigationButton = document.activeElement?.id === 'search-previous' || document.activeElement?.id === 'search-next'
+    ? document.activeElement
+    : null;
+  if (navigationButton?.getAttribute('aria-disabled') === 'true') return;
+
+  const nextIndex = activeNavigationIndex + direction;
+  if (nextIndex < 0 || nextIndex > searchNavigationTargets.length - 1) return;
+
+  const target = searchNavigationTargets[nextIndex];
+  const targetElement = document.getElementById(target.id);
+  activeNavigationIndex = nextIndex;
+  updateSearchNavigationControls(true);
+
+  if (!targetElement) {
+    const sectionLabel = searchNavigationTargets.length === 1 ? 'section' : 'sections';
+    renderStatus(
+      statusElement,
+      `Could not show match ${activeNavigationIndex + 1} of ${searchNavigationTargets.length} ${sectionLabel}: section unavailable.`,
+      comparisonMode ? 'info' : appState.statusTone
+    );
+    navigationButton?.focus();
+    return;
+  }
+
+  targetElement.scrollIntoView({ block: 'start' });
+  renderStatus(
+    statusElement,
+    `Showing match ${activeNavigationIndex + 1} of ${searchNavigationTargets.length} ${
+      searchNavigationTargets.length === 1 ? 'section' : 'sections'
+    }: ${target.title}`,
+    comparisonMode ? 'info' : appState.statusTone
+  );
+  navigationButton?.focus();
 }
 
 function statusMessageForSearch(searchMetadata) {
@@ -498,6 +606,7 @@ function handleSearchInput() {
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     searchQuery = searchInput.value;
+    resetSearchNavigationState();
     renderApp();
   }, 180);
 }
@@ -594,6 +703,8 @@ fileInput.addEventListener('change', async (event) => {
 parsePasteButton.addEventListener('click', parsePastedText);
 searchInput.addEventListener('input', handleSearchInput);
 clearSearchButton.addEventListener('click', clearSearch);
+searchNavigationPreviousButton.addEventListener('click', () => navigateSearchResult(-1));
+searchNavigationNextButton.addEventListener('click', () => navigateSearchResult(1));
 downloadVisibleExportButton.addEventListener('click', downloadVisibleExport);
 downloadVisibleJsonButton.addEventListener('click', downloadVisibleJson);
 
