@@ -555,6 +555,33 @@ for (const run of parsedProductionExamples) {
     narrowSearch.searchResult.sections.map((section) => section.id),
     `${run.example.label} navigation follows the visible filtered section order`
   );
+  assert.deepEqual(
+    narrowSearch.searchResult.navigationTargets.map((target) => target.id),
+    narrowSearch.searchResult.sections.map((section) => section.id),
+    `${run.example.label} search navigation targets follow filtered section order`
+  );
+  assert.deepEqual(
+    narrowSearch.searchResult.navigationTargets.map((target) => target.position),
+    narrowSearch.searchResult.navigationTargets.map((_, index) => index),
+    `${run.example.label} search navigation positions are deterministic`
+  );
+  assert.equal(
+    new Set(narrowSearch.searchResult.navigationTargets.map((target) => target.id)).size,
+    narrowSearch.searchResult.navigationTargets.length,
+    `${run.example.label} search navigation has no duplicate section targets`
+  );
+  for (const target of narrowSearch.searchResult.navigationTargets) {
+    assert.deepEqual(
+      Object.keys(target).sort(),
+      ['id', 'position', 'title'],
+      `${run.example.label} navigation target contains only approved metadata`
+    );
+  }
+  assert.doesNotMatch(
+    JSON.stringify(narrowSearch.searchResult.navigationTargets),
+    forbiddenProductionExamplePattern,
+    `${run.example.label} navigation metadata contains no private-looking values`
+  );
 
   const copy = narrowSearch.visibleSections.map(serializeSectionForCopy).join('\n\n---\n\n');
   const textExport = serializeSectionsForExport(narrowSearch.visibleSections);
@@ -3777,6 +3804,22 @@ assert.match(mainScriptText, /appState\.sanitize \|\| comparisonMode/, 'Raw Loca
 assert.match(mainScriptText, /searchNavigationTargets = \[\];[^]*activeNavigationIndex = -1/, 'search navigation state clears with search reset');
 assert.match(mainScriptText, /searchNavigationPreviousButton\.addEventListener\('click', \(\) => navigateSearchResult\(-1\)\)/, 'Previous uses the shared navigation movement handler');
 assert.match(mainScriptText, /searchNavigationNextButton\.addEventListener\('click', \(\) => navigateSearchResult\(1\)\)/, 'Next uses the shared navigation movement handler');
+const navigationHandlerSource = mainScriptText.match(/function navigateSearchResult\(direction\) \{[^]*?\n\}/)?.[0] ?? '';
+assert.doesNotMatch(
+  navigationHandlerSource,
+  /filterSectionsByQuery|serializeSections|serializeSection|sourceText|raw|table|row/,
+  'navigation movement does not create a second search or export pipeline'
+);
+assert.equal(
+  (mainScriptText.match(/searchNavigationPreviousButton\.addEventListener\(/g) ?? []).length,
+  1,
+  'Previous has one event listener'
+);
+assert.equal(
+  (mainScriptText.match(/searchNavigationNextButton\.addEventListener\(/g) ?? []).length,
+  1,
+  'Next has one event listener'
+);
 assert.match(mainScriptText, /statusMessageForSearch\(searchMetadata\)/, 'search status text is derived from metadata');
 assert.match(mainScriptText, /Search and copy operate on rendered capped rows only\./, 'CoreAnalytics capped search wording is available in status text');
 assert.match(mainScriptText, /Some source records are not rendered\./, 'large rendered-row search wording is available in status text');
