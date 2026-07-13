@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.5.0` released and fully closed; `v1.6.0` planning only
+Status: `v1.5.0` released and fully closed; `v1.6.0` implementation complete and ready for release review, not released
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -27,7 +27,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
-| Next Milestone | Planning only | `v1.6.0` | Scope not approved |
+| Search Result Navigation | Implemented, release review pending | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
+| Next Milestone | Planning only | `v1.7.0` | No implementation scope approved |
 
 ## Project Constraints
 
@@ -630,14 +631,41 @@ families. The completed browser QA covered Chrome system channel
 service-worker precache allowlist.
 
 The 11-family catalog and v1.5.0 implementation are complete. No v1.5.0
-implementation tasks remain, and no v1.6.0 implementation scope is approved.
+implementation tasks remain.
 
-## Active Roadmap: v1.6.0
+## Completed Roadmap: v1.6.0
 
-Status: planning only. No implementation scope is approved.
+Status: implementation complete and ready for release review. The `v1.6.0`
+tag and GitHub Release do not exist yet.
 
-The next milestone requires a separate planning and review pass. Do not infer
-features from deferred ideas or historical exploratory notes.
+Theme: Search Result Navigation. The milestone adds ordered section-level
+navigation metadata and accessible Previous/Next controls while preserving the
+existing substring-search, sanitized SectionModel, export, comparison, and
+local-first contracts.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 16A | Complete | Additive `navigationTargets` contract from filtered sanitized sections |
+| Slice 16B | Complete | Accessible non-wrapping Previous/Next controls, current-position status, stable-anchor scrolling, and focus retention |
+| Slice 16C | Complete | Privacy, workflow, comparison, Raw Local View, accessibility, offline, and regression hardening |
+| Slice 16D | Complete | Documentation, final validation, browser QA, and release-readiness preparation |
+
+The navigation target contract represents one visible matching sanitized
+section, preserves rendered order, and exposes only `id`, `title`, and
+`position`. Navigation does not wrap, does not scan the DOM or raw input, and
+does not change filtered content, copy, text export, JSON export, or comparison
+semantics.
+
+QA covered all 11 bundled parser families, CoreAnalytics facets, comparison,
+Raw Local View, clear/reset workflows, responsive widths, accessibility
+contracts, offline search/navigation, and 20 repeated browser cycles. The
+known Node and Chrome budgets passed. Safari, Firefox, Mobile Safari, physical
+devices, native screen readers, and browser heap snapshots were not directly
+validated.
+
+MetricKit remains deferred pending an authoritative serialized fixture
+contract. Speculative performance optimization remains deferred while the
+established budgets pass.
 
 ## Future Hardening And Exploratory Work
 
@@ -658,7 +686,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, and `PHASE_15_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, and `PHASE_16_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -677,13 +705,14 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Continue v1.6.0 planning in a separate review pass. No v1.6.0 implementation
-scope is approved by this roadmap.
+Continue with v1.7.0 planning in a separate review pass. No v1.7.0
+implementation scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
 - Preserve the released v1.3.0 JSON schema and export boundaries.
 - Preserve the completed v1.5.0 example catalog, privacy fix, and offline QA evidence.
+- Preserve the completed v1.6.0 search-navigation contract, accessibility behavior, and QA evidence.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

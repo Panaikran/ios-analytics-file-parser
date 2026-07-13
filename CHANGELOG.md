@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.6.0 — Search Result Navigation
+
+Status: implementation complete; release review pending. This entry remains
+unreleased until an explicit tag and GitHub Release are approved.
+
+### Added
+
+- Additive section-level `navigationTargets` metadata from the existing filtered sanitized sections.
+- Accessible Previous and Next controls with deterministic order, current-position status, stable-anchor movement, focus retention, and non-wrapping boundary behavior.
+- Reset behavior across search, CoreAnalytics facets, report changes, comparison, Raw Local View, Clear Search, and Clear Report workflows.
+- Expanded all-family search-navigation regression coverage, including privacy, accessibility, responsive, offline, and repeated-workflow checks.
+
+### Verified
+
+- Navigation uses the existing substring-search path and visible sanitized sections only; it does not add highlighting, row-level movement, field-level movement, occurrence-level movement, DOM scraping, or a second search pipeline.
+- Search, copy, text export, structured JSON export, comparison, and parser semantics remain unchanged.
+- Offline search and navigation, responsive containment, accessibility behavior, and established performance budgets remain green.
+
+### Notes
+
+- Raw Local View exposes no Search Result Navigation and remains excluded from sanitized search-navigation metadata.
+- Safari, Firefox, Mobile Safari, physical-device testing, native screen-reader software, and browser heap snapshots were not directly validated in this environment.
+- v1.6.0 has not been tagged or published. No v1.7.0 implementation scope is approved.
+
 ## v1.5.0 — Complete Supported Diagnostic Examples
 
 The `v1.5.0` release has been published as a non-prerelease GitHub Release.

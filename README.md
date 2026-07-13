@@ -26,8 +26,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.5.0` |
-| Active phase | `v1.6.0` planning only |
-| Current focus | v1.6.0 scope review |
+| Active phase | `v1.6.0` implementation complete |
+| Current focus | v1.6.0 release review; not yet released |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -57,7 +57,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.5.0` is the latest stable release. Complete Supported Diagnostic Examples was tagged and published as a non-prerelease GitHub Release. v1.6.0 remains planning-only with no approved implementation scope.
+`v1.5.0` is the latest stable release. Complete Supported Diagnostic Examples was tagged and published as a non-prerelease GitHub Release. The v1.6.0 Search Result Navigation implementation is complete and ready for release review, but it is not tagged or published.
 
 ## Why This Exists
 
@@ -143,6 +143,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Clear Report | Supported |
 | Section jump navigation | Supported |
 | Search/filter parsed output | Supported |
+| Search Result Navigation | Implemented in `v1.6.0`: section-level Previous/Next movement through visible matching sections |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
@@ -226,6 +227,10 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 ### Navigation And Inspection
 
 - Jump-link section navigation.
+- Search Result Navigation moves through visible matching sanitized sections with accessible Previous and Next controls.
+- Navigation follows filtered section order, does not wrap, shows the current section-level position, and scrolls to the existing stable section anchor.
+- Previous is unavailable at the first matching section and Next is unavailable at the final matching section. Focus remains on the activated control and announcements reuse the existing status live region.
+- Search-result navigation is section-level only. It does not highlight text or move through fields, rows, cells, or individual occurrences.
 - Search across section titles, field labels, field values, table cells, and raw text.
 - Matching table rows only are shown while search is active.
 - Search results override collapsed dense-table state so matches remain visible.
@@ -238,6 +243,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
 - Search and copy status wording distinguishes parsed output, rendered capped rows, and visible rows.
 - CoreAnalytics facet filtering uses the same search, copy, text-export, and JSON-export visibility rules as manual search. Keyboard focus is restored to the selected facet after filtering rerenders.
+- CoreAnalytics facet-generated queries reset search-result navigation to the first matching section. Manual search editing, Clear Search, report changes, comparison changes, and Raw Local View changes reset or hide navigation through the existing search workflow.
 - Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
 - Multi-Report Comparison accepts 2 or 3 supported reports with the same `parserType`, preserves insertion order, and produces ordinary comparison sections for the existing navigation, search, and copy paths.
 - Comparison uses sanitized parsed sections only. Raw Local View remains available only for a single loaded report.
@@ -302,6 +308,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - v0.5 mobile polish improves narrow-width containment, CoreAnalytics chip wrapping, search/copy feedback wrapping, and practical touch targets for dense-table controls.
 - v0.8 UI and accessibility polish improves spacing consistency, readable wrapping, touch target sizing, focus visibility, accessible names, reduced-motion guardrails, and mobile/table containment without redesigning the app.
 - v1.4 CoreAnalytics controls use native keyboard-operable buttons, category-and-value accessible names, selected-state semantics, focus restoration, and practical 44px touch targets across narrow layouts.
+- v1.6 Search Result Navigation uses native Previous and Next buttons, accessible names, `aria-disabled` boundary state, visible focus, logical tab order, existing status announcements, stable-anchor movement, and touch-safe controls.
 
 ## Running Locally
 
@@ -620,6 +627,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 9 Summary](PHASE_9_SUMMARY.md)
 - [Phase 11 Summary](PHASE_11_SUMMARY.md)
 - [Phase 15 Summary](PHASE_15_SUMMARY.md)
+- [Phase 16 Summary](PHASE_16_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -639,6 +647,7 @@ After first successful service worker setup, these fictional examples are availa
 - Very large visible search results can still require substantial DOM rerendering.
 - Large tables are capped, grouped, or collapsed, but true virtualization is not implemented.
 - Search is simple substring matching; there is no regex, tokenization, or highlighting.
+- Search-result navigation is limited to visible sanitized sections; it does not provide highlighting, row-level movement, field-level movement, occurrence-level movement, or wrapping.
 - CoreAnalytics does not render full raw JSON bodies.
 - CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
@@ -687,6 +696,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.3.0 | Released | Structured Sanitized Export for eligible single-report and comparison `.json` output |
 | v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
+| v1.6.0 | Implementation complete, release review pending | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
 
 The project keeps the same constraints:
 
@@ -757,7 +767,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.5.0` is released and fully closed. v1.6.0 has no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.5.0` is released and fully closed. v1.6.0 is implementation-complete and awaiting explicit release review; it has not been tagged or published. No v1.7.0 implementation scope is approved. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 
