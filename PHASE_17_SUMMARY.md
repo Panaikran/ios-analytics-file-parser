@@ -4,10 +4,15 @@
 
 `v1.7.0` — Comparison Workflow Clarity
 
-Status: implementation complete; ready for manual release review.
+Status: Released.
 
-Release status: Unreleased. No `v1.7.0` tag or GitHub Release was created in
-this phase.
+Release date: `2026-07-14`
+
+Release commit: `d7ee0d77b5739bc963c12cc8ec2b2dd7b2cdc7dc`
+
+Tag: `v1.7.0`
+
+GitHub Release: published, non-draft, and non-prerelease.
 
 ## Objective
 
@@ -64,9 +69,8 @@ Files changed: `tests/parser.test.js` only.
 ### Slice 17D - Documentation and Release Readiness
 
 Reconciles the README, roadmap, changelog, and this summary with the completed
-v1.7.0 behavior. Final validation and existing browser evidence are recorded;
-the milestone remains unreleased and awaits manual tag and GitHub Release
-review.
+and published v1.7.0 behavior. Final validation and existing browser evidence
+are recorded; the milestone is released and fully closed.
 
 Files changed: `README.md`, `ROADMAP.md`, `CHANGELOG.md`,
 `PHASE_17_SUMMARY.md`.
@@ -179,7 +183,7 @@ passed all established budgets. No production optimization was required.
   and performance contracts preserved.
 - [x] Automated validation and Chrome workflow QA passed.
 - [x] Documentation reconciled for implementation-complete status.
-- [ ] `v1.7.0` tag and GitHub Release - manual review required.
+- [x] `v1.7.0` tag and published GitHub Release verified.
 
-`v1.7.0` is ready for manual tag and GitHub Release review. It remains
-unreleased, and no v1.8.0 implementation scope is approved.
+`v1.7.0` is released and fully closed. `v1.8.0` is planning-only, with scope
+to be determined after v1.7.0 post-release reconciliation.

@@ -25,9 +25,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.6.0` |
-| Active phase | `v1.7.0` implementation complete; release review |
-| Current focus | Comparison Workflow Clarity; unreleased |
+| Latest released version | `v1.7.0` (2026-07-14) |
+| Active phase | `v1.8.0` planning only |
+| Current focus | Scope to be determined after `v1.7.0` post-release reconciliation |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -51,7 +51,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.4.0 | Released: CoreAnalytics Investigation Workflow |
 | v1.5.0 | Released: Complete Supported Diagnostic Examples |
 | v1.6.0 | Released: Search Result Navigation |
-| v1.7.0 | Implementation complete; ready for manual release review |
+| v1.7.0 | Released 2026-07-14: Comparison Workflow Clarity |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -59,7 +59,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.6.0` is the latest stable release. Search Result Navigation was tagged and published as a non-prerelease GitHub Release. v1.7.0 Comparison Workflow Clarity is implementation-complete and ready for manual release review, but remains unreleased. v1.8.0 is planning-only with no approved implementation scope.
+`v1.7.0` is the latest stable release, tagged and published on 2026-07-14 as a non-prerelease GitHub Release. Comparison Workflow Clarity remains available as documented below. `v1.8.0` is the next planning milestone; its scope is to be determined after `v1.7.0` post-release reconciliation.
 
 ## Why This Exists
 
@@ -150,7 +150,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
 | Multi-Report Comparison | Supported: 2-3 reports with the same parser type, sanitized only |
-| Comparison Workflow Clarity | Implemented in `v1.7.0`: optional ephemeral local labels, parser-type visibility, clearer setup feedback, and predictable removal focus |
+| Comparison Workflow Clarity | Released in `v1.7.0`: optional ephemeral local labels, parser-type visibility, clearer setup feedback, and predictable removal focus |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
 | Panic kext collapse | Supported |
@@ -704,8 +704,8 @@ After first successful service worker setup, these fictional examples are availa
 | v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 | v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
-| v1.7.0 | Implementation complete; unreleased | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| v1.8.0 | Planning only | Scope to be determined after v1.7.0 release reconciliation |
+| v1.7.0 | Released 2026-07-14 | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
+| v1.8.0 | Planning only | Scope to be determined after v1.7.0 post-release reconciliation |
 
 The project keeps the same constraints:
 
@@ -776,7 +776,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.6.0` is released and fully closed. v1.7.0 is implementation-complete and awaiting manual release review; it is not tagged or published. v1.8.0 remains planning-only with no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.7.0` is released and fully closed on 2026-07-14. `v1.8.0` remains planning-only with scope to be determined after post-release reconciliation. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

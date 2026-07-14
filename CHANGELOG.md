@@ -2,7 +2,9 @@
 
 ## v1.7.0 — Comparison Workflow Clarity
 
-Status: Unreleased; implementation complete and ready for manual release review.
+Status: Released on 2026-07-14. The `v1.7.0` tag and published, non-draft,
+non-prerelease GitHub Release point to
+`d7ee0d77b5739bc963c12cc8ec2b2dd7b2cdc7dc`.
 
 ### Added
 
@@ -24,7 +26,11 @@ Status: Unreleased; implementation complete and ready for manual release review.
 
 - Hostile-label rendering, Unicode normalization, two- and three-report workflows, mixed-parser rejection, maximum-report handling, clear/reset behavior, focus restoration, export isolation, persistence guards, 20 repeated workflow cycles, offline operation, and responsive browser QA passed.
 
-No release date is assigned until v1.7.0 is manually tagged and published.
+### Notes
+
+- Release date: `2026-07-14`.
+- The release remains local-first and preserves the existing comparison,
+  export, privacy, accessibility, and offline boundaries.
 
 ## v1.6.0 — Search Result Navigation
 

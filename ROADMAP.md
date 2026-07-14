@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.7.0` implementation complete and ready for manual release review; unreleased. `v1.8.0` planning only.
+Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` planning only.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -28,8 +28,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
-| Comparison Workflow Clarity | Implementation complete | `v1.7.0` | Ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation; ready for manual release review |
-| Next Milestone | Planning only | `v1.8.0` | Scope to be determined after v1.7.0 release reconciliation |
+| Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
+| Next Milestone | Planning only | `v1.8.0` | Scope to be determined after v1.7.0 post-release reconciliation |
 
 ## Project Constraints
 
@@ -669,10 +669,11 @@ MetricKit remains deferred pending an authoritative serialized fixture
 contract. Speculative performance optimization remains deferred while the
 established budgets pass. No v1.6.0 implementation tasks remain.
 
-## Release-Ready Roadmap: v1.7.0
+## Released Roadmap: v1.7.0
 
-Status: implementation complete; ready for manual release review. `v1.7.0`
-remains unreleased. No tag or GitHub Release was created during this milestone.
+Status: released and fully closed on 2026-07-14. The `v1.7.0` tag and
+published, non-draft, non-prerelease GitHub Release point to
+`d7ee0d77b5739bc963c12cc8ec2b2dd7b2cdc7dc`.
 
 Theme: Comparison Workflow Clarity. The milestone clarifies selection and
 management of two or three compatible reports without changing sanitized
@@ -699,7 +700,7 @@ Chrome, responsive, accessibility, offline, and performance checks passed.
 
 ## Next Planning Milestone: v1.8.0
 
-Status: planning only. Scope to be determined after v1.7.0 release
+Status: planning only. Scope to be determined after v1.7.0 post-release
 reconciliation. No v1.8.0 implementation scope is approved.
 
 ## Future Hardening And Exploratory Work
