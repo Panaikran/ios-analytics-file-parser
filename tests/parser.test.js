@@ -37,7 +37,7 @@ import {
   summarizeReportSize,
   summarizeSectionSize,
 } from '../src/models/reportSize.js';
-import { filterSectionsByQuery } from '../src/search/filterSections.js';
+import { SEARCH_MATCH_KINDS, filterSectionsByQuery } from '../src/search/filterSections.js';
 import { getSearchMetadata } from '../src/search/searchMetadata.js';
 import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
 import { downloadTextFile } from '../src/clipboard/downloadText.js';
@@ -558,6 +558,112 @@ assert.notEqual(
   'navigation targets do not expose filtered section object references'
 );
 
+const matchMetadataSections = [
+  {
+    id: 'match-first',
+    title: 'Alpha title alpha',
+    fields: [
+      { label: 'Label alpha', value: 'Value alpha alpha' },
+      { label: 'No match', value: 'Other' },
+    ],
+    tableColumns: [
+      { key: 'status', label: 'Alpha status' },
+      { key: 'message', label: 'Alpha message' },
+    ],
+    table: [
+      { status: 'Row alpha', message: 'Cell alpha alpha', hidden: 'Private alpha' },
+      { status: 'Other', message: 'No match' },
+    ],
+    chart: {
+      type: 'memory-bars',
+      title: 'Chart alpha',
+      items: [
+        { label: 'Chart label alpha', value: 42 },
+        { label: 'No chart', value: 7 },
+      ],
+    },
+    raw: 'Raw alpha\nSecond line',
+    sourceOnly: 'Source alpha',
+  },
+  {
+    id: 'match-second',
+    title: 'Later',
+    fields: [{ label: 'Other', value: 'later' }],
+  },
+];
+const matchMetadataInputSnapshot = JSON.stringify(matchMetadataSections);
+const matchMetadataSearch = filterSectionsByQuery(matchMetadataSections, ' alpha ');
+assert.deepEqual(
+  SEARCH_MATCH_KINDS,
+  ['section-title', 'field-label', 'field-value', 'table-header', 'table-cell', 'chart-label', 'chart-value', 'text'],
+  'search metadata exposes only the explicit supported match kinds'
+);
+assert.equal(matchMetadataSearch.totalMatches, 7, 'match metadata preserves the existing field, raw, and table match count');
+assert.deepEqual(
+  matchMetadataSearch.sections.map((section) => section.id),
+  ['match-first'],
+  'match metadata preserves existing section filtering'
+);
+assert.deepEqual(
+  matchMetadataSearch.matchRegions,
+  [
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'section-title', occurrences: [{ start: 0, end: 5 }, { start: 12, end: 17 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'field-label', fieldIndex: 0, occurrences: [{ start: 6, end: 11 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'field-value', fieldIndex: 0, occurrences: [{ start: 6, end: 11 }, { start: 12, end: 17 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'table-header', columnIndex: 0, columnKey: 'status', occurrences: [{ start: 0, end: 5 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'table-header', columnIndex: 1, columnKey: 'message', occurrences: [{ start: 0, end: 5 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'table-cell', rowIndex: 0, columnIndex: 0, columnKey: 'status', occurrences: [{ start: 4, end: 9 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'table-cell', rowIndex: 0, columnIndex: 1, columnKey: 'message', occurrences: [{ start: 5, end: 10 }, { start: 11, end: 16 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'chart-label', chartIndex: 0, chartPart: 'title', occurrences: [{ start: 6, end: 11 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'chart-label', chartIndex: 0, itemIndex: 0, chartPart: 'item-label', occurrences: [{ start: 12, end: 17 }] },
+    { sectionIndex: 0, sectionId: 'match-first', kind: 'text', textBlockIndex: 0, occurrences: [{ start: 4, end: 9 }] },
+  ],
+  'match metadata exposes deterministic visible rendered regions in render order'
+);
+assert.doesNotMatch(JSON.stringify(matchMetadataSearch.matchRegions), /Private alpha|Source alpha/, 'match metadata excludes hidden and source-only values');
+assert.equal(matchMetadataSearch.sections[0].table.length, 1, 'match metadata preserves the existing matching-row filter');
+assert.equal(matchMetadataSearch.sections[0].table[0].hidden, 'Private alpha', 'match metadata does not rewrite filtered row content');
+assert.equal(JSON.stringify(matchMetadataSections), matchMetadataInputSnapshot, 'match metadata does not mutate input sections');
+assert.deepEqual(
+  matchMetadataSearch.matchRegions,
+  filterSectionsByQuery(matchMetadataSections, 'alpha').matchRegions,
+  'match metadata is stable across equivalent normalized queries'
+);
+assert.deepEqual(filterSectionsByQuery(matchMetadataSections, 'not present').matchRegions, [], 'no-match searches expose no match metadata');
+assert.deepEqual(filterSectionsByQuery(matchMetadataSections, '   ').matchRegions, [], 'empty searches expose no match metadata');
+
+const occurrenceSections = [{
+  id: 'occurrences',
+  title: 'Occurrences',
+  fields: [
+    { label: 'Punctuation', value: 'Alpha, alpha alpha.' },
+    { label: 'Emoji', value: '😀Alpha' },
+    { label: 'Overlap', value: 'aaaa' },
+  ],
+  raw: 'Alpha\nalpha',
+}];
+const alphaOccurrences = filterSectionsByQuery(occurrenceSections, 'alpha').matchRegions;
+assert.deepEqual(
+  alphaOccurrences.find((region) => region.kind === 'field-value' && region.fieldIndex === 0)?.occurrences,
+  [{ start: 0, end: 5 }, { start: 7, end: 12 }, { start: 13, end: 18 }],
+  'match metadata records non-overlapping punctuation-separated occurrences'
+);
+assert.deepEqual(
+  alphaOccurrences.find((region) => region.kind === 'field-value' && region.fieldIndex === 1)?.occurrences,
+  [{ start: 2, end: 7 }],
+  'match metadata records deterministic UTF-16 offsets after supplementary characters'
+);
+assert.deepEqual(
+  filterSectionsByQuery(occurrenceSections, 'aa').matchRegions.find((region) => region.fieldIndex === 2)?.occurrences,
+  [{ start: 0, end: 2 }, { start: 2, end: 4 }],
+  'match metadata uses non-overlapping left-to-right occurrences'
+);
+assert.deepEqual(
+  filterSectionsByQuery(occurrenceSections, 'longer than any value').matchRegions,
+  [],
+  'queries longer than visible values produce no match metadata'
+);
+
 const productionExampleByType = new Map(parsedProductionExamples.map((run) => [run.example.type, run]));
 for (const run of parsedProductionExamples) {
   const broadQuery = run.sections[0]?.title.split(/\s+/)[0] ?? run.example.type;
@@ -569,6 +675,7 @@ for (const run of parsedProductionExamples) {
   const clearedSearch = workflowVisibleSections(run.sections);
 
   assert.ok(broadSearch.searchResult.totalMatches > 0, `${run.example.label} supports broad search`);
+  assert.ok(broadSearch.searchResult.matchRegions.length > 0, `${run.example.label} exposes broad-search match metadata`);
   assert.ok(narrowSearch.searchResult.totalMatches > 0, `${run.example.label} supports narrow search`);
   assert.equal(noResultSearch.searchResult.totalMatches, 0, `${run.example.label} supports no-result search`);
   assert.deepEqual(clearedSearch.searchResult.sections, run.sections, `${run.example.label} Clear Search restores all sections`);
@@ -603,6 +710,11 @@ for (const run of parsedProductionExamples) {
     JSON.stringify(narrowSearch.searchResult.navigationTargets),
     forbiddenProductionExamplePattern,
     `${run.example.label} navigation metadata contains no private-looking values`
+  );
+  assert.doesNotMatch(
+    JSON.stringify(narrowSearch.searchResult.matchRegions),
+    forbiddenProductionExamplePattern,
+    `${run.example.label} match metadata contains no private-looking values`
   );
 
   const copy = narrowSearch.visibleSections.map(serializeSectionForCopy).join('\n\n---\n\n');
@@ -3809,6 +3921,7 @@ assert.match(mainScriptText, /function clearSearch\(\) \{[^]*clearSearchState\(\
 assert.match(mainScriptText, /function clearReport\(\) \{[^]*exitComparisonMode\(\)[^]*clearSearchState\(\)/, 'Clear Report clears comparison mode and facet-driven search state');
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
 assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
+assert.match(mainScriptText, /filterSectionsByQuery\(activeSections, searchQuery, \{ includeMatchRegions: appState\.sanitize \|\| comparisonMode \}\)/, 'raw local view disables new search-match metadata while preserving filtering');
 assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
 assert.match(mainScriptText, /searchResult\.navigationTargets/, 'search navigation consumes the Slice 16A navigation target contract');
 assert.match(mainScriptText, /function navigateSearchResult\(direction\)/, 'search navigation uses one section-level movement handler');
@@ -4205,6 +4318,9 @@ assert.doesNotMatch(sanitizedCoreAnalyticsText, /SESSION-COREANALYTICS-0002/);
 assert.match(sanitizedCoreAnalyticsText, /\[identifier redacted\]/);
 
 const rawCoreAnalyticsSections = parseInput(coreAnalyticsMediumText, { sanitize: false });
+const rawSearchWithoutMatchMetadata = filterSectionsByQuery(rawCoreAnalyticsSections, '22222222-3333-4444-5555-666666666666', { includeMatchRegions: false });
+assert.ok(rawSearchWithoutMatchMetadata.totalMatches > 0, 'Raw Local View keeps its existing parsed-value search behavior');
+assert.deepEqual(rawSearchWithoutMatchMetadata.matchRegions, [], 'Raw Local View does not produce new exact-match metadata');
 assert.equal(
   fieldValue(sectionById(rawCoreAnalyticsSections, 'coreanalytics-summary'), 'Incident ID'),
   '22222222-3333-4444-5555-666666666666',
@@ -4437,6 +4553,7 @@ const cappedCoreAnalyticsSearch = filterSectionsByQuery(largeCoreAnalyticsSectio
 const cappedCoreAnalyticsVisibleSections = cappedCoreAnalyticsSearch.sections.map((section) => getVisibleSectionForCopy(section));
 assert.equal(cappedCoreAnalyticsSearch.totalMatches, 0, 'capped-out CoreAnalytics values are not searchable');
 assert.deepEqual(cappedCoreAnalyticsSearch.navigationTargets, [], 'capped-out CoreAnalytics values do not create navigation targets');
+assert.deepEqual(cappedCoreAnalyticsSearch.matchRegions, [], 'capped-out CoreAnalytics values do not create match metadata');
 assert.doesNotMatch(serializeSectionsForExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from text export');
 assert.doesNotMatch(serializeSectionsForJsonExport(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from JSON export');
 assert.doesNotMatch(serializeSectionsForCopy(cappedCoreAnalyticsVisibleSections), new RegExp(cappedCoreAnalyticsSentinel), 'capped-out CoreAnalytics values are excluded from copy output');
@@ -4666,6 +4783,7 @@ assert.doesNotMatch(aliasedComparisonExport, new RegExp(comparisonAliasSentinel)
 assert.doesNotMatch(aliasedComparisonJsonText, new RegExp(comparisonAliasSentinel), 'local labels do not enter comparison JSON export');
 assert.equal(aliasedComparisonJson.mode, 'comparison', 'local labels do not change comparison JSON mode');
 assert.equal(filterSectionsByQuery(aliasedComparisonSections, comparisonAliasSentinel).totalMatches, 0, 'local labels do not enter comparison search');
+assert.deepEqual(filterSectionsByQuery(aliasedComparisonSections, comparisonAliasSentinel).matchRegions, [], 'local labels do not enter match metadata');
 assert.deepEqual(
   filterSectionsByQuery(aliasedComparisonSections, comparisonAliasSentinel).navigationTargets,
   [],
@@ -4904,6 +5022,7 @@ assert.deepEqual(
   'comparison recurring indicators require matching allowlisted values'
 );
 const comparisonSearch = filterSectionsByQuery(twoReportComparison, 'iPhone16,1');
+assert.ok(comparisonSearch.matchRegions.length > 0, 'comparison search exposes match metadata from sanitized comparison sections');
 assert.deepEqual(
   comparisonSearch.sections.map((section) => section.id),
   ['comparison-report-summaries', 'comparison-differences'],

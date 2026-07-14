@@ -92,7 +92,7 @@ function createInitialDenseTableState() {
 function renderApp() {
   const restoreCoreAnalyticsFacetFocus = document.activeElement?.matches('.coreanalytics-overview__chip') === true;
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
-  const searchResult = filterSectionsByQuery(activeSections, searchQuery);
+  const searchResult = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode });
   const coreAnalyticsView = getCoreAnalyticsView(activeSections);
   const coreAnalyticsFacetOptions = !comparisonMode && appState.sanitize
     ? getCoreAnalyticsFacetOptions(coreAnalyticsView)
@@ -704,7 +704,7 @@ async function copySection(section) {
 
 function downloadVisibleExport() {
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
-  const visibleSections = filterSectionsByQuery(activeSections, searchQuery).sections;
+  const visibleSections = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode }).sections;
   const exportText = serializeSectionsForExport(getEligibleExportSections(activeSections, visibleSections));
   if (!exportText) return;
 
@@ -716,7 +716,7 @@ function downloadVisibleExport() {
 
 function downloadVisibleJson() {
   const activeSections = comparisonMode ? comparisonSections : appState.sections;
-  const visibleSections = filterSectionsByQuery(activeSections, searchQuery).sections;
+  const visibleSections = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode }).sections;
   const exportSections = getEligibleExportSections(activeSections, visibleSections);
   const exportJson = serializeSectionsForJsonExport(exportSections, { mode: comparisonMode ? 'comparison' : 'single' });
   if (!exportSections.length || !exportJson) return;
