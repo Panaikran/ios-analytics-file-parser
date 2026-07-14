@@ -4679,6 +4679,122 @@ assert.doesNotMatch(
   'comparison model remains independent of browser, network, storage, search, copy, and rendering APIs'
 );
 
+assert.match(
+  mainScriptText,
+  /comparisonList\.replaceChildren\(\.\.\.items\)/,
+  'comparison rerenders replace the complete entry list without accumulating controls'
+);
+assert.match(
+  mainScriptText,
+  /displayLabel\.textContent = formatComparisonEntryLabel\(comparisonEntries\[index\], index\)/,
+  'local-label updates use safe text insertion for the visible identity'
+);
+assert.doesNotMatch(
+  mainScriptText,
+  /(?:displayLabel|localLabelInput)[^]*(?:innerHTML|outerHTML)/,
+  'local-label UI never interprets user text as HTML'
+);
+assert.match(
+  mainScriptText,
+  /localLabelInput\.addEventListener\('input', \(event\) => \{[^]*updateComparisonEntryLocalLabel\(comparisonEntries, index, event\.currentTarget\.value\)/,
+  'rapid label edits update only the selected comparison entry through the frozen state path'
+);
+assert.match(
+  mainScriptText,
+  /localLabelInput\.addEventListener\('blur', \(\) => \{[^]*localLabelInput\.value = comparisonEntries\[index\]\?\.localLabel \?\? '';/,
+  'normalized local-label state is restored to the input after editing'
+);
+assert.match(
+  mainScriptText,
+  /comparisonStatus\.textContent = comparisonMessage/,
+  'comparison eligibility feedback uses the existing status element'
+);
+assert.match(
+  mainScriptText,
+  /if \(reportCount === 0\) return 'No reports added\.'/,
+  'empty comparison selection has neutral status feedback'
+);
+assert.match(
+  mainScriptText,
+  /if \(reportCount === 1 \|\| validation\.code === 'too-few-reports'\) return 'Add one or two more reports of the same type to compare\.'/,
+  'incomplete selection gives actionable same-type guidance'
+);
+assert.match(
+  mainScriptText,
+  /if \(validation\.code === 'mixed-parser-types'\) return 'Selected reports must use the same parser type\.'/,
+  'mixed-parser feedback stays generic and privacy-safe'
+);
+assert.match(
+  mainScriptText,
+  /if \(validation\.code === 'too-many-reports' \|\| reportCount > 3\) return 'Comparison supports up to three reports\.'/,
+  'maximum-report feedback stays explicit without changing the limit'
+);
+assert.match(
+  mainScriptText,
+  /focusComparisonEntry\(focusIndex\)/,
+  'removal restores focus through the existing comparison control path'
+);
+assert.match(
+  mainScriptText,
+  /const focusIndex = comparisonEntries\.length \? Math\.min\(index, comparisonEntries\.length - 1\) : -1/,
+  'removal focus chooses the next surviving entry or the previous entry at the end'
+);
+assert.match(
+  mainScriptText,
+  /comparisonEntries = \[\];\s+exitComparisonMode\(\);\s+clearSearchState\(\);/,
+  'clear comparison removes identity state and resets comparison search state'
+);
+assert.match(
+  mainScriptText,
+  /comparisonEntries = \[\];\s+comparisonMessage = 'No reports added\.';\s+exitComparisonMode\(\);/,
+  'clear report removes comparison identity and mode state'
+);
+assert.doesNotMatch(
+  `${mainScriptText}\n${appStateSource}`,
+  /(?:localLabel|comparison-local-label)[^]*(?:localStorage|sessionStorage|indexedDB|document\.cookie|history\.pushState|history\.replaceState|URLSearchParams)/,
+  'local-label state has no browser persistence path'
+);
+
+const hostileComparisonLabel = normalizeComparisonLocalLabel('<img src=x onerror=alert(1)>');
+assert.equal(
+  hostileComparisonLabel,
+  '<img src=x onerror=alert(1)>',
+  'hostile-looking local labels remain ordinary normalized text'
+);
+
+const workflowEntriesSnapshot = JSON.stringify([comparisonReportOne, comparisonReportTwo]);
+for (let cycle = 0; cycle < 20; cycle += 1) {
+  let workflowEntries = [
+    createComparisonEntry({ classification: comparisonReportOne.classification, sections: comparisonReportOne.sections }),
+    createComparisonEntry({ classification: comparisonReportTwo.classification, sections: comparisonReportTwo.sections }),
+    createComparisonEntry({ classification: comparisonReportOne.classification, sections: comparisonReportOne.sections }),
+  ];
+
+  workflowEntries = updateComparisonEntryLocalLabel(workflowEntries, 0, `Before ${cycle}`);
+  workflowEntries = updateComparisonEntryLocalLabel(workflowEntries, 1, 'Private Local Alias');
+  workflowEntries = updateComparisonEntryLocalLabel(workflowEntries, 2, 'After Update');
+  assert.equal(validateComparison(workflowEntries).valid, true, `repeated cycle ${cycle + 1} remains comparison-compatible`);
+
+  const workflowSections = createComparisonSections(workflowEntries);
+  const workflowSearch = filterSectionsByQuery(workflowSections, 'Private Local Alias');
+  assert.equal(workflowSearch.totalMatches, 0, `repeated cycle ${cycle + 1} keeps aliases out of search`);
+  assert.deepEqual(workflowSearch.navigationTargets, [], `repeated cycle ${cycle + 1} keeps aliases out of navigation targets`);
+
+  const workflowText = serializeSectionsForExport(workflowSections);
+  const workflowJson = serializeSectionsForJsonExport(workflowSections, { mode: 'comparison' });
+  assert.doesNotMatch(workflowText, /Private Local Alias/, `repeated cycle ${cycle + 1} keeps aliases out of text export`);
+  assert.doesNotMatch(workflowJson, /Private Local Alias/, `repeated cycle ${cycle + 1} keeps aliases out of JSON export`);
+
+  const afterMiddleRemoval = removeComparisonEntry(workflowEntries, 1);
+  assert.deepEqual(
+    afterMiddleRemoval.map((entry) => entry.localLabel),
+    [`Before ${cycle}`, 'After Update'],
+    `repeated cycle ${cycle + 1} preserves surviving aliases after middle removal`
+  );
+  assert.equal(validateComparison(afterMiddleRemoval).valid, true, `repeated cycle ${cycle + 1} keeps two reports eligible`);
+}
+assert.equal(JSON.stringify([comparisonReportOne, comparisonReportTwo]), workflowEntriesSnapshot, 'repeated identity workflows do not mutate source entries');
+
 assert.deepEqual(
   validateComparison([comparisonReportOne, comparisonReportTwo]),
   {
