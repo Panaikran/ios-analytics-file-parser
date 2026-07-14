@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.6.0` released and fully closed; `v1.7.0` planning only
+Status: `v1.7.0` implementation complete and ready for manual release review; unreleased. `v1.8.0` planning only.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -28,7 +28,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
-| Next Milestone | Planning only | `v1.7.0` | No implementation scope approved |
+| Comparison Workflow Clarity | Implementation complete | `v1.7.0` | Ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation; ready for manual release review |
+| Next Milestone | Planning only | `v1.8.0` | Scope to be determined after v1.7.0 release reconciliation |
 
 ## Project Constraints
 
@@ -668,6 +669,39 @@ MetricKit remains deferred pending an authoritative serialized fixture
 contract. Speculative performance optimization remains deferred while the
 established budgets pass. No v1.6.0 implementation tasks remain.
 
+## Release-Ready Roadmap: v1.7.0
+
+Status: implementation complete; ready for manual release review. `v1.7.0`
+remains unreleased. No tag or GitHub Release was created during this milestone.
+
+Theme: Comparison Workflow Clarity. The milestone clarifies selection and
+management of two or three compatible reports without changing sanitized
+comparison output, exports, parser behavior, search, or local-first privacy.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 17A | Complete | Privacy-safe in-memory `localLabel` contract, Unicode normalization, immutable updates, deterministic removal, and export/search isolation |
+| Slice 17B | Complete | Accessible local-label inputs, parser-type display, setup feedback, responsive layout, and removal focus restoration |
+| Slice 17C | Complete | Test-only privacy, workflow, accessibility, responsive, offline, export, search, and repeated-cycle hardening |
+| Slice 17D | Complete | Documentation reconciliation, final validation, browser QA evidence, and release-readiness preparation |
+
+The completed workflow uses generic positional identities (`Report 1`, `Report 2`,
+and `Report 3`) with the parser type visible. Optional local labels are
+user-supplied, normalized, ephemeral, and visible only in the setup UI. They
+remain attached to surviving entries after removal, are discarded on removal,
+clear, report reset, reload, and session end, and never enter comparison
+sections, copy, text export, JSON export, filenames, search, or navigation.
+
+Comparison still requires two or three supported reports of the same parser
+type and remains sanitized-only. Raw Local View restrictions remain unchanged.
+No production defect was reproduced during Slice 17C, and all automated,
+Chrome, responsive, accessibility, offline, and performance checks passed.
+
+## Next Planning Milestone: v1.8.0
+
+Status: planning only. Scope to be determined after v1.7.0 release
+reconciliation. No v1.8.0 implementation scope is approved.
+
 ## Future Hardening And Exploratory Work
 
 These items remain outside the current v1.0 stabilization path unless explicitly approved later.
@@ -687,7 +721,7 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, and `PHASE_16_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, and `PHASE_17_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -706,7 +740,7 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Continue with v1.7.0 planning in a separate review pass. No v1.7.0
+Continue with v1.8.0 planning in a separate review pass. No v1.8.0
 implementation scope is approved by this roadmap.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
@@ -714,6 +748,7 @@ implementation scope is approved by this roadmap.
 - Preserve the released v1.3.0 JSON schema and export boundaries.
 - Preserve the completed v1.5.0 example catalog, privacy fix, and offline QA evidence.
 - Preserve the completed v1.6.0 search-navigation contract, accessibility behavior, and QA evidence.
+- Preserve the completed v1.7.0 comparison identity, setup feedback, privacy, export, accessibility, and QA contracts.
 - Run `npm.cmd test`.
 - Run focused syntax checks:
   - `node --check src\main.js`

@@ -26,8 +26,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.6.0` |
-| Active phase | `v1.7.0` planning only |
-| Current focus | v1.7.0 scope not approved |
+| Active phase | `v1.7.0` implementation complete; release review |
+| Current focus | Comparison Workflow Clarity; unreleased |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -51,6 +51,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.4.0 | Released: CoreAnalytics Investigation Workflow |
 | v1.5.0 | Released: Complete Supported Diagnostic Examples |
 | v1.6.0 | Released: Search Result Navigation |
+| v1.7.0 | Implementation complete; ready for manual release review |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -58,7 +59,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.6.0` is the latest stable release. Search Result Navigation was tagged and published as a non-prerelease GitHub Release. v1.7.0 remains planning-only with no approved implementation scope.
+`v1.6.0` is the latest stable release. Search Result Navigation was tagged and published as a non-prerelease GitHub Release. v1.7.0 Comparison Workflow Clarity is implementation-complete and ready for manual release review, but remains unreleased. v1.8.0 is planning-only with no approved implementation scope.
 
 ## Why This Exists
 
@@ -149,6 +150,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
 | Multi-Report Comparison | Supported: 2-3 reports with the same parser type, sanitized only |
+| Comparison Workflow Clarity | Implemented in `v1.7.0`: optional ephemeral local labels, parser-type visibility, clearer setup feedback, and predictable removal focus |
 | Thread grouping/collapse | Supported |
 | Jetsam row limits | Supported |
 | Panic kext collapse | Supported |
@@ -247,6 +249,9 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - CoreAnalytics facet-generated queries reset search-result navigation to the first matching section. Manual search editing, Clear Search, report changes, comparison changes, and Raw Local View changes reset or hide navigation through the existing search workflow.
 - Explanation sections participate in the same section navigation, search, and copy behavior as other rendered sections.
 - Multi-Report Comparison accepts 2 or 3 supported reports with the same `parserType`, preserves insertion order, and produces ordinary comparison sections for the existing navigation, search, and copy paths.
+- Comparison setup shows generic positional identities (`Report 1`, `Report 2`, and `Report 3`) with the parser type visible. Each selected report may have an optional local label to distinguish it during setup.
+- Local labels are user-supplied, normalized, in-memory-only text. They are discarded when entries are removed, comparison is cleared, the report is reset, the page reloads, or the session ends. They are never derived from filenames or report contents.
+- Local labels appear only in the comparison setup UI. They are excluded from comparison output, copy, text export, JSON export, filenames, search, and Search Result Navigation. Setup feedback explains incomplete selection, mixed parser types, and the three-report limit.
 - Comparison uses sanitized parsed sections only. Raw Local View remains available only for a single loaded report.
 
 ### Sanitized Visible Export
@@ -310,6 +315,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - v0.8 UI and accessibility polish improves spacing consistency, readable wrapping, touch target sizing, focus visibility, accessible names, reduced-motion guardrails, and mobile/table containment without redesigning the app.
 - v1.4 CoreAnalytics controls use native keyboard-operable buttons, category-and-value accessible names, selected-state semantics, focus restoration, and practical 44px touch targets across narrow layouts.
 - v1.6 Search Result Navigation uses native Previous and Next buttons, accessible names, `aria-disabled` boundary state, visible focus, logical tab order, existing status announcements, stable-anchor movement, and touch-safe controls.
+- v1.7 comparison setup uses programmatic input labels, associated privacy help text, native keyboard-editable controls, predictable focus restoration after removal, updated positional names, and responsive touch-safe layout. Labels remain ephemeral. No native screen-reader certification or Safari/Firefox validation is claimed.
 
 ## Running Locally
 
@@ -661,7 +667,7 @@ After first successful service worker setup, these fictional examples are availa
 - Stackshot full stack rendering, frame symbol rendering, frame address rendering, and symbolication are not supported.
 - App Usage Metrics, Wi-Fi Connectivity, and Diagnostic Request reports are recognized for safe unsupported messages only; they are not parsed into sections yet.
 - Human-readable explanations are conservative and generic; they do not symbolicate, inspect full raw stacks, or identify the exact faulty function.
-- Comparison accepts only 2 or 3 reports that share a supported `parserType`; mixed types, raw-mode reports, fuzzy matching, and source-text comparison are not supported.
+- Comparison accepts only 2 or 3 reports that share a supported `parserType`; mixed types, raw-mode reports, fuzzy matching, and source-text comparison are not supported. Local labels are intentionally ephemeral and are not exported.
 - No AI diagnosis or exact root-cause analysis is provided.
 - Section navigation marks clicked links only; there is no scroll-spy observer.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
@@ -698,6 +704,8 @@ After first successful service worker setup, these fictional examples are availa
 | v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 | v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
+| v1.7.0 | Implementation complete; unreleased | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
+| v1.8.0 | Planning only | Scope to be determined after v1.7.0 release reconciliation |
 
 The project keeps the same constraints:
 
@@ -768,7 +776,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.6.0` is released and fully closed. v1.7.0 has no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.6.0` is released and fully closed. v1.7.0 is implementation-complete and awaiting manual release review; it is not tagged or published. v1.8.0 remains planning-only with no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

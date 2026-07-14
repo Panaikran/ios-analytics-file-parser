@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.7.0 — Comparison Workflow Clarity
+
+Status: Unreleased; implementation complete and ready for manual release review.
+
+### Added
+
+- Optional ephemeral local labels for selected comparison reports.
+- Accessible per-report label inputs with generic positional identity and visible parser type.
+- Clearer comparison setup feedback for incomplete selection, mixed parser types, and the maximum three-report limit.
+
+### Changed
+
+- Removing a report re-numbers the remaining reports while retaining their local labels, with predictable focus restoration.
+- Responsive comparison layout and dynamic setup controls were hardened without changing comparison output or report limits.
+
+### Privacy
+
+- Labels remain user-supplied, local, and in memory only. They are excluded from comparison sections, copy, text export, JSON export, filenames, search, and Search Result Navigation.
+- Labels are never derived from filenames, paths, parser metadata, or report contents.
+
+### Testing
+
+- Hostile-label rendering, Unicode normalization, two- and three-report workflows, mixed-parser rejection, maximum-report handling, clear/reset behavior, focus restoration, export isolation, persistence guards, 20 repeated workflow cycles, offline operation, and responsive browser QA passed.
+
+No release date is assigned until v1.7.0 is manually tagged and published.
+
 ## v1.6.0 — Search Result Navigation
 
 The `v1.6.0` release has been published as a non-prerelease GitHub Release.
