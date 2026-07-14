@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.5.0` released and fully closed; `v1.6.0` implementation complete and ready for release review, not released
+Status: `v1.6.0` released and fully closed; `v1.7.0` planning only
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -27,7 +27,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Structured Sanitized Export | Released | `v1.3.0` | Deterministic schema-versioned JSON export for eligible sanitized visible single-report and comparison output |
 | CoreAnalytics Investigation Workflow | Released | `v1.4.0` | Interactive sanitized rendered/capped facets through the existing substring-search path |
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
-| Search Result Navigation | Implemented, release review pending | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
+| Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Next Milestone | Planning only | `v1.7.0` | No implementation scope approved |
 
 ## Project Constraints
@@ -633,10 +633,11 @@ service-worker precache allowlist.
 The 11-family catalog and v1.5.0 implementation are complete. No v1.5.0
 implementation tasks remain.
 
-## Completed Roadmap: v1.6.0
+## Released Roadmap: v1.6.0
 
-Status: implementation complete and ready for release review. The `v1.6.0`
-tag and GitHub Release do not exist yet.
+Status: released and fully closed. The `v1.6.0` tag and published, non-draft,
+non-prerelease GitHub Release point to
+`d7ddb1cc0c4b3fd3ae7f6463522d2c7b29cc6dfe`.
 
 Theme: Search Result Navigation. The milestone adds ordered section-level
 navigation metadata and accessible Previous/Next controls while preserving the
@@ -665,7 +666,7 @@ validated.
 
 MetricKit remains deferred pending an authoritative serialized fixture
 contract. Speculative performance optimization remains deferred while the
-established budgets pass.
+established budgets pass. No v1.6.0 implementation tasks remain.
 
 ## Future Hardening And Exploratory Work
 

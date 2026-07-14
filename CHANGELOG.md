@@ -2,8 +2,7 @@
 
 ## v1.6.0 — Search Result Navigation
 
-Status: implementation complete; release review pending. This entry remains
-unreleased until an explicit tag and GitHub Release are approved.
+The `v1.6.0` release has been published as a non-prerelease GitHub Release.
 
 ### Added
 
@@ -22,7 +21,6 @@ unreleased until an explicit tag and GitHub Release are approved.
 
 - Raw Local View exposes no Search Result Navigation and remains excluded from sanitized search-navigation metadata.
 - Safari, Firefox, Mobile Safari, physical-device testing, native screen-reader software, and browser heap snapshots were not directly validated in this environment.
-- v1.6.0 has not been tagged or published. No v1.7.0 implementation scope is approved.
 
 ## v1.5.0 — Complete Supported Diagnostic Examples
 

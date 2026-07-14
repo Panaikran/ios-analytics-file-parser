@@ -2,10 +2,13 @@
 
 ## Milestone
 
-`v1.6.0` - Search Result Navigation
+`v1.6.0` — Search Result Navigation
 
-Status: implementation complete and ready for release review. The milestone
-has not been tagged or published.
+Status: released and fully closed. The `v1.6.0` tag and published,
+non-draft, non-prerelease GitHub Release point to
+`d7ddb1cc0c4b3fd3ae7f6463522d2c7b29cc6dfe`.
+This post-release reconciliation commit follows the tag and is not part of the
+tagged release.
 
 ## Objective And User Problem
 
@@ -81,8 +84,8 @@ Commit: `21dec8b2bdd28e76c4d3c99c75e28f4a84abf4ab`
 ### Slice 16D - Documentation And Release Readiness
 
 Reconciles user documentation, roadmap state, changelog notes, and this
-summary with the completed implementation and final QA evidence. No tag or
-GitHub Release is created by this slice.
+summary after the v1.6.0 tag and GitHub Release. All four slices are complete;
+no v1.6.0 implementation tasks remain.
 
 ## Architecture And Data Flow
 
@@ -205,10 +208,8 @@ compatibility or memory-leak certification.
 - [x] Slices 16A, 16B, 16C, and 16D complete.
 - [x] Existing parser, search, comparison, copy, export, privacy, accessibility, responsive, offline, and performance contracts preserved.
 - [x] Final deterministic validation and Chrome workflow QA passed.
-- [x] v1.6.0 documentation reconciled for manual release review.
-- [ ] Explicit v1.6.0 tag creation.
-- [ ] GitHub Release publication.
+- [x] v1.6.0 tag verified at the release-readiness commit.
+- [x] GitHub Release verified as published, non-draft, and non-prerelease.
 
-v1.6.0 is implementation-complete and ready for explicit tag and GitHub
-Release approval. It remains unreleased, and no release action is performed by
-this summary.
+v1.6.0 is released, reconciled, frozen, and fully closed. Future work returns
+to planning-only mode for v1.7.0; no v1.7.0 implementation scope is approved.

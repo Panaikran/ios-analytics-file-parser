@@ -25,9 +25,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.5.0` |
-| Active phase | `v1.6.0` implementation complete |
-| Current focus | v1.6.0 release review; not yet released |
+| Latest released version | `v1.6.0` |
+| Active phase | `v1.7.0` planning only |
+| Current focus | v1.7.0 scope not approved |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -50,6 +50,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.3.0 | Released: Structured Sanitized Export |
 | v1.4.0 | Released: CoreAnalytics Investigation Workflow |
 | v1.5.0 | Released: Complete Supported Diagnostic Examples |
+| v1.6.0 | Released: Search Result Navigation |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -57,7 +58,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.5.0` is the latest stable release. Complete Supported Diagnostic Examples was tagged and published as a non-prerelease GitHub Release. The v1.6.0 Search Result Navigation implementation is complete and ready for release review, but it is not tagged or published.
+`v1.6.0` is the latest stable release. Search Result Navigation was tagged and published as a non-prerelease GitHub Release. v1.7.0 remains planning-only with no approved implementation scope.
 
 ## Why This Exists
 
@@ -696,7 +697,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.3.0 | Released | Structured Sanitized Export for eligible single-report and comparison `.json` output |
 | v1.4.0 | Released | CoreAnalytics Investigation Workflow through sanitized rendered/capped facets |
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
-| v1.6.0 | Implementation complete, release review pending | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
+| v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
 
 The project keeps the same constraints:
 
@@ -767,7 +768,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.5.0` is released and fully closed. v1.6.0 is implementation-complete and awaiting explicit release review; it has not been tagged or published. No v1.7.0 implementation scope is approved. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.6.0` is released and fully closed. v1.7.0 has no approved implementation scope. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 
