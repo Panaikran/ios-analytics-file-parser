@@ -9,9 +9,13 @@ import {
   validateReportFile,
 } from '../src/fileValidation.js';
 import {
+  createComparisonEntry,
   createInitialAppState,
+  normalizeComparisonLocalLabel,
+  removeComparisonEntry,
   createParsedStatusMessage,
   startNewReportState,
+  updateComparisonEntryLocalLabel,
   withParsedReport,
   withPrivacyMode,
   withStatus,
@@ -100,6 +104,7 @@ const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 
 const manifestText = await readFile(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
 const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+const appStateSource = await readFile(new URL('../src/appState.js', import.meta.url), 'utf8');
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
 const manifest = JSON.parse(manifestText);
@@ -231,6 +236,8 @@ assert.match(mainScriptText, /validateComparison\(comparisonEntries\)[^]*compare
 assert.match(mainScriptText, /comparisonEntries\.length >= 3/, 'comparison workflow enforces the three-report limit');
 assert.match(mainScriptText, /comparisonSections = createComparisonSections\(comparisonEntries\)/, 'Compare delegates section generation to the pure comparison model');
 assert.match(mainScriptText, /function removeComparisonReport\(index\)/, 'comparison workflow supports removing reports');
+assert.match(mainScriptText, /createComparisonEntry\(\{/, 'comparison entries use the shared identity initializer');
+assert.match(mainScriptText, /comparisonEntries = \[\];\s+comparisonMessage = 'No reports added\.';/, 'full report clear discards comparison identity state');
 assert.match(mainScriptText, /function clearComparison\(\)/, 'comparison workflow supports clearing comparison state');
 assert.match(mainScriptText, /const activeSections = comparisonMode \? comparisonSections : appState\.sections;/, 'renderer, search, and copy share the active SectionModel array');
 assert.match(mainScriptText, /privacyPanel\.hidden = comparisonMode \|\| !hasParsedSections;/, 'Raw Local View controls remain unavailable in comparison mode');
@@ -244,6 +251,7 @@ assert.match(serviceWorkerText, /\.\/src\/clipboard\/copyMetadata\.js/, 'service
 assert.match(serviceWorkerText, /\.\/src\/models\/reportSize\.js/, 'service worker precaches report-size helper dependencies');
 assert.match(serviceWorkerText, /\.\/src\/ui\/tableView\.js/, 'service worker precaches shared table-view helper dependencies');
 assert.doesNotMatch(`${serviceWorkerText}\n${mainScriptText}`, /(?:localStorage|sessionStorage|indexedDB|document\.cookie)/, 'app shell avoids persistent report storage APIs');
+assert.doesNotMatch(appStateSource, /(?:localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|WebSocket)/, 'comparison identity helpers avoid persistence and network APIs');
 assert.match(mainScriptText, /new URL\('\.\.\/service-worker\.js', import\.meta\.url\)/, 'service worker registration uses a GitHub Pages-safe relative script URL');
 assert.match(mainScriptText, /new URL\('\.\.\/', import\.meta\.url\)/, 'service worker registration derives scope from the current module URL');
 assert.match(mainScriptText, /Offline app shell ready\. Examples can open offline\. Reports are still not saved\./, 'offline-ready status uses the approved copy');
@@ -4549,6 +4557,107 @@ const comparisonReportTwo = comparisonEntry([
   { label: 'Bug Type', value: '210' },
   { label: 'Primary Reason', value: 'CPU usage exceeded' },
 ]);
+
+const localLabelInput = '  Before\t\n Update\u0000\u0007!  ';
+assert.equal(
+  normalizeComparisonLocalLabel(localLabelInput),
+  'Before Update!',
+  'comparison local labels trim, normalize whitespace, remove controls, and remove line breaks'
+);
+assert.equal(
+  normalizeComparisonLocalLabel('Before   Update: v1.7!'),
+  'Before Update: v1.7!',
+  'comparison local labels preserve ordinary punctuation'
+);
+assert.equal(
+  normalizeComparisonLocalLabel('  前回 🚀 レポート  '),
+  '前回 🚀 レポート',
+  'comparison local labels preserve Unicode letters, numbers, and punctuation'
+);
+assert.equal(normalizeComparisonLocalLabel('   \t\n  '), '', 'blank local labels normalize to empty');
+assert.equal(normalizeComparisonLocalLabel(null), '', 'non-string local labels normalize to empty');
+assert.equal(normalizeComparisonLocalLabel(17), '', 'numeric local labels normalize to empty');
+assert.equal(
+  [...normalizeComparisonLocalLabel('🚀'.repeat(41))].length,
+  40,
+  'comparison local labels truncate by Unicode code point rather than UTF-16 code unit'
+);
+const stableLocalLabelInput = '  Stable label  ';
+const stableLocalLabelSnapshot = stableLocalLabelInput;
+assert.equal(normalizeComparisonLocalLabel(stableLocalLabelInput), 'Stable label', 'local label normalization is deterministic');
+assert.equal(stableLocalLabelInput, stableLocalLabelSnapshot, 'local label normalization does not mutate its input');
+
+const identitySections = [{ id: 'identity-summary', title: 'Identity Summary', fields: [] }];
+const identityEntryOne = createComparisonEntry({
+  classification: { parserType: 'panic', supported: true },
+  sections: identitySections,
+});
+const identityEntryTwo = createComparisonEntry({
+  classification: { parserType: 'panic', supported: true },
+  sections: [{ id: 'identity-summary-two', title: 'Identity Summary Two', fields: [] }],
+});
+assert.equal(identityEntryOne.localLabel, '', 'new comparison entries start with an empty local label');
+const sourceBoundEntry = createComparisonEntry({
+  classification: { parserType: 'panic', supported: true },
+  sections: identitySections,
+  sourceText: 'PRIVATE-SOURCE-SENTINEL',
+  sourceLabel: 'private-report.ips',
+});
+assert.deepEqual(
+  Object.keys(sourceBoundEntry),
+  ['classification', 'sections', 'localLabel'],
+  'comparison entries exclude source text and source labels from identity metadata'
+);
+const identityEntries = [identityEntryOne, identityEntryTwo];
+const identityEntriesSnapshot = JSON.stringify(identityEntries);
+const labeledIdentityEntries = updateComparisonEntryLocalLabel(identityEntries, 0, ' Before   Update ');
+assert.notStrictEqual(labeledIdentityEntries, identityEntries, 'label updates return a new comparison-entry array');
+assert.notStrictEqual(labeledIdentityEntries[0], identityEntries[0], 'label updates return a new selected entry object');
+assert.equal(labeledIdentityEntries[0].localLabel, 'Before Update', 'label updates store the normalized value');
+assert.equal(labeledIdentityEntries[0].sections, identityEntryOne.sections, 'label updates preserve sanitized sections');
+assert.equal(labeledIdentityEntries[0].classification.parserType, 'panic', 'label updates preserve parser classification');
+assert.equal(labeledIdentityEntries[1], identityEntryTwo, 'label updates preserve other entry objects');
+assert.equal(JSON.stringify(identityEntries), identityEntriesSnapshot, 'label updates do not mutate the prior entry array');
+assert.equal(updateComparisonEntryLocalLabel(identityEntries, 99, 'ignored'), identityEntries, 'invalid label indexes leave state unchanged');
+
+const relabeledIdentityEntries = updateComparisonEntryLocalLabel(labeledIdentityEntries, 1, 'After Update');
+const removedIdentityEntries = removeComparisonEntry(relabeledIdentityEntries, 0);
+assert.deepEqual(
+  removedIdentityEntries.map((entry) => entry.localLabel),
+  ['After Update'],
+  'removing an entry discards only the removed label'
+);
+assert.equal(removedIdentityEntries[0], relabeledIdentityEntries[1], 'remaining entries retain their identity metadata');
+assert.deepEqual(
+  removedIdentityEntries.map((entry, index) => `Report ${index + 1} — ${entry.localLabel}`),
+  ['Report 1 — After Update'],
+  'remaining entries are re-numbered from current insertion order'
+);
+assert.equal(removeComparisonEntry(relabeledIdentityEntries, 99), relabeledIdentityEntries, 'invalid removal indexes leave state unchanged');
+
+const comparisonAliasSentinel = 'Private Local Alias';
+const aliasedComparisonEntries = [
+  updateComparisonEntryLocalLabel(identityEntries, 0, comparisonAliasSentinel)[0],
+  identityEntryTwo,
+];
+assert.equal(validateComparison(aliasedComparisonEntries).valid, true, 'local labels do not affect same-parser comparison validation');
+const aliasedComparisonSections = createComparisonSections(aliasedComparisonEntries);
+const aliasedComparisonJsonText = serializeSectionsForJsonExport(aliasedComparisonSections, { mode: 'comparison' });
+const aliasedComparisonJson = JSON.parse(aliasedComparisonJsonText);
+const aliasedComparisonCopy = aliasedComparisonSections.map((section) => serializeSectionForCopy(section)).join('\n');
+const aliasedComparisonExport = serializeSectionsForExport(aliasedComparisonSections);
+assert.doesNotMatch(JSON.stringify(aliasedComparisonSections), new RegExp(comparisonAliasSentinel), 'local labels do not enter generated comparison sections');
+assert.doesNotMatch(aliasedComparisonCopy, new RegExp(comparisonAliasSentinel), 'local labels do not enter comparison copy output');
+assert.doesNotMatch(aliasedComparisonExport, new RegExp(comparisonAliasSentinel), 'local labels do not enter comparison text export');
+assert.doesNotMatch(aliasedComparisonJsonText, new RegExp(comparisonAliasSentinel), 'local labels do not enter comparison JSON export');
+assert.equal(aliasedComparisonJson.mode, 'comparison', 'local labels do not change comparison JSON mode');
+assert.equal(filterSectionsByQuery(aliasedComparisonSections, comparisonAliasSentinel).totalMatches, 0, 'local labels do not enter comparison search');
+assert.deepEqual(
+  filterSectionsByQuery(aliasedComparisonSections, comparisonAliasSentinel).navigationTargets,
+  [],
+  'local labels do not enter Search Result Navigation targets'
+);
+assert.doesNotMatch(comparisonModelSource, /localLabel/, 'comparison model remains independent of UI-only local labels');
 
 assert.doesNotMatch(
   comparisonModelSource,

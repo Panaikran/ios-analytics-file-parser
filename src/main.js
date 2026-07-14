@@ -1,5 +1,7 @@
 import {
+  createComparisonEntry,
   createInitialAppState,
+  removeComparisonEntry,
   startNewReportState,
   withParsedReport,
   withParseError,
@@ -214,13 +216,13 @@ function addCurrentReportToComparison() {
   try {
     const classification = classifyDiagnostic(appState.sourceText);
     const sections = parseInput(appState.sourceText, { sanitize: true });
-    const entry = {
+    const entry = createComparisonEntry({
       classification: {
         parserType: classification.parserType,
         supported: classification.supported,
       },
       sections,
-    };
+    });
     const nextEntries = [...comparisonEntries, entry];
     const validationEntries = nextEntries.length === 1 ? [entry, entry] : nextEntries;
     const validation = validateComparison(validationEntries);
@@ -243,7 +245,7 @@ function addCurrentReportToComparison() {
 function removeComparisonReport(index) {
   if (index < 0 || index >= comparisonEntries.length) return;
 
-  comparisonEntries = comparisonEntries.filter((_, entryIndex) => entryIndex !== index);
+  comparisonEntries = removeComparisonEntry(comparisonEntries, index);
   exitComparisonMode();
   clearSearchState();
   resetDenseTableState();
@@ -327,6 +329,8 @@ function showParsedReport(text, sourceLabel) {
 
 function clearReport() {
   appState = createInitialAppState();
+  comparisonEntries = [];
+  comparisonMessage = 'No reports added.';
   exitComparisonMode();
   denseTableState = createInitialDenseTableState();
   clearSearchState();

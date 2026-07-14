@@ -1,3 +1,41 @@
+const COMPARISON_LOCAL_LABEL_MAX_LENGTH = 40;
+const NON_WHITESPACE_CONTROL_CHARACTERS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/gu;
+
+export function normalizeComparisonLocalLabel(value) {
+  if (typeof value !== 'string') return '';
+
+  const normalized = value
+    .replace(/[\t\r\n]+/gu, ' ')
+    .replace(NON_WHITESPACE_CONTROL_CHARACTERS, '')
+    .replace(/\s+/gu, ' ')
+    .trim();
+
+  return Array.from(normalized).slice(0, COMPARISON_LOCAL_LABEL_MAX_LENGTH).join('');
+}
+
+export function createComparisonEntry({ classification, sections }) {
+  return {
+    classification,
+    sections,
+    localLabel: '',
+  };
+}
+
+export function updateComparisonEntryLocalLabel(entries, index, value) {
+  if (!Array.isArray(entries) || !Number.isInteger(index) || index < 0 || index >= entries.length) return entries;
+
+  return entries.map((entry, entryIndex) =>
+    entryIndex === index
+      ? { ...entry, localLabel: normalizeComparisonLocalLabel(value) }
+      : entry
+  );
+}
+
+export function removeComparisonEntry(entries, index) {
+  if (!Array.isArray(entries) || !Number.isInteger(index) || index < 0 || index >= entries.length) return entries;
+  return entries.filter((_, entryIndex) => entryIndex !== index);
+}
+
 export function createInitialAppState() {
   return {
     sourceText: '',
