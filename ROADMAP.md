@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` approved planning — implementation not started.
+Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` implementation complete, unreleased, and ready for explicit manual release review.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -29,7 +29,8 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| Next Milestone | Approved planning | `v1.8.0` | Precision Search & Deep Inspection; implementation not started |
+| Precision Search & Deep Inspection | Implementation complete; unreleased | `v1.8.0` | Visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening; ready for manual release review |
+| Next Milestone | Planning | `v1.9.0` | Scope to be determined after v1.8.0 post-release reconciliation |
 
 ## Project Constraints
 
@@ -698,34 +699,45 @@ type and remains sanitized-only. Raw Local View restrictions remain unchanged.
 No production defect was reproduced during Slice 17C, and all automated,
 Chrome, responsive, accessibility, offline, and performance checks passed.
 
-## Next Planning Milestone: v1.8.0
+## Completed Roadmap: v1.8.0
 
-Status: approved planning — implementation not started. The approved user
-outcome is to make exact matches within visible sanitized content easier to
-identify and inspect while preserving existing substring search, section
-navigation, comparison, export, offline, local-only, and privacy boundaries.
+Status: implementation complete; ready for explicit manual release review.
+Release status: unreleased. No `v1.8.0` tag or GitHub Release was created.
 
-The complete approved milestone definition is recorded in `PLANS.md`.
+Theme: Precision Search & Deep Inspection. The milestone adds additive exact-
+match metadata, safe visual highlighting, and deterministic non-wrapping
+Previous/Next exact-match navigation within visible sanitized content while
+preserving substring search, section navigation, comparison, exports, Raw
+Local View, offline, local-only, privacy, and performance boundaries.
 
 | Slice | Status | Scope |
 | --- | --- | --- |
-| Slice 18A | Not started | Deterministic match metadata for visible sanitized rendered regions |
-| Slice 18B | Not started | Safe visual match identification and keyboard movement |
-| Slice 18C | Not started | Privacy, accessibility, responsive, comparison, export, offline, and performance hardening |
-| Slice 18D | Not started | Documentation reconciliation and explicit release-readiness preparation |
+| Slice 18A | Complete | Deterministic `matchRegions` metadata for visible sanitized rendered regions |
+| Slice 18B | Complete | Safe visual match identification, exact-match controls, keyboard movement, focus, status, and responsive behavior |
+| Slice 18C | Complete | Reproduced chart-only regression fix, privacy/accessibility/responsive/comparison/export/offline/performance hardening, and browser QA |
+| Slice 18D | Complete | Documentation reconciliation, final validation, and explicit release-readiness preparation |
 
-The milestone does not approve new parser families, MetricKit, raw-source or
-DOM-derived search, a second filtering pipeline, export-schema changes,
-comparison expansion, report persistence, cloud processing, uploads, AI
-diagnosis, symbolication, or framework migration. Search remains limited to
-generated visible sanitized section data, including existing capped/grouped
-boundaries. Any new or changed precached production asset must update the
-service-worker allowlist and cache version in the same slice; this guard does
-not authorize runtime report caching or service-worker redesign.
+The final outcome covers all supported visible match kinds, supported two- and
+three-report same-parser comparisons, Raw Local View isolation, copy/export
+isolation, accessibility and responsive hardening, service-worker cache
+consistency, and regression evidence across all 11 bundled examples. Search
+remains case-insensitive substring matching over generated visible sanitized
+section data. It does not add regex, fuzzy, semantic, raw-source, capped-out,
+hidden-data, or DOM-derived search.
+
+Any new or changed precached production asset must update the service-worker
+allowlist and cache version in the same slice. This remains a release-
+consistency guard and does not authorize runtime report caching, dynamic cache
+discovery, persistent report storage, or service-worker redesign.
+
+## Next Planning Milestone: v1.9.0
+
+Status: planning-only. Scope to be determined after v1.8.0 post-release
+reconciliation. No v1.9.0 implementation scope is approved.
 
 ## Future Hardening And Exploratory Work
 
-These items remain outside the current v1.0 stabilization path unless explicitly approved later.
+These items remain outside the current v1.9 planning scope unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -742,12 +754,12 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, and `PHASE_17_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, `PHASE_17_SUMMARY.md`, and `PHASE_18_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for the current v1.0 stabilization path unless explicitly approved later.
+These ideas are intentionally out of scope for the current v1.9 planning scope unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |
@@ -761,8 +773,8 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Continue with the approved v1.8.0 plan in `PLANS.md`. Implementation remains
-not started, and no slice is active or complete.
+Complete post-release reconciliation for v1.8.0, then define v1.9.0 scope in a
+separate approved planning pass. No v1.9.0 implementation is active.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -770,10 +782,6 @@ not started, and no slice is active or complete.
 - Preserve the completed v1.5.0 example catalog, privacy fix, and offline QA evidence.
 - Preserve the completed v1.6.0 search-navigation contract, accessibility behavior, and QA evidence.
 - Preserve the completed v1.7.0 comparison identity, setup feedback, privacy, export, accessibility, and QA contracts.
-- Run `npm.cmd test`.
-- Run focused syntax checks:
-  - `node --check src\main.js`
-  - `node --check service-worker.js`
-  - touched JavaScript modules
+- Preserve the completed v1.8.0 exact-match, privacy, export, accessibility, responsive, offline, and performance contracts.
 - Preserve existing parser behavior and PWA privacy boundaries.
 - Create tags, releases, package metadata changes, or publishing actions only after explicit approval.

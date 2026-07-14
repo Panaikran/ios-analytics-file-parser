@@ -195,11 +195,11 @@ actions unless the user explicitly asks for that release action.
 
 Release title: `v1.8.0 — Precision Search & Deep Inspection`
 
-Status: `Approved planning — implementation not started`
+Status: `Implementation complete — ready for explicit manual release review; unreleased`
 
-This section records the approved milestone direction only. No Slice 18A
-implementation has started, and this plan does not approve implementation
-details beyond the high-level contracts below.
+This section records the approved milestone direction and its completed
+implementation boundaries. Slices 18A through 18D are complete. Release
+tagging and GitHub Release publication remain separate explicit actions.
 
 ### Objective
 
@@ -342,7 +342,7 @@ production defect without evidence.
 
 ### Provisional Slices
 
-All slices are `Not started`.
+All slices are `Complete`.
 
 #### Slice 18A — Search Match Contract
 
@@ -417,10 +417,9 @@ native-screen-reader lanes.
 Objective: reconcile documentation, complete final validation, and prepare
 v1.8.0 for explicit manual release review.
 
-Likely areas: `README.md`, `ROADMAP.md`, `CHANGELOG.md` only if the repository
-convention supports an Unreleased planning note, and `PHASE_18_SUMMARY.md`
-only after implementation if the project creates one. No phase summary is
-created by this planning task.
+Likely areas: `README.md`, `ROADMAP.md`, `CHANGELOG.md`, and
+`PHASE_18_SUMMARY.md` after implementation and validation. The phase summary
+records the completed milestone and its unreleased release-readiness state.
 
 Acceptance criteria: verified behavior, slice status, privacy, accessibility,
 responsive, offline, performance evidence, and limitations are documented

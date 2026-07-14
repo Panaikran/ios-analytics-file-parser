@@ -1,5 +1,46 @@
 # Changelog
 
+## v1.8.0 — Precision Search & Deep Inspection
+
+Status: Implementation complete; unreleased; ready for explicit manual release review.
+
+### Added
+
+- Additive exact-match metadata for visible sanitized content.
+- Safe exact-match visual highlighting.
+- Native Previous and Next exact-match controls with deterministic current-position status.
+- Support for section, field, table, chart, and visible-text match regions.
+
+### Changed
+
+- Search now supports precise inspection within filtered sanitized sections while preserving case-insensitive substring semantics.
+- Exact-match navigation synchronizes with section-level navigation and does not wrap.
+- Query, report, comparison, Clear Report, and Raw Local View transitions reset exact-match state deterministically.
+- Service-worker allowlist and cache version were updated for the changed precached production helper in Slice 18B.
+
+### Fixed
+
+- Chart-only search results were incorrectly discarded because chart matches were omitted from `matchCount`.
+
+### Privacy
+
+- Exact-match metadata excludes raw source, hidden values, capped-out records, filenames, paths, local comparison labels, and parser-private data.
+- Match metadata and highlighting do not enter copy, text export, JSON export, filenames, schema, or mode.
+- No persistence or network transmission was introduced.
+
+### Accessibility
+
+- Native keyboard-operable controls with distinct section and exact-match navigation.
+- Visible focus, active-match styling beyond color, concise live-status feedback, reduced-motion handling, and responsive 44px controls.
+
+### Testing
+
+- All 11 bundled examples and all supported match kinds.
+- Unicode and UTF-16 ranges, malformed-range fallback, hostile-looking text, and deterministic boundaries.
+- Comparison, capped CoreAnalytics data, Raw Local View, copy/export isolation, repeated workflows, responsive and browser QA, service-worker readiness, and performance benchmarks.
+
+No release date, tag, or GitHub Release has been created for v1.8.0.
+
 ## v1.7.0 — Comparison Workflow Clarity
 
 Status: Released on 2026-07-14. The `v1.7.0` tag and published, non-draft,

@@ -26,8 +26,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v1.7.0` (2026-07-14) |
-| Active phase | `v1.8.0 — Precision Search & Deep Inspection` approved planning |
-| Current focus | Implementation not started; Slice 18A is not started |
+| Active phase | `v1.8.0 — Precision Search & Deep Inspection` implementation complete |
+| Current focus | Ready for explicit manual release review; unreleased |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -59,7 +59,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.7.0` is the latest stable release, tagged and published on 2026-07-14 as a non-prerelease GitHub Release. Comparison Workflow Clarity remains available as documented below. `v1.8.0 — Precision Search & Deep Inspection` is the approved planning milestone; implementation has not started.
+`v1.7.0` is the latest stable release, tagged and published on 2026-07-14 as a non-prerelease GitHub Release. Comparison Workflow Clarity remains available as documented below. `v1.8.0 — Precision Search & Deep Inspection` is implementation-complete and ready for explicit manual release review; it remains unreleased.
 
 ## Why This Exists
 
@@ -146,6 +146,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Section jump navigation | Supported |
 | Search/filter parsed output | Supported |
 | Search Result Navigation | Implemented in `v1.6.0`: section-level Previous/Next movement through visible matching sections |
+| Precision Search & Deep Inspection | Implemented in `v1.8.0`: exact-match metadata, safe highlighting, and non-wrapping Previous/Next exact-match navigation within visible sanitized content |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
@@ -233,8 +234,12 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 - Search Result Navigation moves through visible matching sanitized sections with accessible Previous and Next controls.
 - Navigation follows filtered section order, does not wrap, shows the current section-level position, and scrolls to the existing stable section anchor.
 - Previous is unavailable at the first matching section and Next is unavailable at the final matching section. Focus remains on the activated control and announcements reuse the existing status live region.
-- Search-result navigation is section-level only. It does not highlight text or move through fields, rows, cells, or individual occurrences.
-- Search across section titles, field labels, field values, table cells, and raw text.
+- Search remains case-insensitive substring search over visible sanitized generated sections.
+- Exact matching regions can be visually identified and navigated with native Previous and Next exact-match controls. The current exact-match position is shown, such as `2 of 7`; first, final, one-result, and no-result boundaries are deterministic and navigation does not wrap.
+- Exact-match regions include section titles, field labels, field values, table headers, table cells, chart labels, chart values, and visible text blocks. Match metadata comes from the same sanitized model as filtering, never raw source or DOM scanning.
+- Exact-match navigation remains synchronized with section-level navigation and works in supported two- and three-report comparisons.
+- Local comparison labels, capped-out rows, hidden values, and Raw Local View content remain excluded from exact-match metadata and highlighting.
+- Search across section titles, field labels, field values, table cells, chart labels, chart values, and visible text blocks.
 - Matching table rows only are shown while search is active.
 - Search results override collapsed dense-table state so matches remain visible.
 - Copy buttons on each section.
@@ -316,6 +321,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - v1.4 CoreAnalytics controls use native keyboard-operable buttons, category-and-value accessible names, selected-state semantics, focus restoration, and practical 44px touch targets across narrow layouts.
 - v1.6 Search Result Navigation uses native Previous and Next buttons, accessible names, `aria-disabled` boundary state, visible focus, logical tab order, existing status announcements, stable-anchor movement, and touch-safe controls.
 - v1.7 comparison setup uses programmatic input labels, associated privacy help text, native keyboard-editable controls, predictable focus restoration after removal, updated positional names, and responsive touch-safe layout. Labels remain ephemeral. No native screen-reader certification or Safari/Firefox validation is claimed.
+- v1.8 exact-match inspection uses distinct native section and exact-match controls, keyboard operation, visible focus, active-match styling beyond color, concise live-status feedback, reduced-motion handling, and responsive touch-safe controls. No native screen-reader certification or Safari/Firefox validation is claimed.
 
 ## Running Locally
 
@@ -653,8 +659,8 @@ After first successful service worker setup, these fictional examples are availa
 - Clipboard behavior depends on browser permissions and secure-context rules.
 - Very large visible search results can still require substantial DOM rerendering.
 - Large tables are capped, grouped, or collapsed, but true virtualization is not implemented.
-- Search is simple substring matching; there is no regex, tokenization, or highlighting.
-- Search-result navigation is limited to visible sanitized sections; it does not provide highlighting, row-level movement, field-level movement, occurrence-level movement, or wrapping.
+- Search is simple case-insensitive substring matching; there is no regex, fuzzy, semantic, raw-source, capped-out, or hidden-data search.
+- Exact-match navigation is limited to visible sanitized rendered regions, does not wrap, and is not available in Raw Local View. It does not provide search history, saved searches, or persistence.
 - CoreAnalytics does not render full raw JSON bodies.
 - CoreAnalytics grouped event rows and sample record rows are capped at 100 rendered rows.
 - CoreAnalytics search and copy operate on rendered capped rows, not every source record.
@@ -705,7 +711,8 @@ After first successful service worker setup, these fictional examples are availa
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 | v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
 | v1.7.0 | Released 2026-07-14 | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| v1.8.0 | Approved planning | Precision Search & Deep Inspection; implementation not started |
+| v1.8.0 | Implementation complete; unreleased | Precision Search & Deep Inspection: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
+| v1.9.0 | Planning | Scope to be determined after v1.8.0 post-release reconciliation |
 
 The project keeps the same constraints:
 
@@ -776,7 +783,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.7.0` is released and fully closed on 2026-07-14. `v1.8.0 — Precision Search & Deep Inspection` is approved planning-only; implementation has not started. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.7.0` is released and fully closed on 2026-07-14. `v1.8.0 — Precision Search & Deep Inspection` is implementation-complete, unreleased, and ready for explicit manual release review. `v1.9.0` remains planning-only with scope to be determined after v1.8.0 post-release reconciliation. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 
