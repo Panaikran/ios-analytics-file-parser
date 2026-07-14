@@ -2,7 +2,9 @@
 
 ## v1.8.0 — Precision Search & Deep Inspection
 
-Status: Implementation complete; unreleased; ready for explicit manual release review.
+Status: Released on 2026-07-14. The `v1.8.0` tag and published, non-draft,
+non-prerelease GitHub Release point to
+`ad19143f76a9bac6d704c078846a518b13a44dcb`.
 
 ### Added
 
@@ -21,6 +23,7 @@ Status: Implementation complete; unreleased; ready for explicit manual release r
 ### Fixed
 
 - Chart-only search results were incorrectly discarded because chart matches were omitted from `matchCount`.
+- Malformed exact-match ranges now fail safely by preserving the original visible text.
 
 ### Privacy
 
@@ -38,8 +41,6 @@ Status: Implementation complete; unreleased; ready for explicit manual release r
 - All 11 bundled examples and all supported match kinds.
 - Unicode and UTF-16 ranges, malformed-range fallback, hostile-looking text, and deterministic boundaries.
 - Comparison, capped CoreAnalytics data, Raw Local View, copy/export isolation, repeated workflows, responsive and browser QA, service-worker readiness, and performance benchmarks.
-
-No release date, tag, or GitHub Release has been created for v1.8.0.
 
 ## v1.7.0 — Comparison Workflow Clarity
 

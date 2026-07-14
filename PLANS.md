@@ -195,11 +195,12 @@ actions unless the user explicitly asks for that release action.
 
 Release title: `v1.8.0 — Precision Search & Deep Inspection`
 
-Status: `Implementation complete — ready for explicit manual release review; unreleased`
+Status: `Released and fully closed on 2026-07-14`
 
 This section records the approved milestone direction and its completed
-implementation boundaries. Slices 18A through 18D are complete. Release
-tagging and GitHub Release publication remain separate explicit actions.
+implementation boundaries. Slices 18A through 18D are complete and closed.
+Release commit: `ad19143f76a9bac6d704c078846a518b13a44dcb`. Tag: `v1.8.0`.
+GitHub Release: published, non-draft, non-prerelease.
 
 ### Objective
 
@@ -414,23 +415,26 @@ native-screen-reader lanes.
 
 #### Slice 18D — Documentation and Release Readiness
 
-Objective: reconcile documentation, complete final validation, and prepare
-v1.8.0 for explicit manual release review.
+Objective: reconcile documentation, complete final validation, and record the
+v1.8.0 release state.
 
 Likely areas: `README.md`, `ROADMAP.md`, `CHANGELOG.md`, and
 `PHASE_18_SUMMARY.md` after implementation and validation. The phase summary
-records the completed milestone and its unreleased release-readiness state.
+records the completed and released milestone state.
 
 Acceptance criteria: verified behavior, slice status, privacy, accessibility,
 responsive, offline, performance evidence, and limitations are documented
-accurately; implementation may be marked complete only after it lands and is
-validated; release tagging remains a separate explicit action.
+accurately; implementation and release status are reconciled after validation.
 
-Stop rules: no new production functionality, tag, GitHub Release, invented
-next-milestone scope, or release claim; stop if final validation finds a
-production blocker.
+Stop rules: no new production functionality, invented next-milestone scope, or
+unsupported release claim; stop if final validation finds a production blocker.
 
-Dependencies: completed validation evidence and explicit manual release review.
+Dependencies: completed validation evidence and the approved release record.
+
+## Next Planning Milestone: v1.9.0
+
+Status: planning-only. Scope to be determined after v1.8.0 post-release
+reconciliation. No v1.9.0 implementation scope is approved.
 
 ### Risks and Testing Expectations
 

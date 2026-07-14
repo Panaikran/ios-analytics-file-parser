@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` implementation complete, unreleased, and ready for explicit manual release review.
+Status: `v1.8.0` released and fully closed on 2026-07-14. `v1.9.0` is the next planning milestone.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -29,7 +29,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| Precision Search & Deep Inspection | Implementation complete; unreleased | `v1.8.0` | Visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening; ready for manual release review |
+| Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | Next Milestone | Planning | `v1.9.0` | Scope to be determined after v1.8.0 post-release reconciliation |
 
 ## Project Constraints
@@ -701,8 +701,8 @@ Chrome, responsive, accessibility, offline, and performance checks passed.
 
 ## Completed Roadmap: v1.8.0
 
-Status: implementation complete; ready for explicit manual release review.
-Release status: unreleased. No `v1.8.0` tag or GitHub Release was created.
+Status: released and fully closed on 2026-07-14.
+Release status: released. Release commit: `ad19143f76a9bac6d704c078846a518b13a44dcb`. Tag: `v1.8.0`. GitHub Release: published, non-draft, non-prerelease.
 
 Theme: Precision Search & Deep Inspection. The milestone adds additive exact-
 match metadata, safe visual highlighting, and deterministic non-wrapping
@@ -773,8 +773,8 @@ These ideas are intentionally out of scope for the current v1.9 planning scope u
 
 ## Next Planning Step
 
-Complete post-release reconciliation for v1.8.0, then define v1.9.0 scope in a
-separate approved planning pass. No v1.9.0 implementation is active.
+Define v1.9.0 scope in a separate approved planning pass. No v1.9.0
+implementation is active.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

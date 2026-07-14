@@ -25,9 +25,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.7.0` (2026-07-14) |
-| Active phase | `v1.8.0 — Precision Search & Deep Inspection` implementation complete |
-| Current focus | Ready for explicit manual release review; unreleased |
+| Latest released version | `v1.8.0` (2026-07-14) |
+| Active phase | `v1.8.0 — Precision Search & Deep Inspection` released and fully closed |
+| Current focus | `v1.9.0` planning; scope to be determined after v1.8.0 post-release reconciliation |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -52,6 +52,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.5.0 | Released: Complete Supported Diagnostic Examples |
 | v1.6.0 | Released: Search Result Navigation |
 | v1.7.0 | Released 2026-07-14: Comparison Workflow Clarity |
+| v1.8.0 | Released 2026-07-14: Precision Search & Deep Inspection |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -59,7 +60,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.7.0` is the latest stable release, tagged and published on 2026-07-14 as a non-prerelease GitHub Release. Comparison Workflow Clarity remains available as documented below. `v1.8.0 — Precision Search & Deep Inspection` is implementation-complete and ready for explicit manual release review; it remains unreleased.
+`v1.8.0 — Precision Search & Deep Inspection` is the latest stable release, tagged and published on 2026-07-14 as a non-draft, non-prerelease GitHub Release. It adds precise exact-match inspection within visible sanitized content while preserving comparison, Raw Local View, export, privacy, local-only, and offline boundaries. `v1.9.0` is the next planning milestone; its scope is to be determined after v1.8.0 post-release reconciliation.
 
 ## Why This Exists
 
@@ -711,7 +712,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.5.0 | Released | Complete fictional bundled example catalog, offline integration, privacy hardening, and cross-family workflow QA |
 | v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
 | v1.7.0 | Released 2026-07-14 | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| v1.8.0 | Implementation complete; unreleased | Precision Search & Deep Inspection: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
+| v1.8.0 | Released 2026-07-14 | Precision Search & Deep Inspection: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | v1.9.0 | Planning | Scope to be determined after v1.8.0 post-release reconciliation |
 
 The project keeps the same constraints:
@@ -783,7 +784,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.7.0` is released and fully closed on 2026-07-14. `v1.8.0 — Precision Search & Deep Inspection` is implementation-complete, unreleased, and ready for explicit manual release review. `v1.9.0` remains planning-only with scope to be determined after v1.8.0 post-release reconciliation. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.8.0 — Precision Search & Deep Inspection` is released and fully closed on 2026-07-14. `v1.9.0` remains planning-only with scope to be determined after v1.8.0 post-release reconciliation. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

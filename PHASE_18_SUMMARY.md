@@ -4,10 +4,22 @@ Version:
 `v1.8.0 — Precision Search & Deep Inspection`
 
 Status:
-`Implementation complete; ready for manual release review`
+`Released`
 
 Release status:
-`Unreleased`
+`Released`
+
+Release date:
+`2026-07-14`
+
+Release commit:
+`ad19143f76a9bac6d704c078846a518b13a44dcb`
+
+Tag:
+`v1.8.0`
+
+GitHub Release:
+`Published, non-draft, non-prerelease`
 
 ## Objective
 
@@ -86,9 +98,9 @@ Commit:
 
 ### 18D — Documentation and Release Readiness
 
-Reconciles README user guidance, roadmap status, unreleased changelog notes,
-this phase summary, and the approved plan status. Final validation confirms
-implementation-complete status without creating a tag or GitHub Release.
+Reconciles README user guidance, roadmap status, changelog notes, this phase
+summary, and the approved plan status. Final validation records the published
+v1.8.0 release without changing its tag or GitHub Release.
 
 ## Final Behavior
 
@@ -191,15 +203,13 @@ for Stackshot. No production optimization was required.
 
 ## Release Readiness
 
-- [x] Implementation complete across Slices 18A, 18B, and 18C.
+- [x] Implementation complete across Slices 18A, 18B, 18C, and 18D.
 - [x] Documentation reconciled in Slice 18D.
 - [x] Automated tests, syntax checks, and Node performance benchmarks passed.
 - [x] Available browser and accessibility checks passed.
 - [x] Privacy, comparison, Raw Local View, copy, export, offline, responsive, and performance boundaries remain documented.
 - [x] No known release blocker remains.
-- [x] Ready for explicit manual tag and GitHub Release review.
-- [x] No `v1.8.0` tag or GitHub Release was created in Slice 18D.
+- [x] The `v1.8.0` tag points to the release commit and the published GitHub Release is non-draft and non-prerelease.
 
-v1.8.0 is implementation-complete and ready for manual release review, but it
-is not released. v1.9.0 remains planning-only with scope to be determined
-after v1.8.0 post-release reconciliation.
+v1.8.0 is released and fully closed. v1.9.0 remains planning-only with scope
+to be determined after v1.8.0 post-release reconciliation.
