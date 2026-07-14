@@ -480,8 +480,9 @@ textarea {
 }
 
 .comparison-list__item {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
@@ -489,9 +490,40 @@ textarea {
   padding-top: 8px;
 }
 
-.comparison-list__item span {
+.comparison-list__fields {
+  display: grid;
+  gap: 4px;
   min-width: 0;
+}
+
+.comparison-list__identity {
+  font-weight: 650;
   overflow-wrap: anywhere;
+}
+
+.comparison-list__label,
+.comparison-list__help {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.comparison-list__input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--surface-strong);
+  border-radius: 8px;
+  background: #111113;
+  color: var(--text);
+  font: inherit;
+  padding: 9px 11px;
+}
+
+.comparison-list__input:focus-visible {
+  border-color: rgba(48, 209, 88, 0.7);
+  outline: 2px solid rgba(48, 209, 88, 0.25);
+  outline-offset: 2px;
 }
 
 .comparison-actions {
@@ -1184,8 +1216,8 @@ textarea {
   }
 
   .comparison-list__item {
+    grid-template-columns: 1fr;
     align-items: stretch;
-    flex-direction: column;
   }
 
   .comparison-actions {

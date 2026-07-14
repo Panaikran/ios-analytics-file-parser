@@ -237,7 +237,18 @@ assert.match(mainScriptText, /comparisonEntries\.length >= 3/, 'comparison workf
 assert.match(mainScriptText, /comparisonSections = createComparisonSections\(comparisonEntries\)/, 'Compare delegates section generation to the pure comparison model');
 assert.match(mainScriptText, /function removeComparisonReport\(index\)/, 'comparison workflow supports removing reports');
 assert.match(mainScriptText, /createComparisonEntry\(\{/, 'comparison entries use the shared identity initializer');
+assert.match(mainScriptText, /updateComparisonEntryLocalLabel\(comparisonEntries, index,/, 'local-label input updates the selected comparison entry through the frozen state helper');
+assert.match(mainScriptText, /Local label for Report \$\{index \+ 1\}/, 'local-label inputs use positional accessible names');
+assert.match(mainScriptText, /Optional local label - stays on this device and is not included in exports\./, 'local-label help text states the privacy boundary');
+assert.match(mainScriptText, /placeholder = 'e\.g\. Before Update'/, 'local-label inputs use a generic example placeholder');
+assert.match(mainScriptText, /localLabelInput\.setAttribute\('aria-describedby', helpId\)/, 'local-label inputs reference their privacy help text');
+assert.match(mainScriptText, /Remove Report \$\{index \+ 1\} from comparison/, 'remove controls identify their comparison slot');
+assert.match(mainScriptText, /Comparison supports up to three reports\./, 'comparison setup exposes the maximum-report feedback');
+assert.match(mainScriptText, /Add one or two more reports of the same type to compare\./, 'one-report setup explains the remaining eligibility');
+assert.match(mainScriptText, /Selected reports must use the same parser type\./, 'mixed-parser setup explains the compatibility rule');
+assert.match(mainScriptText, /focusComparisonEntry\(/, 'comparison removal restores focus through the existing DOM focus path');
 assert.match(mainScriptText, /comparisonEntries = \[\];\s+comparisonMessage = 'No reports added\.';/, 'full report clear discards comparison identity state');
+assert.match(mainScriptText, /function clearComparison\(\)[^]*comparisonEntries = \[\][^]*comparisonMessage = 'Comparison cleared\.';/, 'clear comparison discards local-label state and reports completion');
 assert.match(mainScriptText, /function clearComparison\(\)/, 'comparison workflow supports clearing comparison state');
 assert.match(mainScriptText, /const activeSections = comparisonMode \? comparisonSections : appState\.sections;/, 'renderer, search, and copy share the active SectionModel array');
 assert.match(mainScriptText, /privacyPanel\.hidden = comparisonMode \|\| !hasParsedSections;/, 'Raw Local View controls remain unavailable in comparison mode');
@@ -295,6 +306,9 @@ assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, '
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
 assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
 assert.match(styleText, /\.comparison-button,\s*\.comparison-list__remove\s*{[^}]*min-height:\s*44px;/s, 'comparison controls have practical touch targets');
+assert.match(styleText, /\.comparison-list__fields\s*{/, 'comparison entries provide a contained field group for labels and help text');
+assert.match(styleText, /\.comparison-list__input\s*{/, 'comparison local labels use a dedicated responsive input style');
+assert.match(styleText, /\.comparison-list__input\s*{[^}]*min-height:\s*44px;/s, 'comparison local labels meet the touch-target height');
 assert.match(styleText, /@media \(max-width:\s*480px\)[^]*\.comparison-actions\s*{[^}]*flex-direction:\s*column;/s, 'comparison actions stack at narrow mobile widths');
 assert.match(styleText, /\.thread-group__toggle,\s*\.table-toggle,\s*\.table-control-button\s*{[^}]*min-height:\s*44px;/s, 'dense table controls have practical mobile touch targets');
 assert.match(styleText, /\.frame-table:not\(\.frame-table--compact\) th,\s*\.frame-table:not\(\.frame-table--compact\) td\s*{[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/s, 'non-compact report tables wrap long text inside their scroll containers');

@@ -3,6 +3,7 @@ import {
   createInitialAppState,
   removeComparisonEntry,
   startNewReportState,
+  updateComparisonEntryLocalLabel,
   withParsedReport,
   withParseError,
   withPrivacyMode,
@@ -193,25 +194,88 @@ function renderComparisonControls(hasCurrentReport) {
     item.className = 'comparison-list__item';
     item.setAttribute('role', 'listitem');
 
-    const label = document.createElement('span');
-    label.textContent = `Report ${index + 1} - ${entry.classification.parserType}`;
+    const fields = document.createElement('div');
+    fields.className = 'comparison-list__fields';
+
+    const displayLabel = document.createElement('span');
+    displayLabel.className = 'comparison-list__identity';
+    displayLabel.textContent = formatComparisonEntryLabel(entry, index);
+
+    const labelId = `comparison-local-label-${index + 1}`;
+    const helpId = `${labelId}-help`;
+    const localLabelLabel = document.createElement('label');
+    localLabelLabel.className = 'comparison-list__label';
+    localLabelLabel.htmlFor = labelId;
+    localLabelLabel.textContent = `Local label for Report ${index + 1}`;
+
+    const localLabelInput = document.createElement('input');
+    localLabelInput.className = 'comparison-list__input';
+    localLabelInput.id = labelId;
+    localLabelInput.type = 'text';
+    localLabelInput.autocomplete = 'off';
+    localLabelInput.placeholder = 'e.g. Before Update';
+    localLabelInput.value = entry.localLabel;
+    localLabelInput.setAttribute('aria-describedby', helpId);
+
+    const helpText = document.createElement('span');
+    helpText.className = 'comparison-list__help';
+    helpText.id = helpId;
+    helpText.textContent = 'Optional local label - stays on this device and is not included in exports. Maximum 40 Unicode characters.';
+
+    localLabelInput.addEventListener('input', (event) => {
+      comparisonEntries = updateComparisonEntryLocalLabel(comparisonEntries, index, event.currentTarget.value);
+      displayLabel.textContent = formatComparisonEntryLabel(comparisonEntries[index], index);
+    });
+    localLabelInput.addEventListener('blur', () => {
+      localLabelInput.value = comparisonEntries[index]?.localLabel ?? '';
+    });
+
+    fields.append(displayLabel, localLabelLabel, localLabelInput, helpText);
 
     const removeButton = document.createElement('button');
     removeButton.className = 'comparison-list__remove';
     removeButton.type = 'button';
     removeButton.textContent = 'Remove report';
-    removeButton.setAttribute('aria-label', `Remove Report ${index + 1}`);
+    removeButton.setAttribute('aria-label', `Remove Report ${index + 1} from comparison`);
     removeButton.addEventListener('click', () => removeComparisonReport(index));
 
-    item.append(label, removeButton);
+    item.append(fields, removeButton);
     return item;
   });
 
   comparisonList.replaceChildren(...items);
 }
 
+function formatComparisonEntryLabel(entry, index) {
+  const reportLabel = `Report ${index + 1}`;
+  const parserType = entry?.classification?.parserType ?? 'unknown';
+  const localLabel = typeof entry?.localLabel === 'string' ? entry.localLabel : '';
+  return localLabel ? `${reportLabel} — ${localLabel} (${parserType})` : `${reportLabel} — ${parserType}`;
+}
+
+function comparisonSetupMessage(validation, reportCount) {
+  if (reportCount === 0) return 'No reports added.';
+  if (validation.code === 'mixed-parser-types') return 'Selected reports must use the same parser type.';
+  if (validation.code === 'too-many-reports' || reportCount > 3) return 'Comparison supports up to three reports.';
+  if (reportCount === 1 || validation.code === 'too-few-reports') return 'Add one or two more reports of the same type to compare.';
+  if (!validation.valid) return validation.message;
+  return reportCount === 3
+    ? 'Ready to compare. Comparison supports up to three reports.'
+    : 'Ready to compare.';
+}
+
+function focusComparisonEntry(index) {
+  const target = index >= 0 ? document.getElementById(`comparison-local-label-${index + 1}`) : null;
+  (target ?? addToComparisonButton).focus();
+}
+
 function addCurrentReportToComparison() {
-  if (comparisonMode || !appState.sourceText || !appState.sections.length || comparisonEntries.length >= 3) return;
+  if (comparisonMode || !appState.sourceText || !appState.sections.length) return;
+  if (comparisonEntries.length >= 3) {
+    comparisonMessage = 'Comparison supports up to three reports.';
+    renderApp();
+    return;
+  }
 
   try {
     const classification = classifyDiagnostic(appState.sourceText);
@@ -228,13 +292,13 @@ function addCurrentReportToComparison() {
     const validation = validateComparison(validationEntries);
 
     if (!validation.valid) {
-      comparisonMessage = validation.message;
+      comparisonMessage = comparisonSetupMessage(validation, nextEntries.length);
       renderApp();
       return;
     }
 
     comparisonEntries = nextEntries;
-    comparisonMessage = `Added Report ${comparisonEntries.length}. ${comparisonEntries.length < 2 ? 'Add one more compatible report to compare.' : 'Ready to compare.'}`;
+    comparisonMessage = comparisonSetupMessage(validation, comparisonEntries.length);
   } catch {
     comparisonMessage = 'Could not add this report to comparison.';
   }
@@ -246,13 +310,13 @@ function removeComparisonReport(index) {
   if (index < 0 || index >= comparisonEntries.length) return;
 
   comparisonEntries = removeComparisonEntry(comparisonEntries, index);
+  const focusIndex = comparisonEntries.length ? Math.min(index, comparisonEntries.length - 1) : -1;
   exitComparisonMode();
   clearSearchState();
   resetDenseTableState();
-  comparisonMessage = comparisonEntries.length
-    ? `${comparisonEntries.length} report${comparisonEntries.length === 1 ? '' : 's'} selected.`
-    : 'No reports added.';
+  comparisonMessage = comparisonSetupMessage(validateComparison(comparisonEntries), comparisonEntries.length);
   renderApp();
+  focusComparisonEntry(focusIndex);
 }
 
 function clearComparison() {
@@ -269,7 +333,7 @@ function clearComparison() {
 function compareReports() {
   const validation = validateComparison(comparisonEntries);
   if (!validation.valid) {
-    comparisonMessage = validation.message;
+    comparisonMessage = comparisonSetupMessage(validation, comparisonEntries.length);
     renderApp();
     return;
   }
@@ -290,6 +354,7 @@ function exitComparisonMode() {
 function showParsedReport(text, sourceLabel) {
   exitComparisonMode();
   clearSearchState();
+  comparisonMessage = comparisonSetupMessage(validateComparison(comparisonEntries), comparisonEntries.length);
   const sourceText = String(text ?? '');
   const classification = classifyDiagnostic(sourceText);
   const detectedType = classification.legacyType;
