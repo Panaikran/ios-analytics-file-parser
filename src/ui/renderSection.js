@@ -1,6 +1,7 @@
 import { TABLE_VIEW_MODES, getTableView } from './tableView.js';
 import { getCopyMetadata } from '../clipboard/copyMetadata.js';
 import { getVisibleSectionForCopy } from '../clipboard/visibleSection.js';
+import { getExactMatchTargetId, isValidMatchRange } from '../search/exactMatch.js';
 
 export function renderSection(
   section,
@@ -12,8 +13,12 @@ export function renderSection(
     onShowAllRows = null,
     onToggleDenseTable = null,
     allSections = [],
+    matchRegions = [],
+    activeExactMatchId = '',
   } = {}
 ) {
+  const sectionMatchRegions = getSectionMatchRegions(section, matchRegions);
+  const sourceSection = getSourceSection(sectionMatchRegions, allSections);
   const article = document.createElement('article');
   article.className = `section-card section-card--${section.priority}`;
   article.id = section.id;
@@ -22,7 +27,7 @@ export function renderSection(
   header.className = 'section-card__header';
 
   const title = document.createElement('h2');
-  title.textContent = section.title;
+  title.append(renderMatchText(section.title, findRegion(sectionMatchRegions, 'section-title'), activeExactMatchId));
   header.append(title);
 
   if (onCopySection) {
@@ -42,7 +47,7 @@ export function renderSection(
   article.append(header);
 
   if (section.fields?.length) {
-    article.append(renderFields(section.fields));
+    article.append(renderFields(section.fields, { matchRegions: sectionMatchRegions, activeExactMatchId }));
   }
 
   if (section.tableSummary) {
@@ -61,22 +66,80 @@ export function renderSection(
         onShowAllRows,
         onToggleDenseTable,
         allSections,
+        matchRegions: sectionMatchRegions,
+        sourceSection,
+        activeExactMatchId,
       })
     );
   }
 
   if (section.chart) {
-    article.append(renderChart(section.chart));
+    article.append(renderChart(section.chart, { matchRegions: sectionMatchRegions, activeExactMatchId }));
   }
 
   if (section.raw) {
     const raw = document.createElement('div');
     raw.className = 'raw-note raw-note--wrap';
-    raw.textContent = section.raw;
+    raw.append(renderMatchText(section.raw, findRegion(sectionMatchRegions, 'text'), activeExactMatchId));
     article.append(raw);
   }
 
   return article;
+}
+
+function getSectionMatchRegions(section, matchRegions) {
+  if (!Array.isArray(matchRegions)) return [];
+
+  return matchRegions.flatMap((region, regionIndex) =>
+    region?.sectionId === section.id
+      ? [{ ...region, regionIndex }]
+      : []
+  );
+}
+
+function getSourceSection(sectionMatchRegions, allSections) {
+  const sectionIndex = sectionMatchRegions[0]?.sectionIndex;
+  return Number.isInteger(sectionIndex) ? allSections[sectionIndex] ?? null : null;
+}
+
+function findRegion(matchRegions, kind, matches = {}) {
+  return matchRegions.find((region) =>
+    region.kind === kind && Object.entries(matches).every(([key, value]) => region[key] === value)
+  ) ?? null;
+}
+
+function renderMatchText(value, region, activeExactMatchId) {
+  const text = String(value ?? '');
+  if (!region?.occurrences?.length) return document.createTextNode(text);
+
+  let cursor = 0;
+  const occurrences = region.occurrences;
+  if (!occurrences.every((occurrence) => {
+    const valid = isValidMatchRange(occurrence, text.length) && occurrence.start >= cursor;
+    if (valid) cursor = occurrence.end;
+    return valid;
+  })) {
+    return document.createTextNode(text);
+  }
+
+  const fragment = document.createDocumentFragment();
+  cursor = 0;
+  occurrences.forEach((occurrence, occurrenceIndex) => {
+    if (occurrence.start > cursor) fragment.append(document.createTextNode(text.slice(cursor, occurrence.start)));
+
+    const mark = document.createElement('mark');
+    const targetId = getExactMatchTargetId(region, occurrenceIndex);
+    mark.className = targetId === activeExactMatchId ? 'exact-match exact-match--active' : 'exact-match';
+    mark.dataset.exactMatchId = targetId;
+    mark.dataset.exactMatchKind = region.kind;
+    if (targetId === activeExactMatchId) mark.setAttribute('aria-current', 'true');
+    mark.textContent = text.slice(occurrence.start, occurrence.end);
+    fragment.append(mark);
+    cursor = occurrence.end;
+  });
+
+  if (cursor < text.length) fragment.append(document.createTextNode(text.slice(cursor)));
+  return fragment;
 }
 
 function renderSectionTable(section, options) {
@@ -89,10 +152,15 @@ function renderSectionTable(section, options) {
   if (view.mode === TABLE_VIEW_MODES.grouped) return renderThreadGroups(section, view, options);
   if (view.mode === TABLE_VIEW_MODES.limited) return renderLimitedProcessTable(section, view, options);
   if (view.mode === TABLE_VIEW_MODES.collapsed) return renderCollapsibleKextTable(section, view, options);
-  return renderTable(view.rows, section.tableColumns, { compact: view.mode === TABLE_VIEW_MODES.compact });
+  return renderTable(view.rows, section.tableColumns, {
+    compact: view.mode === TABLE_VIEW_MODES.compact,
+    matchRegions: options.matchRegions,
+    sourceSection: options.sourceSection,
+    activeExactMatchId: options.activeExactMatchId,
+  });
 }
 
-function renderThreadGroups(section, view, { onToggleThreadGroup }) {
+function renderThreadGroups(section, view, { onToggleThreadGroup, matchRegions, sourceSection, activeExactMatchId }) {
   const wrapper = document.createElement('div');
   wrapper.className = 'thread-groups';
 
@@ -112,7 +180,11 @@ function renderThreadGroups(section, view, { onToggleThreadGroup }) {
 
     groupElement.append(button);
     if (group.expanded) {
-      groupElement.append(renderTable(group.rows, section.tableColumns));
+      groupElement.append(renderTable(group.rows, section.tableColumns, {
+        matchRegions,
+        sourceSection,
+        activeExactMatchId,
+      }));
     }
     wrapper.append(groupElement);
   }
@@ -120,12 +192,16 @@ function renderThreadGroups(section, view, { onToggleThreadGroup }) {
   return wrapper;
 }
 
-function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRows }) {
+function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRows, matchRegions, sourceSection, activeExactMatchId }) {
   const wrapper = document.createElement('div');
   wrapper.className = 'limited-table';
 
   wrapper.append(renderRowCount(view.summary));
-  wrapper.append(renderTable(view.rows, section.tableColumns));
+  wrapper.append(renderTable(view.rows, section.tableColumns, {
+    matchRegions,
+    sourceSection,
+    activeExactMatchId,
+  }));
 
   if (view.canShowMore) {
     const controls = document.createElement('div');
@@ -140,7 +216,7 @@ function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRow
   return wrapper;
 }
 
-function renderCollapsibleKextTable(section, view, { onToggleDenseTable }) {
+function renderCollapsibleKextTable(section, view, { onToggleDenseTable, matchRegions, sourceSection, activeExactMatchId }) {
   const wrapper = document.createElement('div');
   wrapper.className = 'collapsible-table';
 
@@ -154,7 +230,11 @@ function renderCollapsibleKextTable(section, view, { onToggleDenseTable }) {
   wrapper.append(button, renderRowCount(view.summary));
 
   if (view.expanded) {
-    wrapper.append(renderTable(view.rows, section.tableColumns));
+    wrapper.append(renderTable(view.rows, section.tableColumns, {
+      matchRegions,
+      sourceSection,
+      activeExactMatchId,
+    }));
   }
 
   return wrapper;
@@ -213,22 +293,27 @@ function copyFeedbackText(copyMetadata) {
   return 'Copied visible section content.';
 }
 
-function renderFields(fields) {
+function renderFields(fields, { matchRegions = [], activeExactMatchId = '' } = {}) {
   const dl = document.createElement('dl');
   dl.className = 'field-list';
 
-  for (const field of fields) {
+  for (const [fieldIndex, field] of fields.entries()) {
     const dt = document.createElement('dt');
-    dt.textContent = field.label;
+    dt.append(renderMatchText(field.label, findRegion(matchRegions, 'field-label', { fieldIndex }), activeExactMatchId));
     const dd = document.createElement('dd');
-    dd.textContent = field.value;
+    dd.append(renderMatchText(field.value, findRegion(matchRegions, 'field-value', { fieldIndex }), activeExactMatchId));
     dl.append(dt, dd);
   }
 
   return dl;
 }
 
-function renderTable(rows, columns = null, { compact = false } = {}) {
+function renderTable(rows, columns = null, {
+  compact = false,
+  matchRegions = [],
+  sourceSection = null,
+  activeExactMatchId = '',
+} = {}) {
   const resolvedColumns =
     columns ??
     [
@@ -242,10 +327,14 @@ function renderTable(rows, columns = null, { compact = false } = {}) {
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  for (const column of resolvedColumns) {
+  for (const [columnIndex, column] of resolvedColumns.entries()) {
     const th = document.createElement('th');
     th.scope = 'col';
-    th.textContent = column.label;
+    th.append(renderMatchText(
+      column.label,
+      findRegion(matchRegions, 'table-header', { columnIndex, columnKey: column.key }),
+      activeExactMatchId
+    ));
     headerRow.append(th);
   }
   thead.append(headerRow);
@@ -253,9 +342,14 @@ function renderTable(rows, columns = null, { compact = false } = {}) {
   const tbody = document.createElement('tbody');
   for (const row of rows) {
     const tr = document.createElement('tr');
-    for (const column of resolvedColumns) {
+    const rowIndex = Array.isArray(sourceSection?.table) ? sourceSection.table.indexOf(row) : -1;
+    for (const [columnIndex, column] of resolvedColumns.entries()) {
       const td = document.createElement('td');
-      td.textContent = row[column.key] ?? '';
+      td.append(renderMatchText(
+        row[column.key],
+        findRegion(matchRegions, 'table-cell', { rowIndex, columnIndex, columnKey: column.key }),
+        activeExactMatchId
+      ));
       tr.append(td);
     }
     tbody.append(tr);
@@ -269,7 +363,7 @@ function renderTable(rows, columns = null, { compact = false } = {}) {
   return wrapper;
 }
 
-function renderChart(chart) {
+function renderChart(chart, { matchRegions = [], activeExactMatchId = '' } = {}) {
   const wrapper = document.createElement('div');
   wrapper.className = 'chart';
   wrapper.dataset.chartType = chart.type;
@@ -277,19 +371,25 @@ function renderChart(chart) {
   const canvas = document.createElement('canvas');
   canvas.width = 720;
   canvas.height = 180;
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', String(chart.title ?? 'Memory chart'));
   wrapper.append(canvas);
 
   const caption = document.createElement('p');
   caption.className = 'chart-caption';
-  caption.textContent = chart.title ?? 'Memory chart';
+  caption.append(renderMatchText(
+    chart.title ?? 'Memory chart',
+    findRegion(matchRegions, 'chart-label', { chartIndex: 0, chartPart: 'title' }),
+    activeExactMatchId
+  ));
   wrapper.append(caption);
 
   const schedule = globalThis.requestAnimationFrame ?? ((callback) => setTimeout(callback, 0));
-  schedule(() => drawMemoryBars(canvas, chart.items ?? []));
+  schedule(() => drawMemoryBars(canvas, chart.items ?? [], { matchRegions, activeExactMatchId }));
   return wrapper;
 }
 
-function drawMemoryBars(canvas, items) {
+function drawMemoryBars(canvas, items, { matchRegions = [], activeExactMatchId = '' } = {}) {
   const context = canvas.getContext('2d');
   if (!context || !items.length) return;
 
@@ -304,10 +404,55 @@ function drawMemoryBars(canvas, items) {
     const y = 24 + index * (barHeight + gap);
     const width = Math.round(((canvas.width - labelWidth - 28) * item.value) / maxValue);
     context.fillStyle = '#8e8e93';
-    context.fillText(item.label, 12, y + 14);
+    drawChartText(
+      context,
+      item.label,
+      12,
+      y + 14,
+      findRegion(matchRegions, 'chart-label', { chartIndex: 0, itemIndex: index, chartPart: 'item-label' }),
+      '#8e8e93',
+      activeExactMatchId
+    );
     context.fillStyle = item.color ?? '#30d158';
     context.fillRect(labelWidth, y, width, barHeight);
-    context.fillStyle = '#f2f2f7';
-    context.fillText(String(item.value), labelWidth + width + 8, y + 14);
+    drawChartText(
+      context,
+      item.value,
+      labelWidth + width + 8,
+      y + 14,
+      findRegion(matchRegions, 'chart-value', { chartIndex: 0, itemIndex: index, chartPart: 'item-value' }),
+      '#f2f2f7',
+      activeExactMatchId
+    );
   });
+}
+
+function drawChartText(context, value, x, baseline, region, color, activeExactMatchId) {
+  const text = String(value ?? '');
+  const occurrences = region?.occurrences ?? [];
+  let cursor = 0;
+  const validOccurrences = occurrences.every((occurrence) => {
+    const valid = isValidMatchRange(occurrence, text.length) && occurrence.start >= cursor;
+    if (valid) cursor = occurrence.end;
+    return valid;
+  });
+
+  if (validOccurrences) {
+    occurrences.forEach((occurrence, occurrenceIndex) => {
+      const prefixWidth = context.measureText(text.slice(0, occurrence.start)).width;
+      const matchWidth = context.measureText(text.slice(occurrence.start, occurrence.end)).width;
+      const targetId = getExactMatchTargetId(region, occurrenceIndex);
+      const active = targetId === activeExactMatchId;
+      context.fillStyle = active ? 'rgba(255, 159, 10, 0.5)' : 'rgba(255, 214, 10, 0.28)';
+      context.fillRect(x + prefixWidth - 2, baseline - 15, matchWidth + 4, 18);
+      if (active) {
+        context.strokeStyle = '#ff9f0a';
+        context.lineWidth = 2;
+        context.strokeRect(x + prefixWidth - 3, baseline - 16, matchWidth + 6, 20);
+      }
+    });
+  }
+
+  context.fillStyle = color;
+  context.fillText(text, x, baseline);
 }

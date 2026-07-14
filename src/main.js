@@ -22,6 +22,7 @@ import { validateReportFile } from './fileValidation.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from './parsers/classifyDiagnostic.js';
 import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
+import { createExactMatchTargets } from './search/exactMatch.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
 import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
@@ -51,6 +52,11 @@ const searchNavigationElement = document.querySelector('#search-navigation');
 const searchNavigationPreviousButton = document.querySelector('#search-previous');
 const searchNavigationNextButton = document.querySelector('#search-next');
 const searchNavigationPosition = document.querySelector('#search-position');
+const exactMatchNavigationElement = document.querySelector('#exact-match-navigation');
+const exactMatchPreviousButton = document.querySelector('#exact-match-previous');
+const exactMatchNextButton = document.querySelector('#exact-match-next');
+const exactMatchPosition = document.querySelector('#exact-match-position');
+const exactMatchStatus = document.querySelector('#exact-match-status');
 const searchCount = document.querySelector('#search-count');
 const exportPanel = document.querySelector('#export-panel');
 const downloadVisibleExportButton = document.querySelector('#download-visible-export');
@@ -76,6 +82,10 @@ let searchTimer = null;
 let searchNavigationTargets = [];
 let activeNavigationIndex = -1;
 let navigationQuery = '';
+let exactMatchTargets = [];
+let activeExactMatchIndex = -1;
+let exactMatchQuery = '';
+let exactMatchNeutral = false;
 let denseTableState = createInitialDenseTableState();
 let lastOfflineStatusKey = '';
 let waitingServiceWorker = null;
@@ -103,6 +113,7 @@ function renderApp() {
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
   const eligibleExportSections = getEligibleExportSections(activeSections, visibleSections);
   reconcileSearchNavigationState(searchResult.navigationTargets, searchResult.active && (appState.sanitize || comparisonMode));
+  reconcileExactMatchState(searchResult.matchRegions, searchResult.active && (appState.sanitize || comparisonMode));
 
   inputPanel.hidden = comparisonMode;
   renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
@@ -129,6 +140,8 @@ function renderApp() {
     onSelectCoreAnalyticsFacet: selectCoreAnalyticsFacet,
     selectedCoreAnalyticsFacetQuery: searchQuery,
     searchActive: searchMetadata.searchActive,
+    matchRegions: searchResult.matchRegions,
+    activeExactMatchId: exactMatchTargets[activeExactMatchIndex]?.id ?? '',
   });
   if (restoreCoreAnalyticsFacetFocus) {
     document.querySelector('.coreanalytics-overview__chip[aria-pressed="true"]')?.focus();
@@ -443,6 +456,13 @@ function resetSearchNavigationState() {
   navigationQuery = '';
 }
 
+function resetExactMatchState() {
+  exactMatchTargets = [];
+  activeExactMatchIndex = -1;
+  exactMatchQuery = '';
+  exactMatchNeutral = false;
+}
+
 function clearSearchState() {
   searchQuery = '';
   if (searchTimer) {
@@ -451,6 +471,7 @@ function clearSearchState() {
   }
   searchInput.value = '';
   resetSearchNavigationState();
+  resetExactMatchState();
 }
 
 function renderSearchControls(searchMetadata, hasParsedSections) {
@@ -460,12 +481,36 @@ function renderSearchControls(searchMetadata, hasParsedSections) {
   if (!hasParsedSections || !searchMetadata.searchActive) {
     searchCount.textContent = 'Search inactive.';
     updateSearchNavigationControls(false);
+    updateExactMatchControls(false);
     return;
   }
 
   searchCount.textContent = searchStatusText(searchMetadata);
   const showSearchNavigation = searchNavigationTargets.length > 0 && (appState.sanitize || comparisonMode);
   updateSearchNavigationControls(showSearchNavigation);
+  updateExactMatchControls(appState.sanitize || comparisonMode);
+}
+
+function reconcileExactMatchState(matchRegions, exactMatchEligible) {
+  const nextTargets = exactMatchEligible ? createExactMatchTargets(matchRegions) : [];
+  const queryChanged = exactMatchQuery !== searchQuery;
+  const currentTargetId = exactMatchTargets[activeExactMatchIndex]?.id ?? '';
+  if (queryChanged) exactMatchNeutral = false;
+
+  let nextIndex = -1;
+  if (nextTargets.length) {
+    if (exactMatchNeutral) {
+      nextIndex = -1;
+    } else if (queryChanged || !currentTargetId) {
+      nextIndex = 0;
+    } else {
+      nextIndex = Math.max(0, nextTargets.findIndex((target) => target.id === currentTargetId));
+    }
+  }
+
+  exactMatchTargets = nextTargets;
+  activeExactMatchIndex = nextIndex;
+  exactMatchQuery = searchQuery;
 }
 
 function reconcileSearchNavigationState(targets, navigationEligible) {
@@ -519,6 +564,51 @@ function updateSearchNavigationControls(showSearchNavigation) {
   }`;
 }
 
+function updateExactMatchControls(showExactMatchNavigation) {
+  exactMatchNavigationElement.hidden = !showExactMatchNavigation;
+
+  if (!showExactMatchNavigation) {
+    exactMatchPreviousButton.disabled = true;
+    exactMatchNextButton.disabled = true;
+    exactMatchPreviousButton.setAttribute('aria-disabled', 'true');
+    exactMatchNextButton.setAttribute('aria-disabled', 'true');
+    setExactMatchText(exactMatchPosition, 'Exact-match navigation inactive.');
+    setExactMatchText(exactMatchStatus, '');
+    return;
+  }
+
+  const hasMatches = exactMatchTargets.length > 0 && activeExactMatchIndex >= 0;
+  const previousDisabled = !hasMatches || activeExactMatchIndex <= 0;
+  const nextDisabled = !hasMatches || activeExactMatchIndex >= exactMatchTargets.length - 1;
+  exactMatchPreviousButton.disabled = previousDisabled;
+  exactMatchNextButton.disabled = nextDisabled;
+  exactMatchPreviousButton.setAttribute('aria-disabled', String(previousDisabled));
+  exactMatchNextButton.setAttribute('aria-disabled', String(nextDisabled));
+
+  if (!hasMatches) {
+    setExactMatchText(exactMatchPosition, 'No exact matches.');
+    setExactMatchText(exactMatchStatus, 'No exact matches in visible sanitized content.');
+    return;
+  }
+
+  const isFirst = activeExactMatchIndex === 0;
+  const isLast = activeExactMatchIndex === exactMatchTargets.length - 1;
+  const boundaryMessage = isFirst && isLast
+    ? ' First and last exact match.'
+    : isFirst
+      ? ' First exact match.'
+      : isLast
+      ? ' Last exact match.'
+      : '';
+  const position = `Match ${activeExactMatchIndex + 1} of ${exactMatchTargets.length}.${boundaryMessage}`;
+  setExactMatchText(exactMatchPosition, `${activeExactMatchIndex + 1} of ${exactMatchTargets.length}`);
+  setExactMatchText(exactMatchStatus, position);
+}
+
+function setExactMatchText(element, text) {
+  if (element.textContent !== text) element.textContent = text;
+}
+
 function navigateSearchResult(direction) {
   if (!searchNavigationTargets.length) return;
 
@@ -531,10 +621,14 @@ function navigateSearchResult(direction) {
   if (nextIndex < 0 || nextIndex > searchNavigationTargets.length - 1) return;
 
   const target = searchNavigationTargets[nextIndex];
-  const targetElement = document.getElementById(target.id);
   activeNavigationIndex = nextIndex;
   updateSearchNavigationControls(true);
 
+  const nextExactMatchIndex = exactMatchTargets.findIndex((match) => match.sectionId === target.id);
+  exactMatchNeutral = nextExactMatchIndex < 0;
+  activeExactMatchIndex = nextExactMatchIndex;
+
+  const targetElement = document.getElementById(target.id);
   if (!targetElement) {
     const sectionLabel = searchNavigationTargets.length === 1 ? 'section' : 'sections';
     renderStatus(
@@ -542,11 +636,14 @@ function navigateSearchResult(direction) {
       `Could not show match ${activeNavigationIndex + 1} of ${searchNavigationTargets.length} ${sectionLabel}: section unavailable.`,
       comparisonMode ? 'info' : appState.statusTone
     );
-    navigationButton?.focus();
+    document.getElementById(navigationButton?.id ?? '')?.focus();
     return;
   }
 
-  targetElement.scrollIntoView({ block: 'start' });
+  renderApp();
+  markCurrentSectionNavigation(target.id);
+  const nextTargetElement = document.getElementById(target.id);
+  nextTargetElement?.scrollIntoView({ block: 'start' });
   renderStatus(
     statusElement,
     `Showing match ${activeNavigationIndex + 1} of ${searchNavigationTargets.length} ${
@@ -554,7 +651,66 @@ function navigateSearchResult(direction) {
     }: ${target.title}`,
     comparisonMode ? 'info' : appState.statusTone
   );
-  navigationButton?.focus();
+  document.getElementById(navigationButton?.id ?? '')?.focus();
+}
+
+function findExactMatchElement(targetId) {
+  if (!targetId) return null;
+  return [...document.querySelectorAll('[data-exact-match-id]')]
+    .find((element) => element.dataset.exactMatchId === targetId) ?? null;
+}
+
+function markCurrentSectionNavigation(sectionId) {
+  for (const link of sectionNavElement.querySelectorAll('.section-nav__link')) {
+    if (link.getAttribute('href') === `#${sectionId}`) {
+      link.setAttribute('aria-current', 'true');
+    } else {
+      link.removeAttribute('aria-current');
+    }
+  }
+}
+
+function scrollExactMatchIntoView(target) {
+  const targetElement = findExactMatchElement(target.id) ?? document.getElementById(target.sectionId);
+  if (!targetElement) return;
+
+  const reducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+  targetElement.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+    behavior: reducedMotion ? 'auto' : 'smooth',
+  });
+}
+
+function navigateExactMatch(direction) {
+  if (!exactMatchTargets.length || activeExactMatchIndex < 0) return;
+
+  const navigationButton = document.activeElement?.id === 'exact-match-previous' || document.activeElement?.id === 'exact-match-next'
+    ? document.activeElement
+    : null;
+  if (navigationButton?.disabled) return;
+
+  const nextIndex = activeExactMatchIndex + direction;
+  if (nextIndex < 0 || nextIndex > exactMatchTargets.length - 1) return;
+
+  exactMatchNeutral = false;
+  activeExactMatchIndex = nextIndex;
+  const activeTarget = exactMatchTargets[activeExactMatchIndex];
+  const nextSectionIndex = searchNavigationTargets.findIndex((match) => match.id === activeTarget.sectionId);
+  if (nextSectionIndex >= 0) {
+    activeNavigationIndex = nextSectionIndex;
+    updateSearchNavigationControls(true);
+  }
+  renderApp();
+  markCurrentSectionNavigation(activeTarget.sectionId);
+  scrollExactMatchIntoView(activeTarget);
+  const activatedButton = document.getElementById(navigationButton?.id ?? '');
+  if (activatedButton && !activatedButton.disabled) {
+    activatedButton.focus();
+    return;
+  }
+
+  document.getElementById(direction > 0 ? 'exact-match-previous' : 'exact-match-next')?.focus();
 }
 
 function statusMessageForSearch(searchMetadata) {
@@ -774,6 +930,8 @@ searchInput.addEventListener('input', handleSearchInput);
 clearSearchButton.addEventListener('click', clearSearch);
 searchNavigationPreviousButton.addEventListener('click', () => navigateSearchResult(-1));
 searchNavigationNextButton.addEventListener('click', () => navigateSearchResult(1));
+exactMatchPreviousButton.addEventListener('click', () => navigateExactMatch(-1));
+exactMatchNextButton.addEventListener('click', () => navigateExactMatch(1));
 downloadVisibleExportButton.addEventListener('click', downloadVisibleExport);
 downloadVisibleJsonButton.addEventListener('click', downloadVisibleJson);
 

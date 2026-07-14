@@ -747,6 +747,28 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.exact-match-status {
+  flex-basis: 100%;
+}
+
+.exact-match {
+  border-radius: 3px;
+  background: rgba(255, 214, 10, 0.3);
+  color: inherit;
+  padding: 0 1px;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.exact-match--active {
+  background: rgba(255, 159, 10, 0.55);
+  box-shadow: 0 0 0 2px rgba(255, 159, 10, 0.95);
+  font-weight: 700;
+  outline: 2px solid rgba(255, 159, 10, 0.55);
+  outline-offset: 2px;
+}
+
 .empty-results {
   margin: 14px 0 0;
   border: 1px solid var(--border);

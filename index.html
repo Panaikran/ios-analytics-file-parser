@@ -108,6 +108,15 @@
               <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
             </div>
           </div>
+          <div id="exact-match-navigation" class="search-navigation exact-match-navigation" role="group" aria-labelledby="exact-match-navigation-label" hidden>
+            <span id="exact-match-navigation-label" class="search-navigation__label">Exact-match navigation</span>
+            <div class="search-navigation__controls">
+              <button id="exact-match-previous" class="search-navigation__button" type="button" aria-label="Previous exact match" aria-disabled="true" disabled>Previous exact match</button>
+              <span id="exact-match-position" class="search-navigation__position">Exact-match navigation inactive.</span>
+              <button id="exact-match-next" class="search-navigation__button" type="button" aria-label="Next exact match" aria-disabled="true" disabled>Next exact match</button>
+            </div>
+            <p id="exact-match-status" class="search-count exact-match-status" role="status" aria-live="polite"></p>
+          </div>
           <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
         </div>
         <div id="export-panel" class="export-panel" hidden>

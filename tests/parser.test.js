@@ -38,6 +38,7 @@ import {
   summarizeSectionSize,
 } from '../src/models/reportSize.js';
 import { SEARCH_MATCH_KINDS, filterSectionsByQuery } from '../src/search/filterSections.js';
+import { createExactMatchTargets, getExactMatchTargetId, isValidMatchRange } from '../src/search/exactMatch.js';
 import { getSearchMetadata } from '../src/search/searchMetadata.js';
 import { getCopyMetadata } from '../src/clipboard/copyMetadata.js';
 import { downloadTextFile } from '../src/clipboard/downloadText.js';
@@ -77,6 +78,7 @@ const metadataIpsText = await readFile(new URL('./fixtures/example-metadata.ips'
 const visibleSectionSource = await readFile(new URL('../src/clipboard/visibleSection.js', import.meta.url), 'utf8');
 const indexHtmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const searchSource = await readFile(new URL('../src/search/filterSections.js', import.meta.url), 'utf8');
+const exactMatchSource = await readFile(new URL('../src/search/exactMatch.js', import.meta.url), 'utf8');
 const searchMetadataSource = await readFile(new URL('../src/search/searchMetadata.js', import.meta.url), 'utf8');
 const copyMetadataSource = await readFile(new URL('../src/clipboard/copyMetadata.js', import.meta.url), 'utf8');
 const downloadTextSource = await readFile(new URL('../src/clipboard/downloadText.js', import.meta.url), 'utf8');
@@ -128,6 +130,11 @@ assert.match(indexHtmlText, /id="search-navigation-label"[^>]*>Search result nav
 assert.match(indexHtmlText, /id="search-previous"[^>]*aria-label="Previous matching section"[^>]*disabled[^>]*>Previous</, 'Previous uses a native disabled button with an accessible name');
 assert.match(indexHtmlText, /id="search-position"[^>]*>Search navigation inactive\.</, 'search navigation exposes an inactive position status');
 assert.match(indexHtmlText, /id="search-next"[^>]*aria-label="Next matching section"[^>]*disabled[^>]*>Next</, 'Next uses a native disabled button with an accessible name');
+assert.match(indexHtmlText, /id="exact-match-navigation"[^>]*role="group"[^>]*aria-labelledby="exact-match-navigation-label"[^>]*hidden/, 'exact-match navigation starts hidden in a labeled group');
+assert.match(indexHtmlText, /id="exact-match-navigation-label"[^>]*>Exact-match navigation</, 'exact-match navigation has a distinct accessible label');
+assert.match(indexHtmlText, /id="exact-match-previous"[^>]*aria-label="Previous exact match"[^>]*disabled[^>]*>Previous exact match</, 'Previous exact match is a native disabled button with a distinct accessible name');
+assert.match(indexHtmlText, /id="exact-match-next"[^>]*aria-label="Next exact match"[^>]*disabled[^>]*>Next exact match</, 'Next exact match is a native disabled button with a distinct accessible name');
+assert.match(indexHtmlText, /id="exact-match-status"[^>]*role="status"[^>]*aria-live="polite"/, 'exact-match movement has a scoped live status');
 assert.match(indexHtmlText, /<section id="comparison-panel" class="comparison-panel" aria-labelledby="comparison-title" hidden>/, 'comparison workflow uses a compact labeled region');
 assert.match(indexHtmlText, /id="add-to-comparison"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Add to comparison starts disabled and references status feedback');
 assert.match(indexHtmlText, /id="compare-reports"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Compare starts disabled and references status feedback');
@@ -185,7 +192,8 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.5\.0-slice15b-supported-examples-2026-07-12/, 'service worker cache version reflects the Slice 15B example precache update');
+assert.match(serviceWorkerText, /v1\.8\.0-slice18b-exact-match-2026-07-14/, 'service worker cache version reflects the Slice 18B precached asset update');
+assert.match(serviceWorkerText, /\.\/src\/search\/exactMatch\.js/, 'service worker precaches the exact-match helper');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
@@ -280,6 +288,11 @@ assert.match(renderSectionText, /thread-group__toggle[^]*aria-label[^]*Toggle \$
 assert.match(renderSectionText, /table-toggle[^]*aria-label[^]*Toggle loaded kexts table/, 'collapsible loaded-kext controls expose explicit accessible names');
 assert.match(renderSectionText, /renderTableButton\('Show more'[^]*Show more rows in \$\{section\.title\}/, 'limited table Show more control has contextual accessible text');
 assert.match(renderSectionText, /renderTableButton\('Show all'[^]*Show all rows in \$\{section\.title\}/, 'limited table Show all control has contextual accessible text');
+assert.match(renderSectionText, /document\.createElement\('mark'\)/, 'exact matches render through safe mark elements');
+assert.match(renderSectionText, /mark\.textContent = text\.slice\(/, 'match text is assigned as text content rather than interpreted markup');
+assert.doesNotMatch(renderSectionText, /innerHTML|outerHTML|innerText/, 'match rendering avoids unsafe HTML-string and DOM-text search techniques');
+assert.match(renderSectionText, /canvas\.setAttribute\('role', 'img'\)/, 'canvas chart output has an accessible semantic role');
+assert.doesNotMatch(exactMatchSource, /(?:document|window|innerText|textContent|localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|WebSocket)/, 'exact-match target metadata remains pure and DOM-free');
 const rawWrapRule = styleText.match(/\.raw-note--wrap\s*{(?<body>[^}]*)}/s)?.groups?.body ?? '';
 assert.match(rawWrapRule, /white-space:\s*pre-wrap;/, 'raw wrapping class preserves panic string line breaks');
 assert.match(rawWrapRule, /overflow-wrap:\s*anywhere;/, 'raw wrapping class allows arbitrary token wrapping');
@@ -304,6 +317,8 @@ assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-
 assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
+assert.match(styleText, /\.exact-match\s*{[^}]*text-decoration:\s*underline;/s, 'non-active matches remain identifiable beyond color');
+assert.match(styleText, /\.exact-match--active\s*{[^}]*outline:/s, 'active matches have a stronger non-color focus treatment');
 assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
 assert.match(styleText, /\.comparison-button,\s*\.comparison-list__remove\s*{[^}]*min-height:\s*44px;/s, 'comparison controls have practical touch targets');
 assert.match(styleText, /\.comparison-list__fields\s*{/, 'comparison entries provide a contained field group for labels and help text');
@@ -658,6 +673,31 @@ assert.deepEqual(
   [{ start: 0, end: 2 }, { start: 2, end: 4 }],
   'match metadata uses non-overlapping left-to-right occurrences'
 );
+
+const exactTargetRegions = [
+  { sectionIndex: 0, sectionId: 'first', kind: 'field-value', fieldIndex: 2, occurrences: [{ start: 1, end: 3 }, { start: 5, end: 7 }] },
+  { sectionIndex: 2, sectionId: 'second', kind: 'table-cell', rowIndex: 4, columnIndex: 1, columnKey: 'message', occurrences: [{ start: 0, end: 4 }] },
+];
+const exactTargetSnapshot = JSON.stringify(exactTargetRegions);
+assert.equal(isValidMatchRange({ start: 1, end: 3 }, 3), true, 'exact-match ranges accept valid UTF-16 bounds');
+assert.equal(isValidMatchRange({ start: -1, end: 3 }, 3), false, 'exact-match ranges reject negative offsets');
+assert.equal(isValidMatchRange({ start: 1, end: 4 }, 3), false, 'exact-match ranges reject out-of-bounds offsets');
+assert.equal(
+  getExactMatchTargetId({ sectionIndex: 2, regionIndex: 4 }, 1),
+  'exact-match-2-4-1',
+  'exact-match target identities use only deterministic metadata indices'
+);
+assert.deepEqual(
+  createExactMatchTargets(exactTargetRegions),
+  [
+    { id: 'exact-match-0-0-0', sectionIndex: 0, sectionId: 'first', kind: 'field-value', regionIndex: 0, occurrenceIndex: 0, start: 1, end: 3 },
+    { id: 'exact-match-0-0-1', sectionIndex: 0, sectionId: 'first', kind: 'field-value', regionIndex: 0, occurrenceIndex: 1, start: 5, end: 7 },
+    { id: 'exact-match-2-1-0', sectionIndex: 2, sectionId: 'second', kind: 'table-cell', regionIndex: 1, occurrenceIndex: 0, start: 0, end: 4 },
+  ],
+  'exact-match targets flatten regions in deterministic section, region, and occurrence order'
+);
+assert.deepEqual(createExactMatchTargets([{ sectionIndex: 0, sectionId: 'invalid', kind: 'text', occurrences: [{ start: 2, end: 1 }] }]), [], 'malformed match ranges do not create navigable targets');
+assert.equal(JSON.stringify(exactTargetRegions), exactTargetSnapshot, 'exact-match target derivation does not mutate frozen metadata');
 assert.deepEqual(
   filterSectionsByQuery(occurrenceSections, 'longer than any value').matchRegions,
   [],
@@ -3928,7 +3968,7 @@ assert.match(mainScriptText, /function navigateSearchResult\(direction\)/, 'sear
 assert.match(mainScriptText, /document\.getElementById\(target\.id\)/, 'search navigation resolves existing stable section anchors by ID');
 assert.match(mainScriptText, /targetElement\.scrollIntoView\(/, 'search navigation scrolls the selected section into view');
 assert.match(mainScriptText, /section unavailable/, 'search navigation handles missing anchors through the existing status path');
-assert.match(mainScriptText, /navigationButton\?\.focus\(\)/, 'search navigation restores focus when an anchor is unavailable');
+assert.match(mainScriptText, /document\.getElementById\(navigationButton\?\.id \?\? ''\)\?\.focus\(\)/, 'search navigation restores focus after rerender when an anchor is unavailable');
 assert.match(mainScriptText, /activeNavigationIndex|searchNavigationTargets/, 'search navigation stores only target metadata and an active numeric index');
 assert.match(mainScriptText, /searchNavigationTargets\.length - 1/, 'search navigation disables movement at the final target without wrapping');
 assert.match(mainScriptText, /setAttribute\('aria-disabled', String\(previousDisabled\)\)/, 'search navigation exposes boundary-disabled state accessibly while retaining focus');
@@ -3939,6 +3979,11 @@ assert.match(mainScriptText, /appState\.sanitize \|\| comparisonMode/, 'Raw Loca
 assert.match(mainScriptText, /searchNavigationTargets = \[\];[^]*activeNavigationIndex = -1/, 'search navigation state clears with search reset');
 assert.match(mainScriptText, /searchNavigationPreviousButton\.addEventListener\('click', \(\) => navigateSearchResult\(-1\)\)/, 'Previous uses the shared navigation movement handler');
 assert.match(mainScriptText, /searchNavigationNextButton\.addEventListener\('click', \(\) => navigateSearchResult\(1\)\)/, 'Next uses the shared navigation movement handler');
+assert.match(mainScriptText, /direction > 0 \? 'exact-match-previous' : 'exact-match-next'/, 'exact-match boundary movement restores focus to the remaining enabled control');
+assert.match(mainScriptText, /exactMatchPreviousButton\.addEventListener\('click', \(\) => navigateExactMatch\(-1\)\)/, 'Previous exact match uses the shared exact-match movement handler');
+assert.match(mainScriptText, /exactMatchNextButton\.addEventListener\('click', \(\) => navigateExactMatch\(1\)\)/, 'Next exact match uses the shared exact-match movement handler');
+assert.match(mainScriptText, /createExactMatchTargets\(matchRegions\)/, 'exact-match UI derives targets from the frozen match-region metadata');
+assert.doesNotMatch(mainScriptText, /(?:innerText|textContent)\.(?:match|includes|indexOf|toLowerCase)/, 'exact-match navigation does not derive search matches from rendered DOM text');
 const navigationHandlerSource = mainScriptText.match(/function navigateSearchResult\(direction\) \{[^]*?\n\}/)?.[0] ?? '';
 assert.doesNotMatch(
   navigationHandlerSource,
