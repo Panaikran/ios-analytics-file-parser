@@ -91,6 +91,7 @@ const parserIndexSource = await readFile(new URL('../src/parsers/index.js', impo
 const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
 const comparisonModelSource = await readFile(new URL('../src/comparison/comparisonModel.js', import.meta.url), 'utf8');
 const largeWorkloadSource = await readFile(new URL('./fixtures/largeReportWorkloads.js', import.meta.url), 'utf8');
+const browserHarnessSource = await readFile(new URL('./browserPerformanceHarness.html', import.meta.url), 'utf8');
 const crashText = await readFile(new URL('./fixtures/example.crash', import.meta.url), 'utf8');
 const fullCrashText = await readFile(new URL('./fixtures/example-full.crash', import.meta.url), 'utf8');
 const watchdogText = await readFile(new URL('./fixtures/example-watchdog.ips', import.meta.url), 'utf8');
@@ -293,6 +294,14 @@ assert.match(renderSectionText, /mark\.textContent = text\.slice\(/, 'match text
 assert.doesNotMatch(renderSectionText, /innerHTML|outerHTML|innerText/, 'match rendering avoids unsafe HTML-string and DOM-text search techniques');
 assert.match(renderSectionText, /canvas\.setAttribute\('role', 'img'\)/, 'canvas chart output has an accessible semantic role');
 assert.doesNotMatch(exactMatchSource, /(?:document|window|innerText|textContent|localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|WebSocket)/, 'exact-match target metadata remains pure and DOM-free');
+assert.match(browserHarnessSource, /createExactMatchTargets/, 'browser harness derives exact-match targets from the frozen metadata contract');
+assert.match(browserHarnessSource, /matchRegions,\s*activeExactMatchId/, 'browser harness renders exact-match metadata through the production renderer path');
+assert.match(browserHarnessSource, /exactMatchRenderingWorkflow/, 'browser harness includes a focused exact-match rendering workflow');
+assert.match(browserHarnessSource, /Promise\.race\(\[/, 'browser harness bounds frame settlement when headless animation frames are unavailable');
+assert.match(browserHarnessSource, /targetIdsUnique: new Set\(targetIds\)\.size === targetIds\.length/, 'browser harness checks deterministic unique target identities');
+assert.match(browserHarnessSource, /hostileImageCount: document\.querySelectorAll\('#sections img'\)\.length/, 'browser harness checks hostile report text does not create image elements');
+assert.match(browserHarnessSource, /hostileTextPreserved:/, 'browser harness checks hostile report text remains literal after highlighting');
+assert.match(browserHarnessSource, /const comparisonFiltered = filterSectionsByQuery\(comparisonSections, query\)/, 'browser harness exercises exact-match rendering on sanitized comparison sections');
 const rawWrapRule = styleText.match(/\.raw-note--wrap\s*{(?<body>[^}]*)}/s)?.groups?.body ?? '';
 assert.match(rawWrapRule, /white-space:\s*pre-wrap;/, 'raw wrapping class preserves panic string line breaks');
 assert.match(rawWrapRule, /overflow-wrap:\s*anywhere;/, 'raw wrapping class allows arbitrary token wrapping');
@@ -613,7 +622,7 @@ assert.deepEqual(
   ['section-title', 'field-label', 'field-value', 'table-header', 'table-cell', 'chart-label', 'chart-value', 'text'],
   'search metadata exposes only the explicit supported match kinds'
 );
-assert.equal(matchMetadataSearch.totalMatches, 7, 'match metadata preserves the existing field, raw, and table match count');
+assert.equal(matchMetadataSearch.totalMatches, 9, 'match metadata counts all matching visible fields, rows, labels, charts, and text');
 assert.deepEqual(
   matchMetadataSearch.sections.map((section) => section.id),
   ['match-first'],
@@ -646,6 +655,24 @@ assert.deepEqual(
 );
 assert.deepEqual(filterSectionsByQuery(matchMetadataSections, 'not present').matchRegions, [], 'no-match searches expose no match metadata');
 assert.deepEqual(filterSectionsByQuery(matchMetadataSections, '   ').matchRegions, [], 'empty searches expose no match metadata');
+
+const chartOnlySections = [{
+  id: 'chart-only',
+  title: 'Unmatched title',
+  fields: [{ label: 'Unmatched label', value: 'Unmatched value' }],
+  chart: {
+    type: 'memory-bars',
+    title: 'Chart title',
+    items: [{ label: 'Chart label only', value: 17 }],
+  },
+  raw: 'Unmatched raw',
+}];
+const chartValueOnlySearch = filterSectionsByQuery(chartOnlySections, '17');
+const chartLabelOnlySearch = filterSectionsByQuery(chartOnlySections, 'chart label only');
+assert.deepEqual(chartValueOnlySearch.sections.map((section) => section.id), ['chart-only'], 'chart-value-only searches retain the matching section');
+assert.ok(chartValueOnlySearch.matchRegions.some((region) => region.kind === 'chart-value'), 'chart-value-only searches expose chart-value metadata');
+assert.deepEqual(chartLabelOnlySearch.sections.map((section) => section.id), ['chart-only'], 'chart-label-only searches retain the matching section');
+assert.ok(chartLabelOnlySearch.matchRegions.some((region) => region.kind === 'chart-label'), 'chart-label-only searches expose chart-label metadata');
 
 const occurrenceSections = [{
   id: 'occurrences',

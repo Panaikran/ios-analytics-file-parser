@@ -63,6 +63,7 @@ function filterSection(section, query, sectionIndex, includeMatchRegions) {
   let matchCount = includesQuery(section.title, query) ? 1 : 0;
   matchCount += countFieldMatches(section.fields ?? [], query);
   matchCount += includesQuery(section.raw, query) ? 1 : 0;
+  matchCount += countChartMatches(section.chart, query);
 
   const nextSection = { ...section, forceExpanded: true };
 
@@ -192,6 +193,17 @@ function countFieldMatches(fields, query) {
 
 function countRowMatches(row, query) {
   return Object.values(row).reduce((total, value) => total + (includesQuery(value, query) ? 1 : 0), 0);
+}
+
+function countChartMatches(chart, query) {
+  if (!chart || typeof chart !== 'object') return 0;
+
+  let total = includesQuery(chart.title ?? 'Memory chart', query) ? 1 : 0;
+  if (!Array.isArray(chart.items)) return total;
+
+  return chart.items.reduce((count, item) => count
+    + (includesQuery(item?.label, query) ? 1 : 0)
+    + (includesQuery(item?.value, query) ? 1 : 0), total);
 }
 
 function includesQuery(value, query) {

@@ -19,6 +19,7 @@
     <script type="module">
       import { createComparisonSections } from '../src/comparison/comparisonModel.js';
       import { parseInput } from '../src/parsers/index.js';
+      import { createExactMatchTargets } from '../src/search/exactMatch.js';
       import { filterSectionsByQuery } from '../src/search/filterSections.js';
       import { getCoreAnalyticsView } from '../src/ui/coreAnalyticsView.js';
       import { renderSections } from '../src/ui/renderApp.js';
@@ -32,10 +33,14 @@
       window.addEventListener('unhandledrejection', (event) => errors.push(String(event.reason)));
 
       function nextFrame() {
+        const timeoutFallback = new Promise((resolve) => setTimeout(resolve, 50));
         if (document.visibilityState === 'hidden') {
           return new Promise((resolve) => setTimeout(resolve, 0));
         }
-        return new Promise((resolve) => requestAnimationFrame(resolve));
+        return Promise.race([
+          new Promise((resolve) => requestAnimationFrame(resolve)),
+          timeoutFallback,
+        ]);
       }
 
       function summarizeSamples(samples) {
@@ -65,15 +70,22 @@
         return summarizeSamples(samples);
       }
 
-      function renderParsedSections(sections, { searchActive = false } = {}) {
+      function renderParsedSections(sections, {
+        allSections = sections,
+        searchActive = false,
+        matchRegions = [],
+        activeExactMatchId = '',
+      } = {}) {
         const sectionRoot = document.querySelector('#sections');
         const navRoot = document.querySelector('#section-nav');
         const coreAnalyticsView = getCoreAnalyticsView(sections);
         renderSectionNav(navRoot, sections);
         renderSections(sectionRoot, sections, {
-          allSections: sections,
+          allSections,
           coreAnalyticsView,
           searchActive,
+          matchRegions,
+          activeExactMatchId,
           onCopySection: () => Promise.resolve({ ok: true }),
         });
       }
@@ -142,13 +154,23 @@
         });
 
         const search = await measureAsync(() => {
-          const filtered = filterSectionsByQuery(sections, query).sections;
-          renderParsedSections(filtered, { searchActive: true });
+          const filtered = filterSectionsByQuery(sections, query);
+          const targets = createExactMatchTargets(filtered.matchRegions);
+          renderParsedSections(filtered.sections, {
+            allSections: sections,
+            searchActive: true,
+            matchRegions: filtered.matchRegions,
+            activeExactMatchId: targets[0]?.id ?? '',
+          });
         });
 
         const noResultsSearch = await measureAsync(() => {
-          const filtered = filterSectionsByQuery(sections, 'NO-SUCH-SYNTHETIC-TERM').sections;
-          renderParsedSections(filtered, { searchActive: true });
+          const filtered = filterSectionsByQuery(sections, 'NO-SUCH-SYNTHETIC-TERM');
+          renderParsedSections(filtered.sections, {
+            allSections: sections,
+            searchActive: true,
+            matchRegions: filtered.matchRegions,
+          });
         });
 
         const clearSearch = await measureAsync(() => renderParsedSections(sections));
@@ -160,7 +182,14 @@
         let comparisonSections;
         const comparison = await measureAsync(() => {
           comparisonSections = createComparisonSections(comparisonEntries);
-          renderParsedSections(comparisonSections);
+          const filtered = filterSectionsByQuery(comparisonSections, query);
+          const targets = createExactMatchTargets(filtered.matchRegions);
+          renderParsedSections(filtered.sections, {
+            allSections: comparisonSections,
+            searchActive: true,
+            matchRegions: filtered.matchRegions,
+            activeExactMatchId: targets[0]?.id ?? '',
+          });
         });
         const clearComparison = await measureAsync(() => {
           clearRenderedState();
@@ -188,12 +217,27 @@
           const sections = parseInput(text);
           renderParsedSections(sections);
           await nextFrame();
-          renderParsedSections(filterSectionsByQuery(sections, query).sections, { searchActive: true });
+          const filtered = filterSectionsByQuery(sections, query);
+          const targets = createExactMatchTargets(filtered.matchRegions);
+          renderParsedSections(filtered.sections, {
+            allSections: sections,
+            searchActive: true,
+            matchRegions: filtered.matchRegions,
+            activeExactMatchId: targets[0]?.id ?? '',
+          });
           await nextFrame();
           renderParsedSections(sections);
           await nextFrame();
           const entry = { classification: { parserType: 'coreanalytics', supported: true }, sections };
-          renderParsedSections(createComparisonSections([entry, entry]));
+          const comparisonSections = createComparisonSections([entry, entry]);
+          const comparisonFiltered = filterSectionsByQuery(comparisonSections, query);
+          const comparisonTargets = createExactMatchTargets(comparisonFiltered.matchRegions);
+          renderParsedSections(comparisonFiltered.sections, {
+            allSections: comparisonSections,
+            searchActive: true,
+            matchRegions: comparisonFiltered.matchRegions,
+            activeExactMatchId: comparisonTargets[0]?.id ?? '',
+          });
           await nextFrame();
           clearRenderedState();
           await nextFrame();
@@ -201,6 +245,71 @@
         }
         await nextFrame();
         return summarizeSamples(samples);
+      }
+
+      async function exactMatchRenderingWorkflow() {
+        const sections = [{
+          id: 'exact-match-harness',
+          title: 'Needle title',
+          priority: 'normal',
+          fields: [{ label: 'Needle label', value: 'Needle value 😀' }],
+          tableColumns: [{ key: 'value', label: 'Needle header' }],
+          table: [{ value: 'Needle cell' }],
+          chart: {
+            type: 'memory',
+            title: 'Needle chart',
+            items: [{ label: 'Needle chart label', value: 17, color: '#30d158' }],
+          },
+          raw: 'Needle text',
+        }];
+        const filtered = filterSectionsByQuery(sections, 'needle');
+        const targets = createExactMatchTargets(filtered.matchRegions);
+        renderParsedSections(filtered.sections, {
+          allSections: sections,
+          searchActive: true,
+          matchRegions: filtered.matchRegions,
+          activeExactMatchId: targets[0]?.id ?? '',
+        });
+        await nextFrame();
+
+        const marks = [...document.querySelectorAll('#sections mark.exact-match')];
+        const activeMarks = marks.filter((mark) => mark.classList.contains('exact-match--active'));
+        const kinds = [...new Set(marks.map((mark) => mark.dataset.exactMatchKind))].sort();
+        const targetIds = marks.map((mark) => mark.dataset.exactMatchId);
+        const chartValueFiltered = filterSectionsByQuery(sections, '17');
+        const chartValueTargets = createExactMatchTargets(chartValueFiltered.matchRegions);
+        renderParsedSections(chartValueFiltered.sections, {
+          allSections: sections,
+          searchActive: true,
+          matchRegions: chartValueFiltered.matchRegions,
+          activeExactMatchId: chartValueTargets[0]?.id ?? '',
+        });
+        await nextFrame();
+        const hostileSection = [{
+          ...sections[0],
+          id: 'hostile-exact-match-harness',
+          title: '<img src=x onerror=alert(1)> Needle',
+        }];
+        const hostileFiltered = filterSectionsByQuery(hostileSection, 'needle');
+        renderParsedSections(hostileFiltered.sections, {
+          allSections: hostileSection,
+          searchActive: true,
+          matchRegions: hostileFiltered.matchRegions,
+          activeExactMatchId: createExactMatchTargets(hostileFiltered.matchRegions)[0]?.id ?? '',
+        });
+        await nextFrame();
+
+        return {
+          targetCount: targets.length,
+          renderedMarkCount: marks.length,
+          activeMarkCount: activeMarks.length,
+          renderedKinds: kinds,
+          targetIdsUnique: new Set(targetIds).size === targetIds.length,
+          chartValueTargetCount: chartValueTargets.filter((target) => target.kind === 'chart-value').length,
+          chartValueCanvasCount: document.querySelectorAll('#sections canvas').length,
+          hostileImageCount: document.querySelectorAll('#sections img').length,
+          hostileTextPreserved: document.querySelector('#sections h2')?.textContent.includes('<img src=x onerror=alert(1)>') === true,
+        };
       }
 
       async function run() {
@@ -211,6 +320,7 @@
         const core = await benchmarkReport(coreText, 'SyntheticMetricGroup-000', 'coreanalytics');
         const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
         const repeated = await repeatedWorkflow(coreText, 'SyntheticMetricGroup-000');
+        const exactMatchRendering = await exactMatchRenderingWorkflow();
         let serviceWorkerReady = false;
         if ('serviceWorker' in navigator) {
           try {
@@ -233,6 +343,7 @@
           core,
           stackshot,
           repeatedWorkflow: repeated,
+          exactMatchRendering,
           accessibility: accessibilityReport(),
           containment: containmentReport(),
           pwa: {
