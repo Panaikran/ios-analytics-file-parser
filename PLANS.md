@@ -191,3 +191,262 @@ Before committing:
 Do not create tags, GitHub releases, package version changes, or publishing
 actions unless the user explicitly asks for that release action.
 
+## Approved Milestone Plan: v1.8.0
+
+Release title: `v1.8.0 — Precision Search & Deep Inspection`
+
+Status: `Approved planning — implementation not started`
+
+This section records the approved milestone direction only. No Slice 18A
+implementation has started, and this plan does not approve implementation
+details beyond the high-level contracts below.
+
+### Objective
+
+Improve investigation of long diagnostic reports by making exact matches
+within visible sanitized content easier to identify and inspect, while
+preserving existing substring search semantics, section navigation, privacy
+boundaries, comparison behavior, export contracts, offline operation, and
+local-only processing.
+
+### Core Search Contract
+
+Search metadata identifies exact matches only within visible sanitized fields,
+rows, labels, chart labels, and rendered values while preserving the existing
+case-insensitive substring search semantics.
+
+The search workflow must not search or expose raw source data, parser-private
+data, values excluded by sanitization, capped-out records that are not
+rendered, hidden source-only fields, filenames, file paths, report identifiers,
+or DOM text outside the supported rendered section model.
+
+The current application behavior remains the baseline: case-insensitive
+substring search, filtering of generated parsed sections, section-level
+Previous and Next result navigation, single-report search, sanitized
+comparison search, search-aware text and JSON export, local-only operation,
+and the existing Raw Local View boundaries. v1.8.0 extends this workflow; it
+does not replace it.
+
+### Approved User Outcome
+
+By the end of the milestone, users should be able to:
+
+- identify exactly where visible sanitized matches occur;
+- distinguish matching fields, table rows, labels, chart labels, and rendered values;
+- move through matching rendered regions predictably;
+- understand first, previous, next, final, and no-result boundaries;
+- use the workflow with keyboard navigation;
+- retain existing section-level navigation behavior;
+- use the workflow in supported two- and three-report comparisons; and
+- rely on current privacy, export, offline, and performance boundaries.
+
+### Success Criteria
+
+1. Existing case-insensitive substring semantics remain unchanged.
+2. Match metadata is derived only from generated sanitized visible content.
+3. Matching visible fields, rows, labels, chart labels, and supported rendered
+   values can be identified without parsing raw source text.
+4. Users can move through matching rendered regions with deterministic boundary
+   behavior.
+5. Existing section-level Previous and Next search-result navigation remains
+   available.
+6. Search behavior works across all 11 supported parser families and bundled
+   examples.
+7. Search behavior works in supported two- and three-report sanitized
+   comparisons.
+8. CoreAnalytics and other capped or grouped views describe their searched and
+   visible boundaries accurately.
+9. Match metadata never includes capped-out, hidden, raw, or parser-private data.
+10. Raw Local View restrictions remain unchanged.
+11. Copy behavior remains based on visible sanitized content.
+12. Text export behavior remains unchanged.
+13. JSON export schema, version, mode, and visibility behavior remain unchanged.
+14. Search filtering continues to affect visible sanitized exports according to
+    the existing contract.
+15. Comparison labels remain UI-only and excluded from search metadata and
+    exports.
+16. Keyboard navigation, focus visibility, and live status behavior remain
+    accessible.
+17. Responsive checks pass at 320 px, 375 px, 390 px, 414 px, and 768 px.
+18. Offline/PWA behavior remains functional.
+19. No report content is persisted or transmitted.
+20. Full tests, syntax checks, Node benchmarks, browser QA, privacy checks, and
+    regression checks pass.
+21. No unexpected external requests are introduced.
+22. Existing large-report performance budgets remain green.
+
+### Non-Goals
+
+The milestone does not include regex, fuzzy, semantic, AI-assisted, or
+natural-language search; raw-source search; full-text indexing; searching
+capped-out or hidden source data; DOM scraping; a second filtering pipeline;
+new parser families; MetricKit; new diagnostic formats; uncapped CoreAnalytics
+rendering; table virtualization; worker-based parsing; framework migration;
+parser output or `SectionModel[]` redesign; filename or path search; saved
+searches; search history; report persistence; cloud processing; uploads;
+telemetry; analytics; mixed-parser comparison; comparison of more than three
+reports; comparison redesign; CSV, PDF, raw, or original-file export; JSON
+schema redesign; AI diagnosis; symbolication; or root-cause diagnosis claims.
+
+### Architectural Boundaries
+
+Preserve the static browser ES-module architecture, no-build operation, no
+framework, no backend, no uploads, no analytics, no report persistence,
+parser output separated from application UI state, search operating on
+generated sanitized section data, rendering driven by supported models rather
+than arbitrary DOM scanning, existing comparison boundaries, existing text and
+JSON export contracts, Raw Local View isolation, and offline/PWA support.
+
+Implementation must reuse the current search and rendering architecture. A
+parallel search state, duplicate filtering engine, or DOM-derived search model
+is not approved.
+
+### Privacy, Security, and Rendering Boundaries
+
+Search match data must never contain or derive from raw report source,
+filenames, file paths, device or user identifiers, UUIDs, excluded process or
+bundle identifiers, addresses, source-only timestamps, hidden nested payloads,
+parser-private fields, or records excluded by caps or visibility controls.
+
+Search match text must be rendered safely. User-controlled report content must
+not be inserted through unsafe `innerHTML`; safe text nodes, DOM ranges, or
+another evidence-based non-interpreting rendering method must be used.
+
+### Export Boundaries
+
+Preserve visible sanitized text export, visible sanitized JSON export, the
+existing schema version and JSON mode values, generic comparison identities,
+search-filter visibility rules, Raw Local View export restrictions, and the
+existing Blob/Object URL lifecycle. Match highlighting, focus state, internal
+match IDs, offsets, and navigation metadata must not enter exported data. No
+v1.8.0 export-schema change is approved.
+
+### Comparison Boundaries
+
+Preserve two or three reports, same-parser-type requirements, sanitized-only
+comparison, insertion order, generic exported `Report 1`, `Report 2`, and
+`Report 3` identities, and setup-only optional local labels. Local labels remain
+excluded from search metadata, sections, navigation targets, copy, exports,
+filenames, and schemas.
+
+### Service-Worker Maintenance Guard
+
+Any new or changed precached production asset must update the service-worker
+allowlist and cache version in the same slice. This is a release-consistency
+guard only. It does not authorize service-worker redesign, runtime report
+caching, dynamic cache discovery, or persistent report storage. It applies
+only when a slice adds, removes, renames, or changes a precached production
+asset whose cache identity must be refreshed. The stale current cache-version
+label may be recorded as a maintenance signal, but it is not a reproduced
+production defect without evidence.
+
+### Provisional Slices
+
+All slices are `Not started`.
+
+#### Slice 18A — Search Match Contract
+
+Objective: define deterministic match metadata for visible sanitized fields,
+table rows, labels, chart labels, and supported rendered values without changing
+substring search semantics.
+
+Likely areas: `src/search/filterSections.js`, a focused search-metadata module
+only if justified, and `tests/parser.test.js`.
+
+Acceptance criteria: existing filtering results are unchanged; metadata
+identifies exact rendered regions deterministically; raw, hidden, capped-out,
+and parser-private values are absent; Unicode, case-insensitive, empty-query,
+immutability, comparison, and export contracts remain correct; focused unit
+and integration tests pass.
+
+Stop rules: stop if parser output, `SectionModel[]`, raw content, DOM scraping,
+or a second filtering pipeline is required; stop before visible highlighting or
+keyboard navigation assigned to 18B.
+
+Dependencies: existing fixtures and bundled examples only; no new dependency
+or diagnostic fixture.
+
+#### Slice 18B — Primary Inspection Workflow
+
+Objective: add safe visual identification and keyboard movement through
+matching rendered content using the approved 18A metadata contract.
+
+Likely areas: `src/main.js`, `src/ui/renderSection.js`, existing UI helpers,
+`index.html`, `styles/main.css`, `tests/parser.test.js`, and
+`service-worker.js` only when required by the asset-version guard.
+
+Acceptance criteria: visible matches are identifiable; presentation cannot
+interpret report content as HTML; keyboard movement, focus, boundaries,
+filtered-section synchronization, comparison mode, no-results feedback, and
+responsive containment are predictable; section navigation and all export and
+schema behavior remain unchanged.
+
+Stop rules: no raw-source navigation, regex/fuzzy/semantic mode, DOM-wide text
+scanning, duplicate search state, broad renderer redesign, or unapproved
+framework/dependency introduction; stop before 18C hardening or documentation.
+
+Dependencies: frozen 18A metadata contract, existing native controls and live
+status region, and the existing browser harness.
+
+#### Slice 18C — Regression and QA Hardening
+
+Objective: prove privacy, accessibility, responsive, comparison, export, Raw
+Local View, offline, repeated-workflow, and performance stability.
+
+Likely areas: `tests/parser.test.js`, browser harness, benchmark files only if
+measurement coverage must be extended, and production code only for reproduced
+defects.
+
+Acceptance criteria: all 11 examples, representative fields/rows/labels/charts
+and rendered values, keyboard/focus behavior, comparisons, CoreAnalytics caps,
+Raw Local View, copy, text/JSON export, privacy, no persistence/transmission,
+responsive widths, offline workflow, repeated cycles, console/page/request
+health, and established Node/browser budgets pass.
+
+Stop rules: production changes require a reproduced defect and failing
+regression test; stop on raw/hidden-data leakage, material performance
+regression, or a privacy/accessibility blocker requiring milestone expansion;
+do not begin documentation or release publication.
+
+Dependencies: completed and frozen 18A/18B, cached or available Chrome QA, and
+honest reporting of unavailable Safari, Mobile Safari, physical-device, and
+native-screen-reader lanes.
+
+#### Slice 18D — Documentation and Release Readiness
+
+Objective: reconcile documentation, complete final validation, and prepare
+v1.8.0 for explicit manual release review.
+
+Likely areas: `README.md`, `ROADMAP.md`, `CHANGELOG.md` only if the repository
+convention supports an Unreleased planning note, and `PHASE_18_SUMMARY.md`
+only after implementation if the project creates one. No phase summary is
+created by this planning task.
+
+Acceptance criteria: verified behavior, slice status, privacy, accessibility,
+responsive, offline, performance evidence, and limitations are documented
+accurately; implementation may be marked complete only after it lands and is
+validated; release tagging remains a separate explicit action.
+
+Stop rules: no new production functionality, tag, GitHub Release, invented
+next-milestone scope, or release claim; stop if final validation finds a
+production blocker.
+
+Dependencies: completed validation evidence and explicit manual release review.
+
+### Risks and Testing Expectations
+
+Known risks are safe highlighting across nested rendered structures,
+filtered-section and exact-match synchronization, focus stability during
+rerender, Unicode and offset correctness, table and capped-row boundary
+wording, large-report rendering overhead, comparison parity, export isolation,
+Chromium-heavy evidence, unavailable Safari/Mobile Safari/physical-device and
+native-screen-reader lanes, and service-worker consistency when assets change.
+
+Mitigation is tests before production changes, safe text rendering, immutable
+metadata, deterministic navigation, existing fixtures, browser QA, responsive
+checks, performance measurement, and no new dependency without evidence.
+Validation must include `npm.cmd test`, relevant syntax checks,
+`node tests\largeReportPerformance.bench.js`, browser QA, privacy and export
+regression checks, responsive widths, offline checks, and the existing
+large-report budgets. Report unavailable environments honestly.
+

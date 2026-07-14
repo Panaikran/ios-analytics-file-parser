@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` planning only.
+Status: `v1.7.0` released and fully closed on 2026-07-14. `v1.8.0` approved planning — implementation not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -29,7 +29,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Complete Supported Diagnostic Examples | Released | `v1.5.0` | One fictional bundled example for each supported parser family, offline integration, privacy hardening, and cross-family QA |
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
-| Next Milestone | Planning only | `v1.8.0` | Scope to be determined after v1.7.0 post-release reconciliation |
+| Next Milestone | Approved planning | `v1.8.0` | Precision Search & Deep Inspection; implementation not started |
 
 ## Project Constraints
 
@@ -700,8 +700,28 @@ Chrome, responsive, accessibility, offline, and performance checks passed.
 
 ## Next Planning Milestone: v1.8.0
 
-Status: planning only. Scope to be determined after v1.7.0 post-release
-reconciliation. No v1.8.0 implementation scope is approved.
+Status: approved planning — implementation not started. The approved user
+outcome is to make exact matches within visible sanitized content easier to
+identify and inspect while preserving existing substring search, section
+navigation, comparison, export, offline, local-only, and privacy boundaries.
+
+The complete approved milestone definition is recorded in `PLANS.md`.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| Slice 18A | Not started | Deterministic match metadata for visible sanitized rendered regions |
+| Slice 18B | Not started | Safe visual match identification and keyboard movement |
+| Slice 18C | Not started | Privacy, accessibility, responsive, comparison, export, offline, and performance hardening |
+| Slice 18D | Not started | Documentation reconciliation and explicit release-readiness preparation |
+
+The milestone does not approve new parser families, MetricKit, raw-source or
+DOM-derived search, a second filtering pipeline, export-schema changes,
+comparison expansion, report persistence, cloud processing, uploads, AI
+diagnosis, symbolication, or framework migration. Search remains limited to
+generated visible sanitized section data, including existing capped/grouped
+boundaries. Any new or changed precached production asset must update the
+service-worker allowlist and cache version in the same slice; this guard does
+not authorize runtime report caching or service-worker redesign.
 
 ## Future Hardening And Exploratory Work
 
@@ -741,8 +761,8 @@ These ideas are intentionally out of scope for the current v1.0 stabilization pa
 
 ## Next Planning Step
 
-Continue with v1.8.0 planning in a separate review pass. No v1.8.0
-implementation scope is approved by this roadmap.
+Continue with the approved v1.8.0 plan in `PLANS.md`. Implementation remains
+not started, and no slice is active or complete.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
