@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f5f5f7">
+    <title>Inspector Workspace Prototype — iOS Analytics File Parser</title>
+    <script>
+      (() => {
+        const theme = new URLSearchParams(location.search).get('theme');
+        document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+      })();
+    </script>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#prototype-app">Skip to prototype</a>
+
+    <aside class="review-controls" aria-labelledby="review-controls-title">
+      <div class="review-controls__heading">
+        <p class="eyebrow">Slice 20A</p>
+        <h2 id="review-controls-title">Prototype review controls</h2>
+        <p>These controls are not part of the proposed application interface.</p>
+      </div>
+
+      <div class="review-controls__fields">
+        <label>
+          <span>Scenario</span>
+          <select id="scenario-select">
+            <option value="import">Import state</option>
+            <option value="report">Parsed report</option>
+            <option value="search">Search workflow</option>
+            <option value="noresult">No-result state</option>
+            <option value="comparison">Comparison</option>
+            <option value="raw">Raw Local View</option>
+            <option value="error">Warning and error states</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Theme</span>
+          <select id="theme-select">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+
+        <fieldset>
+          <legend>Accessibility simulations</legend>
+          <label><input id="reduce-motion" type="checkbox"> Reduced motion</label>
+          <label><input id="reduce-transparency" type="checkbox"> Reduced transparency</label>
+          <label><input id="increase-contrast" type="checkbox"> Increased contrast</label>
+          <label><input id="force-colors" type="checkbox"> Forced colors approximation</label>
+        </fieldset>
+      </div>
+    </aside>
+
+    <main id="prototype-app" class="prototype-app" tabindex="-1"></main>
+
+    <dialog id="section-dialog" class="section-dialog" aria-labelledby="section-dialog-title">
+      <div class="section-dialog__header">
+        <h2 id="section-dialog-title">Report sections</h2>
+        <button id="close-section-dialog" class="button button--secondary" type="button">Close</button>
+      </div>
+      <nav id="mobile-section-nav" aria-label="Report sections"></nav>
+    </dialog>
+
+    <div id="action-popover" class="action-popover" role="group" aria-label="Report actions" hidden></div>
+
+    <script type="module" src="./prototype.js"></script>
+  </body>
+</html>
