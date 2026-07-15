@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.8.0` released and fully closed on 2026-07-14. `v1.9.0` is implementation-complete, unreleased, and ready for manual release review.
+Status: `v1.9.0` released and fully closed on 2026-07-15. No next milestone scope is approved.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -30,7 +30,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
-| Visible Search Contract Integrity | Implementation Complete | `v1.9.0` (unreleased) | Declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
+| Visible Search Contract Integrity | Released | `v1.9.0` | Released 2026-07-15: declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
 
 ## Project Constraints
 
@@ -730,9 +730,10 @@ allowlist and cache version in the same slice. This remains a release-
 consistency guard and does not authorize runtime report caching, dynamic cache
 discovery, persistent report storage, or service-worker redesign.
 
-## Implementation-Complete Roadmap: v1.9.0
+## Released Roadmap: v1.9.0
 
-Status: implementation complete and unreleased. Slices 19A, 19B, and 19C are complete. Manual release review, tagging, and publication remain pending; no release date is assigned.
+Status: released and fully closed on 2026-07-15.
+Release status: released. Release commit: `5ee166b7dba49dd7522a1d5c3c27bf60265a540a`. Annotated tag object: `8eb5700ed8272768d2b239284feca933d5cb2a6f`. Tag: `v1.9.0`. GitHub Release: published, non-draft, non-prerelease.
 
 Theme: Visible Search Contract Integrity.
 
@@ -791,9 +792,9 @@ reproducible shared-contract defect, corrected in the shared filter path.
 - [x] Automated tests, relevant syntax checks, established large-report budgets, and available direct Microsoft Edge browser QA passed.
 - [x] Hidden-only and visible-cell workflows, comparison, Raw Local View, copy, text/JSON export, Clear Search, Clear Report, responsive containment, focus, and accessibility status consistency were covered.
 - [x] No report persistence, transmission, service-worker cache expansion, or hidden-value export was introduced.
-- [x] README, ROADMAP, CHANGELOG, PLANS, and `PHASE_19_SUMMARY.md` are reconciled for an implementation-complete, unreleased milestone.
-- [ ] Manual release review approval.
-- [ ] Create the `v1.9.0` tag and publish the GitHub Release after approval.
+- [x] README, ROADMAP, CHANGELOG, PLANS, and `PHASE_19_SUMMARY.md` are reconciled for the released milestone.
+- [x] Manual release review approved.
+- [x] The annotated `v1.9.0` tag and published, non-draft, non-prerelease GitHub Release point to the release commit.
 
 ## Future Hardening And Exploratory Work
 
@@ -831,11 +832,10 @@ These ideas are intentionally out of scope for the completed v1.9 milestone unle
 | Comparison | Additional comparison modes beyond the bounded, same-parser, sanitized-only workflow |
 | Sharing | Additional local-only share/export formats beyond sanitized visible `.txt` and `.json` downloads |
 
-## Manual Release Review
+## Next Planning Step
 
-No v1.9.0 implementation slice remains active. Review the completed milestone
-before creating the `v1.9.0` tag or publishing its GitHub Release. No future
-milestone scope is approved or defined here.
+v1.9.0 is released and fully closed. Define any next milestone in a separate
+approved planning pass. No future milestone scope is approved or defined here.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

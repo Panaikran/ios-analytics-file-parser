@@ -25,9 +25,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.8.0` (2026-07-14) |
-| Active phase | `v1.9.0 — Visible Search Contract Integrity` implementation complete and unreleased |
-| Current focus | Manual release review for `v1.9.0`; Slices 19A–19C complete, with no tag or GitHub Release yet |
+| Latest released version | `v1.9.0` (2026-07-15) |
+| Active phase | `v1.9.0 — Visible Search Contract Integrity` released and fully closed |
+| Current focus | Post-release reconciliation complete; no next milestone scope is approved |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -53,7 +53,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.6.0 | Released: Search Result Navigation |
 | v1.7.0 | Released 2026-07-14: Comparison Workflow Clarity |
 | v1.8.0 | Released 2026-07-14: Precision Search & Deep Inspection |
-| v1.9.0 | Implementation complete and ready for manual release review; unreleased |
+| v1.9.0 | Released 2026-07-15: Visible Search Contract Integrity |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -61,7 +61,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.8.0 — Precision Search & Deep Inspection` remains the latest stable release, tagged and published on 2026-07-14 as a non-draft, non-prerelease GitHub Release. `v1.9.0 — Visible Search Contract Integrity` is implementation-complete and ready for manual release review, with Slices 19A–19C complete. No `v1.9.0` tag or GitHub Release has been created.
+`v1.9.0 — Visible Search Contract Integrity` is the latest stable release, tagged and published on 2026-07-15 as a non-draft, non-prerelease GitHub Release. It aligns table-row filtering with declared visible columns while preserving visible-cell search, exact-match metadata, navigation, copy, export, comparison, Raw Local View, privacy, local-only, and offline boundaries.
 
 ## Why This Exists
 
@@ -149,7 +149,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Search/filter parsed output | Supported |
 | Search Result Navigation | Implemented in `v1.6.0`: section-level Previous/Next movement through visible matching sections |
 | Precision Search & Deep Inspection | Implemented in `v1.8.0`: exact-match metadata, safe highlighting, and non-wrapping Previous/Next exact-match navigation within visible sanitized content |
-| Visible Search Contract Integrity | Implemented for unreleased `v1.9.0`: table-row search follows declared visible columns only |
+| Visible Search Contract Integrity | Released in `v1.9.0`: table-row search follows declared visible columns only |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
@@ -718,7 +718,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.6.0 | Released | Section-level Search Result Navigation with accessible non-wrapping Previous/Next controls |
 | v1.7.0 | Released 2026-07-14 | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | v1.8.0 | Released 2026-07-14 | Precision Search & Deep Inspection: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
-| v1.9.0 | Implementation complete; unreleased | Visible Search Contract Integrity: declared visible-column row filtering with workflow, privacy, accessibility, responsive, browser, export, and performance hardening |
+| v1.9.0 | Released 2026-07-15 | Visible Search Contract Integrity: declared visible-column row filtering with workflow, privacy, accessibility, responsive, browser, export, and performance hardening |
 
 The project keeps the same constraints:
 
@@ -789,7 +789,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.8.0 — Precision Search & Deep Inspection` is released and fully closed on 2026-07-14. `v1.9.0 — Visible Search Contract Integrity` is implementation-complete and unreleased, with Slices 19A–19C complete and manual release review pending. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.9.0 — Visible Search Contract Integrity` is released and fully closed on 2026-07-15. No next milestone scope is approved. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

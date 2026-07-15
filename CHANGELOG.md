@@ -1,9 +1,11 @@
 # Changelog
 
-## [v1.9.0] — Unreleased
+## v1.9.0 — Visible Search Contract Integrity
 
-Status: Implementation complete and ready for manual release review. No
-`v1.9.0` tag, release date, or GitHub Release exists yet.
+Status: Released on 2026-07-15. The annotated `v1.9.0` tag object
+`8eb5700ed8272768d2b239284feca933d5cb2a6f` peels to release commit
+`5ee166b7dba49dd7522a1d5c3c27bf60265a540a`; the GitHub Release is published,
+non-draft, and non-prerelease.
 
 ### Fixed
 

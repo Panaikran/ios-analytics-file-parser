@@ -4,13 +4,28 @@ Version:
 `v1.9.0`
 
 Status:
-`Implementation Complete`
+`Released`
 
 Release status:
-`Unreleased — Ready for Manual Release Review`
+`Released`
 
 Current released version:
-`v1.8.0 — Precision Search & Deep Inspection`
+`v1.9.0 — Visible Search Contract Integrity`
+
+Release date:
+`2026-07-15`
+
+Release commit:
+`5ee166b7dba49dd7522a1d5c3c27bf60265a540a`
+
+Annotated tag object:
+`8eb5700ed8272768d2b239284feca933d5cb2a6f`
+
+Tag:
+`v1.9.0`
+
+GitHub Release:
+`Published, non-draft, non-prerelease`
 
 ## Objective
 
@@ -68,7 +83,8 @@ Commit:
 - Reran final automated, syntax, performance, browser, responsive,
   accessibility, privacy, and repository-diff checks.
 - Prepared the implementation-complete milestone for manual release review.
-- Created no tag or GitHub Release.
+- Created no tag or GitHub Release during Slice 19C; publication followed
+  separate manual approval.
 
 ## Final Behavior
 
@@ -176,11 +192,10 @@ application failures.
 - [x] Full tests and relevant syntax checks passed.
 - [x] Established performance budgets passed.
 - [x] Available Edge, accessibility, responsive, privacy, and service-worker readiness checks passed.
-- [x] Documentation reconciled for an implementation-complete, unreleased milestone.
+- [x] Documentation reconciled for the released milestone.
 - [x] No known release blocker remains.
-- [ ] Manual release review approval.
-- [ ] Create the `v1.9.0` tag after approval.
-- [ ] Publish the `v1.9.0` GitHub Release after approval.
+- [x] Manual release review approved.
+- [x] Annotated `v1.9.0` tag created and pushed.
+- [x] GitHub Release published as non-draft and non-prerelease.
 
-No `v1.9.0` tag or GitHub Release has been created. v1.9.0 remains unreleased
-and is ready for manual release review.
+v1.9.0 is released and fully closed. No next milestone scope is approved.

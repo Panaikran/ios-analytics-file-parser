@@ -435,13 +435,14 @@ Dependencies: completed validation evidence and the approved release record.
 
 Release title: `v1.9.0 — Visible Search Contract Integrity`
 
-Status: `Implementation Complete`
+Status: `Released and Fully Closed on 2026-07-15`
 
-Release status: `Unreleased — Ready for Manual Release Review`
+Release status: `Released`
 
 Slices 19A, 19B, and 19C are complete. No implementation slice remains active.
-No `v1.9.0` tag or GitHub Release exists yet; tagging and publication may begin
-only after manual review approval.
+Release commit: `5ee166b7dba49dd7522a1d5c3c27bf60265a540a`. Annotated tag
+object: `8eb5700ed8272768d2b239284feca933d5cb2a6f`. Tag: `v1.9.0`.
+GitHub Release: published, non-draft, non-prerelease.
 
 ### Objective
 
@@ -537,9 +538,9 @@ accurate; no unsupported claim, tag, or publication occurs without approval.
 
 Dependencies: completed 19A/19B evidence.
 
-Completion record: documentation reconciliation and final QA are recorded in
-`PHASE_19_SUMMARY.md`. This plan does not invent a self-referential 19C commit
-hash before the release-readiness commit exists.
+Completion commit: `5ee166b7dba49dd7522a1d5c3c27bf60265a540a`.
+Documentation reconciliation and final QA are recorded in
+`PHASE_19_SUMMARY.md`.
 
 ### Completed Release-Readiness Validation
 
