@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.8.0` released and fully closed on 2026-07-14. `v1.9.0` is the next planning milestone.
+Status: `v1.8.0` released and fully closed on 2026-07-14. `v1.9.0` is implementation-complete, unreleased, and ready for manual release review.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -30,7 +30,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
-| Visible Search Contract Integrity | Planned | `v1.9.0` | Align table-row filtering with visible sanitized exact-match metadata, then verify privacy, accessibility, export, and workflow parity |
+| Visible Search Contract Integrity | Implementation Complete | `v1.9.0` (unreleased) | Declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
 
 ## Project Constraints
 
@@ -730,9 +730,9 @@ allowlist and cache version in the same slice. This remains a release-
 consistency guard and does not authorize runtime report caching, dynamic cache
 discovery, persistent report storage, or service-worker redesign.
 
-## Planned Roadmap: v1.9.0
+## Implementation-Complete Roadmap: v1.9.0
 
-Status: Planned. No implementation slice is active or complete.
+Status: implementation complete and unreleased. Slices 19A, 19B, and 19C are complete. Manual release review, tagging, and publication remain pending; no release date is assigned.
 
 Theme: Visible Search Contract Integrity.
 
@@ -742,15 +742,13 @@ navigation, rendering, copy, and export describe the same user-visible data.
 
 ### Planning Evidence
 
-`filterSectionsByQuery()` currently counts table-row matches across
-`Object.values(row)`, while exact-match metadata traverses only declared visible
-`tableColumns`. A contract-valid row containing a non-column property can
-therefore retain its section and row without producing a visible exact match.
-The behavior is reproducible with the current shared search function. The
-checked fixture and production-example corpus has no surplus row keys, so this
-is not a confirmed user-visible defect in a shipped parser family; it is a
-reproducible shared-contract defect and a privacy-sensitive architectural risk
-for future table rows.
+Before Slice 19A, `filterSectionsByQuery()` counted table-row matches across
+`Object.values(row)`, while exact-match metadata traversed only declared visible
+`tableColumns`. A synthetic contract-valid row containing a non-column property
+could therefore retain its section and row without producing a visible exact
+match. The checked bundled fixture and production-example corpus had no surplus
+row keys, so this was not reproduced in current bundled parser data. It was a
+reproducible shared-contract defect, corrected in the shared filter path.
 
 ### Boundaries
 
@@ -769,13 +767,13 @@ for future table rows.
   virtualization, worker-based parsing, browser-engine expansion, MetricKit,
   export format, backend, upload, analytics, persistence, tag, or release.
 
-### Planned Slices
+### Completed Slices
 
 | Slice | Status | Scope | Dependencies |
 | --- | --- | --- | --- |
-| Slice 19A | Planned | Add a regression contract for non-column table properties and make shared row filtering use the same visible-column projection as exact-match metadata. | Existing `filterSectionsByQuery()` and v1.8.0 match-region contract |
-| Slice 19B | Planned | Harden visible-search parity across rendered tables, exact-match navigation, section navigation, copy/export eligibility, comparison, Raw Local View, and accessibility states; production changes only for reproduced defects. | Completed 19A contract |
-| Slice 19C | Planned | Complete documentation reconciliation, deterministic validation, available browser QA, and release-readiness evidence. | Completed 19A and 19B evidence |
+| Slice 19A | Complete | Aligned shared row filtering with declared visible columns; added hidden-only, visible-cell, and header-regression coverage while preserving row shape and search schemas. Commit: `678ce2f3a513cee39b37ed6326381a9d13d5f912`. | Existing `filterSectionsByQuery()` and v1.8.0 match-region contract |
+| Slice 19B | Complete | Hardened workflow, privacy, accessibility, responsive, browser, copy, and export coverage in tests and the browser harness only; no production defect was reproduced and no production code changed. Commit: `f7c3223a2af6852931affaeb047d10f3a2e2d9a7`. | Completed 19A contract |
+| Slice 19C | Complete | Reconciled documentation, reran final QA, and recorded release-readiness evidence without production, test, harness, service-worker, or dependency changes. | Completed 19A and 19B evidence |
 
 ### Success Criteria
 
@@ -787,18 +785,19 @@ for future table rows.
 6. Keyboard operation, disabled boundary states, live status, focus visibility, reduced motion, and responsive containment remain accessible.
 7. All automated tests, relevant syntax checks, established large-report budgets, available browser QA, privacy checks, and diff hygiene pass.
 
-### Release-Readiness Requirements
+### Release Readiness
 
-- Review the implementation diff for a single shared search-path correction and no parser or schema expansion.
-- Run `npm.cmd test`, relevant `node --check` commands, `node tests\\largeReportPerformance.bench.js`, and `git diff --check`.
-- Exercise visible and non-visible table-property probes plus representative supported examples, comparison, Raw Local View, copy, text/JSON export, Clear Report, and repeated search workflows.
-- Perform available browser QA at the established responsive widths; report unavailable Safari, Mobile Safari, screen-reader, or offline-reload lanes honestly.
-- Confirm no report content is persisted, transmitted, added to service-worker caches, or introduced into exports.
-- Reconcile README, ROADMAP, CHANGELOG, and `PHASE_19_SUMMARY.md` only after implemented behavior and validation evidence exist. Do not tag, publish, or claim release without explicit approval.
+- [x] The implementation diff contains one shared search-path correction and no parser, `SectionModel`, comparison-model, export-schema, or rendering redesign.
+- [x] Automated tests, relevant syntax checks, established large-report budgets, and available direct Microsoft Edge browser QA passed.
+- [x] Hidden-only and visible-cell workflows, comparison, Raw Local View, copy, text/JSON export, Clear Search, Clear Report, responsive containment, focus, and accessibility status consistency were covered.
+- [x] No report persistence, transmission, service-worker cache expansion, or hidden-value export was introduced.
+- [x] README, ROADMAP, CHANGELOG, PLANS, and `PHASE_19_SUMMARY.md` are reconciled for an implementation-complete, unreleased milestone.
+- [ ] Manual release review approval.
+- [ ] Create the `v1.9.0` tag and publish the GitHub Release after approval.
 
 ## Future Hardening And Exploratory Work
 
-These items remain outside the current v1.9 planning scope unless explicitly approved later.
+These items remain outside the completed v1.9 scope unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -815,12 +814,12 @@ The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, `PHASE_17_SUMMARY.md`, and `PHASE_18_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, `PHASE_17_SUMMARY.md`, `PHASE_18_SUMMARY.md`, and `PHASE_19_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
 
-These ideas are intentionally out of scope for the current v1.9 planning scope unless explicitly approved later.
+These ideas are intentionally out of scope for the completed v1.9 milestone unless explicitly approved later.
 
 | Area | Idea |
 | --- | --- |
@@ -832,10 +831,11 @@ These ideas are intentionally out of scope for the current v1.9 planning scope u
 | Comparison | Additional comparison modes beyond the bounded, same-parser, sanitized-only workflow |
 | Sharing | Additional local-only share/export formats beyond sanitized visible `.txt` and `.json` downloads |
 
-## Next Planning Step
+## Manual Release Review
 
-Define v1.9.0 scope in a separate approved planning pass. No v1.9.0
-implementation is active.
+No v1.9.0 implementation slice remains active. Review the completed milestone
+before creating the `v1.9.0` tag or publishing its GitHub Release. No future
+milestone scope is approved or defined here.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

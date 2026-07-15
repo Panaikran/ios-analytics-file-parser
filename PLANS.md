@@ -435,7 +435,13 @@ Dependencies: completed validation evidence and the approved release record.
 
 Release title: `v1.9.0 — Visible Search Contract Integrity`
 
-Status: `Planned`
+Status: `Implementation Complete`
+
+Release status: `Unreleased — Ready for Manual Release Review`
+
+Slices 19A, 19B, and 19C are complete. No implementation slice remains active.
+No `v1.9.0` tag or GitHub Release exists yet; tagging and publication may begin
+only after manual review approval.
 
 ### Objective
 
@@ -445,14 +451,13 @@ solely by a row value that the renderer cannot display or highlight.
 
 ### Evidence And Scope Decision
 
-The shared filter currently checks every `Object.values(row)`, while exact-match
-metadata checks declared visible `tableColumns`. A direct shared-function probe
-reproduces a retained row and section with zero visible exact-match regions when
-a row has a non-column property. The checked fixture and production-example
-corpus has no such surplus row keys, so this is not confirmed as a released
-parser-family regression. It is nevertheless a reproducible contract defect at
-a privacy boundary; the smallest coherent milestone is to align the two search
-projections and prove the established workflow remains intact.
+Before Slice 19A, the shared filter checked every `Object.values(row)`, while
+exact-match metadata checked declared visible `tableColumns`. A direct
+shared-function probe reproduced a retained row and section with zero visible
+exact-match regions when a row had a non-column property. The checked fixture
+and production-example corpus had no such surplus row keys, so this was not
+confirmed as a released parser-family regression. Slice 19A aligned the two
+visible search projections without changing parser or output contracts.
 
 ### Boundaries
 
@@ -476,6 +481,10 @@ persistence, release tag, or publication.
 
 #### Slice 19A — Visible Row Search Contract
 
+Status: `Complete`
+
+Completion commit: `678ce2f3a513cee39b37ed6326381a9d13d5f912`
+
 Objective: add a focused regression contract for a non-column row property and
 make shared filtering count only the visible table-column values used by
 exact-match metadata.
@@ -490,6 +499,10 @@ Stop rules: stop if parser changes, `SectionModel[]` changes, DOM scanning, raw
 data access, a second filtering path, or a search feature expansion is needed.
 
 #### Slice 19B — Search Workflow Regression Hardening
+
+Status: `Complete`
+
+Completion commit: `f7c3223a2af6852931affaeb047d10f3a2e2d9a7`
 
 Objective: verify the corrected contract through existing rendering and user
 workflows, fixing production code only for a reproduced defect.
@@ -510,6 +523,8 @@ examples, browser harness, and performance budgets.
 
 #### Slice 19C — Documentation And Release Readiness
 
+Status: `Complete`
+
 Objective: record verified behavior and complete final validation without
 expanding production scope.
 
@@ -522,30 +537,36 @@ accurate; no unsupported claim, tag, or publication occurs without approval.
 
 Dependencies: completed 19A/19B evidence.
 
-### Required Validation Before Release Readiness
+Completion record: documentation reconciliation and final QA are recorded in
+`PHASE_19_SUMMARY.md`. This plan does not invent a self-referential 19C commit
+hash before the release-readiness commit exists.
 
-Run `npm.cmd test`, relevant JavaScript syntax checks,
-`node tests\\largeReportPerformance.bench.js`, `git diff --check`, and available
-browser QA. Verify all 11 examples where relevant, comparison, Raw Local View,
-search navigation, exact-match navigation, copy, both exports, Clear Report,
-privacy mode, responsive widths, and offline shell if precached assets change.
-Confirm no persistence, network transmission, export leakage, or service-worker
-cache expansion was introduced.
+### Completed Release-Readiness Validation
+
+Final Slice 19C validation reran `npm.cmd test`, relevant JavaScript syntax
+checks, `node tests\\largeReportPerformance.bench.js`, `git diff --check`, and
+available direct Microsoft Edge browser QA. Existing coverage verifies all 11
+examples, comparison, Raw Local View, search navigation, exact-match navigation,
+copy, both exports, Clear Search, Clear Report, privacy mode, responsive widths,
+and static service-worker readiness. No persistence, network transmission,
+export leakage, or service-worker cache expansion was introduced.
 
 ### Risks and Testing Expectations
 
-Known risks are safe highlighting across nested rendered structures,
+The reviewed risks were safe highlighting across nested rendered structures,
 filtered-section and exact-match synchronization, focus stability during
 rerender, Unicode and offset correctness, table and capped-row boundary
 wording, large-report rendering overhead, comparison parity, export isolation,
 Chromium-heavy evidence, unavailable Safari/Mobile Safari/physical-device and
 native-screen-reader lanes, and service-worker consistency when assets change.
 
-Mitigation is tests before production changes, safe text rendering, immutable
+Mitigation remains tests before production changes, safe text rendering, immutable
 metadata, deterministic navigation, existing fixtures, browser QA, responsive
 checks, performance measurement, and no new dependency without evidence.
 Validation must include `npm.cmd test`, relevant syntax checks,
 `node tests\largeReportPerformance.bench.js`, browser QA, privacy and export
 regression checks, responsive widths, offline checks, and the existing
-large-report budgets. Report unavailable environments honestly.
+large-report budgets. Safari, Firefox, Mobile Safari, physical devices, native
+screen readers, heap snapshots, Playwright through WSL, and runtime offline
+reload remain unavailable environmental lanes and are not claimed.
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.9.0] — Unreleased
+
+Status: Implementation complete and ready for manual release review. No
+`v1.9.0` tag, release date, or GitHub Release exists yet.
+
+### Fixed
+
+- Table-row filtering now searches only declared visible table columns.
+- Non-column row properties no longer retain filtered rows or sections or affect search counts and navigation.
+- Search filtering and exact-match metadata now use the same visible table projection.
+
+### Changed
+
+- Visible-cell search remains aligned across filtering, highlighting, section and exact-match navigation, copy, text export, and JSON export.
+- Retained rows continue to preserve unrelated helper properties without making those properties searchable or exportable.
+- Header-only search preserves its established zero-result behavior.
+
+### Testing
+
+- Added hidden-only and visible-cell workflow coverage, query transitions, report and comparison transitions, Raw Local View, Clear Search, and Clear Report.
+- Verified exact-match boundaries, focus retention, position feedback, comparison privacy, capped content, local aliases, raw source, source tables, and hidden helper properties.
+- Verified visible-sanitized copy, text export, and JSON export; responsive layouts at `390×844` and `1440×1000`; accessibility status consistency; direct Microsoft Edge browser QA; and established large-report performance budgets.
+
+### Privacy
+
+- Non-visible row properties cannot act as a search-existence signal.
+- Hidden values remain excluded from rendered and accessible output, copy, text export, and JSON export.
+- Raw source, local comparison aliases, source tables, and capped-out content remain excluded from visible search results and exports.
+
 ## v1.8.0 — Precision Search & Deep Inspection
 
 Status: Released on 2026-07-14. The `v1.8.0` tag and published, non-draft,
