@@ -18,6 +18,12 @@
     <pre id="results">Running browser baseline...</pre>
     <script type="module">
       import { createComparisonSections } from '../src/comparison/comparisonModel.js';
+      import {
+        serializeSectionForCopy,
+        serializeSectionsForExport,
+        serializeSectionsForJsonExport,
+      } from '../src/clipboard/serializeSection.js';
+      import { getVisibleSectionForCopy } from '../src/clipboard/visibleSection.js';
       import { parseInput } from '../src/parsers/index.js';
       import { createExactMatchTargets } from '../src/search/exactMatch.js';
       import { filterSectionsByQuery } from '../src/search/filterSections.js';
@@ -312,15 +318,172 @@
         };
       }
 
+      function visibleSearchContractWorkflow() {
+        const hiddenValue = ['hidden', 'workflow', 'value'].join('-');
+        const sections = [{
+          id: 'visible-search-contract',
+          title: 'Workflow table',
+          priority: 'normal',
+          tableColumns: [{ key: 'visible', label: 'Visible value' }],
+          table: [{ visible: 'Visible workflow cell repeat repeat', helper: hiddenValue }],
+        }];
+        const transitions = [
+          ['empty', ''],
+          ['visible-cell', 'visible workflow cell'],
+          ['hidden-only', hiddenValue],
+          ['no-result', 'no such workflow value'],
+          ['repeated-occurrence', 'repeat'],
+          ['cleared', ''],
+        ].map(([state, query]) => {
+          const filtered = filterSectionsByQuery(sections, query);
+          const targets = createExactMatchTargets(filtered.matchRegions);
+          renderParsedSections(filtered.sections, {
+            allSections: sections,
+            searchActive: filtered.active,
+            matchRegions: filtered.matchRegions,
+            activeExactMatchId: targets[0]?.id ?? '',
+          });
+          const visibleSections = filtered.sections.map((section) =>
+            getVisibleSectionForCopy(section, { allSections: sections })
+          );
+          const copy = visibleSections.map(serializeSectionForCopy).join('\n');
+          const textExport = serializeSectionsForExport(visibleSections);
+          const jsonExport = serializeSectionsForJsonExport(visibleSections);
+          const renderedRoots = [document.querySelector('#sections'), document.querySelector('#section-nav')];
+          const renderedSurface = renderedRoots.flatMap((root) => [
+            root.textContent,
+            ...[...root.querySelectorAll('*')].flatMap((element) => [...element.attributes].map((attribute) => attribute.value)),
+          ]).join(' ');
+
+          return {
+            state,
+            active: filtered.active,
+            sectionCount: filtered.sections.length,
+            rowCount: filtered.sections.flatMap((section) => section.table ?? []).length,
+            matchCount: filtered.totalMatches,
+            navigationCount: filtered.navigationTargets.length,
+            targetCount: targets.length,
+            renderedNavigationCount: document.querySelectorAll('#section-nav a').length,
+            renderedMarkCount: document.querySelectorAll('#sections mark.exact-match').length,
+            copyEligible: Boolean(copy),
+            textExportEligible: Boolean(textExport),
+            jsonSectionCount: JSON.parse(jsonExport).sections.length,
+            hiddenValueExposed: `${renderedSurface}\n${copy}\n${textExport}\n${jsonExport}`.includes(hiddenValue),
+          };
+        });
+
+        return { transitions };
+      }
+
+      async function applicationWorkflow(coreText) {
+        await import('../src/main.js');
+        const visibleQuery = 'demo.';
+        const pasteInput = document.querySelector('#paste-input');
+        const searchInput = document.querySelector('#result-search');
+        const setSearch = async (query) => {
+          searchInput.value = query;
+          searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 220));
+          await nextFrame();
+        };
+        const state = () => ({
+          searchValue: searchInput.value,
+          resultStatus: document.querySelector('#status').textContent,
+          searchStatus: document.querySelector('#search-count').textContent,
+          exactStatus: document.querySelector('#exact-match-status').textContent,
+          exactPosition: document.querySelector('#exact-match-position').textContent,
+          exactPreviousDisabled: document.querySelector('#exact-match-previous').disabled,
+          exactNextDisabled: document.querySelector('#exact-match-next').disabled,
+          sectionCount: document.querySelectorAll('#sections > article').length,
+          sectionNavigationCount: document.querySelectorAll('#section-nav a').length,
+          searchNavigationHidden: document.querySelector('#search-navigation').hidden,
+          exactNavigationHidden: document.querySelector('#exact-match-navigation').hidden,
+          renderedMarkCount: document.querySelectorAll('#sections mark.exact-match').length,
+          textExportDisabled: document.querySelector('#download-visible-export').disabled,
+          jsonExportDisabled: document.querySelector('#download-visible-json').disabled,
+        });
+
+        pasteInput.value = coreText;
+        document.querySelector('#parse-paste').click();
+        await nextFrame();
+        await setSearch(visibleQuery);
+        const visibleSearch = state();
+        const exactNext = document.querySelector('#exact-match-next');
+        exactNext.focus();
+        exactNext.click();
+        await nextFrame();
+        const nextFocusRetained = document.activeElement === exactNext;
+
+        const clearSearch = document.querySelector('#clear-search');
+        clearSearch.focus();
+        clearSearch.click();
+        await nextFrame();
+        const clearedSearch = state();
+        const clearFocusReturned = document.activeElement === searchInput;
+
+        await setSearch(visibleQuery);
+        document.querySelector('#privacy-toggle').click();
+        await nextFrame();
+        const rawLocalView = state();
+        document.querySelector('#privacy-toggle').click();
+        await nextFrame();
+        const sanitizedReturn = state();
+
+        document.querySelector('#parse-paste').click();
+        await nextFrame();
+        const reportTransition = state();
+
+        document.querySelector('#add-to-comparison').click();
+        await nextFrame();
+        const localAlias = ['local', 'workflow', 'alias'].join('-');
+        const localLabelInput = document.querySelector('#comparison-local-label-1');
+        localLabelInput.value = localAlias;
+        localLabelInput.dispatchEvent(new Event('input', { bubbles: true }));
+        document.querySelector('#add-to-comparison').click();
+        await nextFrame();
+        document.querySelector('#compare-reports').click();
+        await nextFrame();
+        await setSearch(localAlias);
+        const comparisonAliasSearch = state();
+        const aliasInResults = document.querySelector('#sections').textContent.includes(localAlias);
+        await setSearch('Report 1');
+        const comparisonVisibleSearch = state();
+        document.querySelector('#clear-comparison').click();
+        await nextFrame();
+        const comparisonCleared = state();
+
+        document.querySelector('#clear-report').click();
+        await nextFrame();
+        const reportCleared = state();
+
+        return {
+          visibleSearch,
+          nextFocusRetained,
+          clearedSearch,
+          clearFocusReturned,
+          rawLocalView,
+          sanitizedReturn,
+          reportTransition,
+          comparisonAliasSearch,
+          aliasInResults,
+          comparisonVisibleSearch,
+          comparisonCleared,
+          reportCleared,
+        };
+      }
+
       async function run() {
         await loadAppMarkup();
         await nextFrame();
         const coreText = createLargeCoreAnalyticsFixture();
         const stackshotText = createLargeStackshotFixture();
+        const workflowText = await fetch('../examples/coreanalytics.ips.ca.synced').then((response) => response.text());
+        const appWorkflow = await applicationWorkflow(workflowText);
         const core = await benchmarkReport(coreText, 'SyntheticMetricGroup-000', 'coreanalytics');
         const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
         const repeated = await repeatedWorkflow(coreText, 'SyntheticMetricGroup-000');
         const exactMatchRendering = await exactMatchRenderingWorkflow();
+        const visibleSearchContract = visibleSearchContractWorkflow();
         let serviceWorkerReady = false;
         if ('serviceWorker' in navigator) {
           try {
@@ -343,7 +506,9 @@
           core,
           stackshot,
           repeatedWorkflow: repeated,
+          applicationWorkflow: appWorkflow,
           exactMatchRendering,
+          visibleSearchContract,
           accessibility: accessibilityReport(),
           containment: containmentReport(),
           pwa: {

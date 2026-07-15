@@ -297,6 +297,8 @@ assert.doesNotMatch(exactMatchSource, /(?:document|window|innerText|textContent|
 assert.match(browserHarnessSource, /createExactMatchTargets/, 'browser harness derives exact-match targets from the frozen metadata contract');
 assert.match(browserHarnessSource, /matchRegions,\s*activeExactMatchId/, 'browser harness renders exact-match metadata through the production renderer path');
 assert.match(browserHarnessSource, /exactMatchRenderingWorkflow/, 'browser harness includes a focused exact-match rendering workflow');
+assert.match(browserHarnessSource, /visibleSearchContractWorkflow/, 'browser harness covers hidden-only and visible-cell rendering transitions');
+assert.match(browserHarnessSource, /applicationWorkflow/, 'browser harness covers live search, report, comparison, Raw Local View, and Clear Report transitions');
 assert.match(browserHarnessSource, /Promise\.race\(\[/, 'browser harness bounds frame settlement when headless animation frames are unavailable');
 assert.match(browserHarnessSource, /targetIdsUnique: new Set\(targetIds\)\.size === targetIds\.length/, 'browser harness checks deterministic unique target identities');
 assert.match(browserHarnessSource, /hostileImageCount: document\.querySelectorAll\('#sections img'\)\.length/, 'browser harness checks hostile report text does not create image elements');
@@ -669,6 +671,62 @@ assert.deepEqual(
   'visible table-cell metadata keeps its row and column identity without hidden properties'
 );
 assert.equal(createExactMatchTargets(visibleCellSearch.matchRegions).length, 1, 'visible table-cell values keep exact-match targets');
+const hiddenOnlyWorkflowSections = hiddenOnlyTableSearch.sections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: matchMetadataSections })
+);
+const hiddenOnlyWorkflowOutput = [
+  hiddenOnlyWorkflowSections.map(serializeSectionForCopy).join('\n'),
+  serializeSectionsForExport(hiddenOnlyWorkflowSections),
+  serializeSectionsForJsonExport(hiddenOnlyWorkflowSections),
+].join('\n');
+assert.equal(hiddenOnlyWorkflowSections.length, 0, 'non-column row values leave copy and export ineligible');
+assert.equal(JSON.parse(serializeSectionsForJsonExport(hiddenOnlyWorkflowSections)).sections.length, 0, 'non-column row values produce no JSON export sections');
+assert.doesNotMatch(hiddenOnlyWorkflowOutput, /Private alpha/, 'non-column row values never enter copy or export output');
+
+const visibleCellWorkflowSections = visibleCellSearch.sections.map((section) =>
+  getVisibleSectionForCopy(section, { allSections: matchMetadataSections })
+);
+const visibleCellWorkflowOutput = [
+  visibleCellWorkflowSections.map(serializeSectionForCopy).join('\n'),
+  serializeSectionsForExport(visibleCellWorkflowSections),
+  serializeSectionsForJsonExport(visibleCellWorkflowSections),
+].join('\n');
+assert.match(visibleCellWorkflowOutput, /Cell alpha alpha/, 'visible table-cell values remain eligible for copy and export');
+assert.doesNotMatch(visibleCellWorkflowOutput, /Private alpha/, 'visible table-cell copy and export exclude unrelated row properties');
+assert.doesNotMatch(visibleCellWorkflowOutput, /matchRegions|navigationTargets|occurrences/, 'search metadata never enters copy or export output');
+
+const queryTransitionResults = [
+  ['empty', ''],
+  ['visible-cell', 'cell alpha alpha'],
+  ['hidden-only', 'private alpha'],
+  ['no-result', 'not present'],
+  ['repeated-occurrence', 'alpha'],
+  ['cleared', ''],
+].map(([state, query]) => {
+  const result = filterSectionsByQuery(matchMetadataSections, query);
+  return {
+    state,
+    active: result.active,
+    sectionCount: result.sections.length,
+    rowCount: result.sections.flatMap((section) => section.table ?? []).length,
+    matchCount: result.totalMatches,
+    navigationCount: result.navigationTargets.length,
+    regionCount: result.matchRegions.length,
+    targetCount: createExactMatchTargets(result.matchRegions).length,
+  };
+});
+assert.deepEqual(
+  queryTransitionResults,
+  [
+    { state: 'empty', active: false, sectionCount: 2, rowCount: 2, matchCount: 0, navigationCount: 0, regionCount: 0, targetCount: 0 },
+    { state: 'visible-cell', active: true, sectionCount: 1, rowCount: 1, matchCount: 1, navigationCount: 1, regionCount: 1, targetCount: 1 },
+    { state: 'hidden-only', active: true, sectionCount: 0, rowCount: 0, matchCount: 0, navigationCount: 0, regionCount: 0, targetCount: 0 },
+    { state: 'no-result', active: true, sectionCount: 0, rowCount: 0, matchCount: 0, navigationCount: 0, regionCount: 0, targetCount: 0 },
+    { state: 'repeated-occurrence', active: true, sectionCount: 1, rowCount: 1, matchCount: 8, navigationCount: 1, regionCount: 10, targetCount: 13 },
+    { state: 'cleared', active: false, sectionCount: 2, rowCount: 2, matchCount: 0, navigationCount: 0, regionCount: 0, targetCount: 0 },
+  ],
+  'query transitions replace counts, metadata, navigation targets, and exact-match targets without stale state'
+);
 assert.deepEqual(headerOnlyTableSearch.sections, [], 'header-only queries preserve existing section filtering');
 assert.equal(headerOnlyTableSearch.totalMatches, 0, 'header-only queries preserve existing match-count semantics');
 assert.deepEqual(headerOnlyTableSearch.matchRegions, [], 'discarded header-only sections expose no match metadata');
@@ -4053,6 +4111,10 @@ assert.equal(
   'Next has one event listener'
 );
 assert.match(mainScriptText, /statusMessageForSearch\(searchMetadata\)/, 'search status text is derived from metadata');
+assert.match(mainScriptText, /searchCount\.textContent = searchStatusText\(searchMetadata\)/, 'visible and live search status use the same result-count wording');
+assert.match(mainScriptText, /if \(searchMetadata\.matchCount === 0\) return 'No matches in parsed output\.'/, 'zero-result searches cannot announce a positive result count');
+const exactNavigationHandlerSource = mainScriptText.match(/function navigateExactMatch\(direction\) \{[^]*?\n\}/)?.[0] ?? '';
+assert.match(exactNavigationHandlerSource, /nextIndex < 0 \|\| nextIndex > exactMatchTargets\.length - 1/, 'exact-match navigation remains non-wrapping at both boundaries');
 assert.match(mainScriptText, /Search and copy operate on rendered capped rows only\./, 'CoreAnalytics capped search wording is available in status text');
 assert.match(mainScriptText, /Some source records are not rendered\./, 'large rendered-row search wording is available in status text');
 assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
