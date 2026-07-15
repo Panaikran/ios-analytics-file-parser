@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.9.0` released and fully closed on 2026-07-15. No next milestone scope is approved.
+Status: `v1.9.0` released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` is planned; implementation has not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -31,6 +31,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | Visible Search Contract Integrity | Released | `v1.9.0` | Released 2026-07-15: declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
+| Apple-Inspired Inspector Workspace | Planned | `v2.0.0` | Approved interface architecture, design system, responsive/accessibility strategy, prototype gates, and implementation slices; no slice active |
 
 ## Project Constraints
 
@@ -796,6 +797,50 @@ reproducible shared-contract defect, corrected in the shared filter path.
 - [x] Manual release review approved.
 - [x] The annotated `v1.9.0` tag and published, non-draft, non-prerelease GitHub Release point to the release commit.
 
+## Planned Roadmap: v2.0.0
+
+Status: Planned. Implementation has not started and no slice is active.
+
+Theme: Apple-Inspired Inspector Workspace.
+
+Objective: reorganize the existing application into a deliberate, restrained,
+accessible inspection workspace. The plan changes information architecture,
+navigation, visual/component systems, responsive strategy, interaction
+hierarchy, accessibility architecture, and design tokens while preserving all
+released data and behavior contracts.
+
+The selected architecture is Approach B — Inspector workspace: a calm import
+state that becomes a two-region desktop workspace with persistent control
+chrome, a section rail, and an opaque report canvas. Tablet and mobile keep
+search and mode visible, use an accessible section-navigation sheet, and move
+only secondary report actions to a labeled menu.
+
+Liquid Glass is limited to a restrained regular-material approximation on
+navigation, toolbar, menu, and transient control layers. Report sections,
+tables, charts, comparison content, Raw Local View, and status/error content
+remain opaque. Clear glass and glass-on-glass are prohibited. Solid,
+high-contrast, reduced-transparency, reduced-motion, and unsupported-
+`backdrop-filter` fallbacks are release requirements.
+
+The normative design and traceability audit are in
+`docs/design/V2_INTERFACE_DESIGN.md`. Slice objectives, boundaries, tests,
+rollback points, risks, and release gates are in `PHASE_20_PLAN.md`.
+
+Planned slices:
+
+1. 20A — isolated prototype and design approval.
+2. 20B — tokens, themes, and workspace shell.
+3. 20C — import state and workspace navigation.
+4. 20D — report content system.
+5. 20E — search, exact match, and report actions.
+6. 20F — comparison and Raw Local View.
+7. 20G — responsive and accessibility hardening.
+8. 20H — browser, performance, PWA, and release documentation.
+
+No parser, `SectionModel[]`, sanitizer, comparison model, search semantic,
+copy/export contract, schema, dependency, backend, persistence, service-worker
+strategy, tag, or GitHub Release change is authorized by this planning entry.
+
 ## Future Hardening And Exploratory Work
 
 These items remain outside the completed v1.9 scope unless explicitly approved later.
@@ -834,8 +879,10 @@ These ideas are intentionally out of scope for the completed v1.9 milestone unle
 
 ## Next Planning Step
 
-v1.9.0 is released and fully closed. Define any next milestone in a separate
-approved planning pass. No future milestone scope is approved or defined here.
+v1.9.0 is released and fully closed. v2.0.0 interface redesign planning is
+approved in `docs/design/V2_INTERFACE_DESIGN.md` and `PHASE_20_PLAN.md`.
+Implementation remains inactive until the prototype and approval gates in
+those documents are satisfied.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

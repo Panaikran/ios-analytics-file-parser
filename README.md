@@ -27,7 +27,8 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | --- | --- |
 | Latest released version | `v1.9.0` (2026-07-15) |
 | Active phase | `v1.9.0 — Visible Search Contract Integrity` released and fully closed |
-| Current focus | Post-release reconciliation complete; no next milestone scope is approved |
+| Current focus | `v2.0.0 — Apple-Inspired Inspector Workspace` planned; implementation not started |
+| Next milestone | `v2.0.0` design and milestone plan approved; no implementation slice is active |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -54,6 +55,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.7.0 | Released 2026-07-14: Comparison Workflow Clarity |
 | v1.8.0 | Released 2026-07-14: Precision Search & Deep Inspection |
 | v1.9.0 | Released 2026-07-15: Visible Search Contract Integrity |
+| v2.0.0 | Planned: Apple-Inspired Inspector Workspace; implementation not started |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -789,7 +791,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.9.0 — Visible Search Contract Integrity` is released and fully closed on 2026-07-15. No next milestone scope is approved. MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v1.9.0 — Visible Search Contract Integrity` is released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` is planned, with no implementation slice active. The approved direction is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md) and [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md). MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

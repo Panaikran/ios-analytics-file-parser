@@ -571,3 +571,57 @@ large-report budgets. Safari, Firefox, Mobile Safari, physical devices, native
 screen readers, heap snapshots, Playwright through WSL, and runtime offline
 reload remain unavailable environmental lanes and are not claimed.
 
+## Planned Milestone: v2.0.0
+
+Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
+
+Status: `Planned`
+
+Implementation status: `Not started; no slice is active or complete`
+
+### Scope Decision
+
+The milestone is justified as a major version because it changes information
+architecture, navigation, visual/component systems, responsive strategy,
+interaction hierarchy, accessibility architecture, and design-token
+architecture. A visual-only refresh would remain a v1.x proposal and is not the
+approved scope.
+
+The selected direction is Approach B — Inspector workspace with a progressive
+initial state, a two-region desktop inspection layout, intentional mobile
+navigation/action prioritization, opaque report content, and restrained regular
+material on eligible control chrome only.
+
+### Source of Truth
+
+- `docs/design/V2_INTERFACE_DESIGN.md` defines the normalized design system,
+  attached-design audit, Liquid Glass research, information architecture,
+  workflows, responsive behavior, motion, accessibility, prototype gates, and
+  design freeze.
+- `PHASE_20_PLAN.md` defines the milestone boundaries, slices, success criteria,
+  testing, risks, migration, rollback, and release gates.
+
+### Frozen Boundaries
+
+All v1.9 parser, classification, `SectionModel[]`, sanitization, Raw Local View,
+comparison, visible-only search, exact-match, copy, text/JSON export, schema,
+capped-content, local-alias, service-worker/PWA, keyboard, responsive, and
+performance behavior remains frozen. No dependency, tag, GitHub Release, or
+implementation status change is part of this planning commit.
+
+### Planned Slices
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| 20A | Planned | Isolated sanitized prototype and design approval |
+| 20B | Planned | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
+| 20C | Planned | Compact import state, desktop section rail, and accessible section sheet |
+| 20D | Planned | Continuous opaque report content, tables, charts, and CoreAnalytics presentation |
+| 20E | Planned | Search, section/exact navigation, copy/export, and contextual report actions |
+| 20F | Planned | Comparison and Raw Local View workspace treatment |
+| 20G | Planned | Responsive and accessibility hardening across all required preference modes |
+| 20H | Planned | Browser, performance, PWA update-path, documentation, and release-readiness validation |
+
+Implementation may begin only after the separate prototype records approval of
+structure, visual system, interaction/accessibility behavior, and performance.
+
