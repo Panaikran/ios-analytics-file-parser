@@ -537,12 +537,14 @@ const navigationContractSections = [
     title: 'First visible section',
     fields: [{ label: 'Category', value: 'shared-visible-value' }],
     raw: 'explanation-only match',
+    tableColumns: [{ key: 'value', label: 'Value' }],
     table: [{ value: 'shared-visible-value' }, { value: 'other-visible-value' }],
   },
   {
     id: 'navigation-second',
     title: 'Second visible section',
     fields: [{ label: 'Other field', value: 'second-only-value' }],
+    tableColumns: [{ key: 'value', label: 'Value' }],
     table: [{ value: 'shared-visible-value' }],
   },
 ];
@@ -617,12 +619,15 @@ const matchMetadataSections = [
 ];
 const matchMetadataInputSnapshot = JSON.stringify(matchMetadataSections);
 const matchMetadataSearch = filterSectionsByQuery(matchMetadataSections, ' alpha ');
+const hiddenOnlyTableSearch = filterSectionsByQuery(matchMetadataSections, 'private alpha');
+const visibleCellSearch = filterSectionsByQuery(matchMetadataSections, 'cell alpha alpha');
+const headerOnlyTableSearch = filterSectionsByQuery(matchMetadataSections, 'alpha status');
 assert.deepEqual(
   SEARCH_MATCH_KINDS,
   ['section-title', 'field-label', 'field-value', 'table-header', 'table-cell', 'chart-label', 'chart-value', 'text'],
   'search metadata exposes only the explicit supported match kinds'
 );
-assert.equal(matchMetadataSearch.totalMatches, 9, 'match metadata counts all matching visible fields, rows, labels, charts, and text');
+assert.equal(matchMetadataSearch.totalMatches, 8, 'match metadata counts all matching visible fields, rows, labels, charts, and text');
 assert.deepEqual(
   matchMetadataSearch.sections.map((section) => section.id),
   ['match-first'],
@@ -648,6 +653,26 @@ assert.doesNotMatch(JSON.stringify(matchMetadataSearch.matchRegions), /Private a
 assert.equal(matchMetadataSearch.sections[0].table.length, 1, 'match metadata preserves the existing matching-row filter');
 assert.equal(matchMetadataSearch.sections[0].table[0].hidden, 'Private alpha', 'match metadata does not rewrite filtered row content');
 assert.equal(JSON.stringify(matchMetadataSections), matchMetadataInputSnapshot, 'match metadata does not mutate input sections');
+assert.deepEqual(hiddenOnlyTableSearch.sections, [], 'non-column row values do not retain a section');
+assert.equal(hiddenOnlyTableSearch.sections.flatMap((section) => section.table ?? []).length, 0, 'non-column row values do not return filtered rows');
+assert.equal(hiddenOnlyTableSearch.totalMatches, 0, 'non-column row values do not increment the search match count');
+assert.deepEqual(hiddenOnlyTableSearch.navigationTargets, [], 'non-column row values do not create section-navigation results');
+assert.deepEqual(hiddenOnlyTableSearch.matchRegions, [], 'non-column row values do not create visible match metadata');
+assert.deepEqual(createExactMatchTargets(hiddenOnlyTableSearch.matchRegions), [], 'non-column row values do not create exact-match targets');
+assert.deepEqual(visibleCellSearch.sections.map((section) => section.id), ['match-first'], 'visible table-cell values retain their section');
+assert.equal(visibleCellSearch.sections[0].table.length, 1, 'visible table-cell values retain their matching row');
+assert.equal(visibleCellSearch.sections[0].table[0].hidden, 'Private alpha', 'visible table-cell filtering preserves unrelated row properties');
+assert.equal(visibleCellSearch.totalMatches, 1, 'visible table-cell values preserve existing match-count semantics');
+assert.deepEqual(
+  visibleCellSearch.matchRegions,
+  [{ sectionIndex: 0, sectionId: 'match-first', kind: 'table-cell', rowIndex: 0, columnIndex: 1, columnKey: 'message', occurrences: [{ start: 0, end: 16 }] }],
+  'visible table-cell metadata keeps its row and column identity without hidden properties'
+);
+assert.equal(createExactMatchTargets(visibleCellSearch.matchRegions).length, 1, 'visible table-cell values keep exact-match targets');
+assert.deepEqual(headerOnlyTableSearch.sections, [], 'header-only queries preserve existing section filtering');
+assert.equal(headerOnlyTableSearch.totalMatches, 0, 'header-only queries preserve existing match-count semantics');
+assert.deepEqual(headerOnlyTableSearch.matchRegions, [], 'discarded header-only sections expose no match metadata');
+assert.deepEqual(createExactMatchTargets(headerOnlyTableSearch.matchRegions), [], 'discarded header-only sections expose no exact-match targets');
 assert.deepEqual(
   matchMetadataSearch.matchRegions,
   filterSectionsByQuery(matchMetadataSections, 'alpha').matchRegions,

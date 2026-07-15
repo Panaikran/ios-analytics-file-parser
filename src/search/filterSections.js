@@ -68,10 +68,11 @@ function filterSection(section, query, sectionIndex, includeMatchRegions) {
   const nextSection = { ...section, forceExpanded: true };
 
   if (Array.isArray(section.table)) {
+    const tableColumns = getVisibleTableColumns(section);
     const matchingRows = [];
 
     for (const row of section.table) {
-      const rowMatches = countRowMatches(row, query);
+      const rowMatches = countRowMatches(row, tableColumns, query);
       if (rowMatches > 0) {
         matchingRows.push(row);
         matchCount += rowMatches;
@@ -191,8 +192,9 @@ function countFieldMatches(fields, query) {
   }, 0);
 }
 
-function countRowMatches(row, query) {
-  return Object.values(row).reduce((total, value) => total + (includesQuery(value, query) ? 1 : 0), 0);
+function countRowMatches(row, tableColumns, query) {
+  return tableColumns.reduce((total, column) => total
+    + (isVisibleColumn(column) && includesQuery(row[column.key], query) ? 1 : 0), 0);
 }
 
 function countChartMatches(chart, query) {
