@@ -30,7 +30,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Search Result Navigation | Released | `v1.6.0` | Additive section-level targets and accessible non-wrapping Previous/Next navigation through the existing search path |
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
-| Next Milestone | Planning | `v1.9.0` | Scope to be determined after v1.8.0 post-release reconciliation |
+| Visible Search Contract Integrity | Planned | `v1.9.0` | Align table-row filtering with visible sanitized exact-match metadata, then verify privacy, accessibility, export, and workflow parity |
 
 ## Project Constraints
 
@@ -730,10 +730,71 @@ allowlist and cache version in the same slice. This remains a release-
 consistency guard and does not authorize runtime report caching, dynamic cache
 discovery, persistent report storage, or service-worker redesign.
 
-## Next Planning Milestone: v1.9.0
+## Planned Roadmap: v1.9.0
 
-Status: planning-only. Scope to be determined after v1.8.0 post-release
-reconciliation. No v1.9.0 implementation scope is approved.
+Status: Planned. No implementation slice is active or complete.
+
+Theme: Visible Search Contract Integrity.
+
+Objective: ensure a table row is retained by search only when its visible,
+sanitized table columns match the query, so filtering, exact-match metadata,
+navigation, rendering, copy, and export describe the same user-visible data.
+
+### Planning Evidence
+
+`filterSectionsByQuery()` currently counts table-row matches across
+`Object.values(row)`, while exact-match metadata traverses only declared visible
+`tableColumns`. A contract-valid row containing a non-column property can
+therefore retain its section and row without producing a visible exact match.
+The behavior is reproducible with the current shared search function. The
+checked fixture and production-example corpus has no surplus row keys, so this
+is not a confirmed user-visible defect in a shipped parser family; it is a
+reproducible shared-contract defect and a privacy-sensitive architectural risk
+for future table rows.
+
+### Boundaries
+
+- Preserve case-insensitive substring search and all released v1.8.0 exact-match behavior.
+- Search only visible sanitized section data; do not inspect raw, hidden,
+  capped-out, parser-private, local-label, filename, or path values.
+- Preserve `SectionModel[]`, parser families, comparison limits, Raw Local View,
+  copy/export schemas, service-worker strategy, and local-only processing.
+- Keep native controls, keyboard behavior, focus visibility, live status, and
+  responsive behavior intact.
+
+### Non-Goals
+
+- No new parser family, parser refactor, schema redesign, raw-source search,
+  DOM search, second filtering pipeline, regex/fuzzy/semantic search, table
+  virtualization, worker-based parsing, browser-engine expansion, MetricKit,
+  export format, backend, upload, analytics, persistence, tag, or release.
+
+### Planned Slices
+
+| Slice | Status | Scope | Dependencies |
+| --- | --- | --- | --- |
+| Slice 19A | Planned | Add a regression contract for non-column table properties and make shared row filtering use the same visible-column projection as exact-match metadata. | Existing `filterSectionsByQuery()` and v1.8.0 match-region contract |
+| Slice 19B | Planned | Harden visible-search parity across rendered tables, exact-match navigation, section navigation, copy/export eligibility, comparison, Raw Local View, and accessibility states; production changes only for reproduced defects. | Completed 19A contract |
+| Slice 19C | Planned | Complete documentation reconciliation, deterministic validation, available browser QA, and release-readiness evidence. | Completed 19A and 19B evidence |
+
+### Success Criteria
+
+1. A non-column table property cannot retain a filtered row, section, navigation target, or exact-match state.
+2. Visible matching table columns retain current case-insensitive substring behavior.
+3. Filtering and exact-match metadata use one equivalent visible-column contract.
+4. Hidden, raw, capped-out, parser-private, comparison-label, filename, and path data remain excluded.
+5. Section navigation, exact-match navigation, rendering, copy, text export, JSON export, comparison, and Raw Local View contracts remain unchanged except for removing invisible-row matches.
+6. Keyboard operation, disabled boundary states, live status, focus visibility, reduced motion, and responsive containment remain accessible.
+7. All automated tests, relevant syntax checks, established large-report budgets, available browser QA, privacy checks, and diff hygiene pass.
+
+### Release-Readiness Requirements
+
+- Review the implementation diff for a single shared search-path correction and no parser or schema expansion.
+- Run `npm.cmd test`, relevant `node --check` commands, `node tests\\largeReportPerformance.bench.js`, and `git diff --check`.
+- Exercise visible and non-visible table-property probes plus representative supported examples, comparison, Raw Local View, copy, text/JSON export, Clear Report, and repeated search workflows.
+- Perform available browser QA at the established responsive widths; report unavailable Safari, Mobile Safari, screen-reader, or offline-reload lanes honestly.
+- Confirm no report content is persisted, transmitted, added to service-worker caches, or introduced into exports.
+- Reconcile README, ROADMAP, CHANGELOG, and `PHASE_19_SUMMARY.md` only after implemented behavior and validation evidence exist. Do not tag, publish, or claim release without explicit approval.
 
 ## Future Hardening And Exploratory Work
 

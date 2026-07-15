@@ -431,10 +431,106 @@ unsupported release claim; stop if final validation finds a production blocker.
 
 Dependencies: completed validation evidence and the approved release record.
 
-## Next Planning Milestone: v1.9.0
+## Approved Milestone Plan: v1.9.0
 
-Status: planning-only. Scope to be determined after v1.8.0 post-release
-reconciliation. No v1.9.0 implementation scope is approved.
+Release title: `v1.9.0 — Visible Search Contract Integrity`
+
+Status: `Planned`
+
+### Objective
+
+Align table-row filtering with the visible sanitized table-column contract
+already used by exact-match metadata. A search result must never be retained
+solely by a row value that the renderer cannot display or highlight.
+
+### Evidence And Scope Decision
+
+The shared filter currently checks every `Object.values(row)`, while exact-match
+metadata checks declared visible `tableColumns`. A direct shared-function probe
+reproduces a retained row and section with zero visible exact-match regions when
+a row has a non-column property. The checked fixture and production-example
+corpus has no such surplus row keys, so this is not confirmed as a released
+parser-family regression. It is nevertheless a reproducible contract defect at
+a privacy boundary; the smallest coherent milestone is to align the two search
+projections and prove the established workflow remains intact.
+
+### Boundaries
+
+- Preserve existing case-insensitive substring semantics for visible sanitized values.
+- Reuse the existing search path; do not add a second filter, DOM scanning, or
+  independent search state.
+- Do not change parser output, `SectionModel[]`, supported parser families,
+  comparison identity or limits, Raw Local View restrictions, copy/text/JSON
+  export schemas, PWA strategy, or local-only privacy model.
+- Keep hidden, raw, capped-out, parser-private, local-label, filename, and path
+  values outside search and exact-match metadata.
+
+### Non-Goals
+
+No new parser support, MetricKit, broader browser-support project, performance
+optimization, virtualization, new export format, raw search, regex/fuzzy/
+semantic search, UI redesign, dependency, backend, upload, analytics,
+persistence, release tag, or publication.
+
+### Slices
+
+#### Slice 19A — Visible Row Search Contract
+
+Objective: add a focused regression contract for a non-column row property and
+make shared filtering count only the visible table-column values used by
+exact-match metadata.
+
+Likely areas: `src/search/filterSections.js` and `tests/parser.test.js`.
+
+Acceptance criteria: a hidden row value cannot retain a row, section, or
+navigation target; visible-column matches keep current behavior; exact-match
+metadata stays visible-sanitized-only; focused tests pass.
+
+Stop rules: stop if parser changes, `SectionModel[]` changes, DOM scanning, raw
+data access, a second filtering path, or a search feature expansion is needed.
+
+#### Slice 19B — Search Workflow Regression Hardening
+
+Objective: verify the corrected contract through existing rendering and user
+workflows, fixing production code only for a reproduced defect.
+
+Likely areas: `tests/parser.test.js`, existing browser harness, and production
+files only when evidence requires a narrow fix.
+
+Acceptance criteria: table filtering, exact-match and section navigation,
+comparison, Raw Local View, copy, text/JSON export, privacy, keyboard/focus,
+live status, responsive containment, repeated search, and large-report budgets
+remain correct.
+
+Stop rules: no browser-engine expansion, accessibility redesign, parser work,
+or performance rewrite. Unavailable environments are recorded as limitations.
+
+Dependencies: frozen 19A filtering contract and existing v1.8.0 fixtures,
+examples, browser harness, and performance budgets.
+
+#### Slice 19C — Documentation And Release Readiness
+
+Objective: record verified behavior and complete final validation without
+expanding production scope.
+
+Likely areas: `README.md`, `ROADMAP.md`, `CHANGELOG.md`, and
+`PHASE_19_SUMMARY.md` after implementation and QA.
+
+Acceptance criteria: only verified behavior and known limitations are
+documented; validation and privacy evidence are complete; release status is
+accurate; no unsupported claim, tag, or publication occurs without approval.
+
+Dependencies: completed 19A/19B evidence.
+
+### Required Validation Before Release Readiness
+
+Run `npm.cmd test`, relevant JavaScript syntax checks,
+`node tests\\largeReportPerformance.bench.js`, `git diff --check`, and available
+browser QA. Verify all 11 examples where relevant, comparison, Raw Local View,
+search navigation, exact-match navigation, copy, both exports, Clear Report,
+privacy mode, responsive widths, and offline shell if precached assets change.
+Confirm no persistence, network transmission, export leakage, or service-worker
+cache expansion was introduced.
 
 ### Risks and Testing Expectations
 
