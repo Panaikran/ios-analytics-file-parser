@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0d0d0f">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="iOS Parser">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,7 +20,7 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <main id="main-content" class="app-shell">
-      <section class="intro">
+      <header class="intro">
         <p class="privacy-badge">Parsed locally - not uploaded</p>
         <h1>iOS Analytics File Parser</h1>
         <p>
@@ -44,7 +46,7 @@
           </div>
         </details>
         <div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden></div>
-      </section>
+      </header>
 
       <section class="input-panel" id="input-panel" aria-labelledby="input-title">
         <h2 id="input-title">Load a report</h2>
@@ -68,68 +70,72 @@
         <button id="parse-paste" class="parse-paste" type="button">Parse pasted text</button>
       </section>
 
-      <section class="results">
-        <div id="status" class="status" role="status" aria-live="polite">No report loaded yet.</div>
-        <div id="privacy-panel" class="privacy-panel" hidden>
-          <p id="privacy-mode-label" class="privacy-mode-label">Privacy mode: Sanitized view</p>
-          <button id="privacy-toggle" class="privacy-toggle" type="button" aria-pressed="false" aria-describedby="privacy-mode-label">
-            Switch to raw local view
-          </button>
-          <p id="privacy-warning" class="privacy-warning" hidden>
-            Raw local view may show device or report identifiers. Nothing is uploaded.
-          </p>
-        </div>
-        <section id="comparison-panel" class="comparison-panel" aria-labelledby="comparison-title" hidden>
-          <div class="comparison-panel__header">
-            <div>
-              <h2 id="comparison-title">Compare reports</h2>
-              <p>Compare 2 or 3 reports of the same type. Comparison is sanitized only.</p>
-            </div>
-          </div>
-          <div id="comparison-list" class="comparison-list" role="list" aria-label="Reports selected for comparison"></div>
-          <div class="comparison-actions">
-            <button id="add-to-comparison" class="comparison-button" type="button" aria-describedby="comparison-status" disabled>Add to comparison</button>
-            <button id="compare-reports" class="comparison-button comparison-button--primary" type="button" aria-describedby="comparison-status" disabled>Compare</button>
-            <button id="clear-comparison" class="comparison-button" type="button" aria-describedby="comparison-status" disabled>Clear comparison</button>
-          </div>
-          <p id="comparison-status" class="comparison-status" role="status" aria-live="polite">No reports added.</p>
-        </section>
-        <div id="search-panel" class="search-panel" hidden>
-          <label class="search-field" for="result-search">
-            <span>Search parsed output</span>
-            <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text" aria-describedby="search-count">
-          </label>
-          <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
-          <div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>
-            <span id="search-navigation-label" class="search-navigation__label">Search result navigation</span>
-            <div class="search-navigation__controls">
-              <button id="search-previous" class="search-navigation__button" type="button" aria-label="Previous matching section" aria-disabled="true" disabled>Previous</button>
-              <span id="search-position" class="search-navigation__position">Search navigation inactive.</span>
-              <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
-            </div>
-          </div>
-          <div id="exact-match-navigation" class="search-navigation exact-match-navigation" role="group" aria-labelledby="exact-match-navigation-label" hidden>
-            <span id="exact-match-navigation-label" class="search-navigation__label">Exact-match navigation</span>
-            <div class="search-navigation__controls">
-              <button id="exact-match-previous" class="search-navigation__button" type="button" aria-label="Previous exact match" aria-disabled="true" disabled>Previous exact match</button>
-              <span id="exact-match-position" class="search-navigation__position">Exact-match navigation inactive.</span>
-              <button id="exact-match-next" class="search-navigation__button" type="button" aria-label="Next exact match" aria-disabled="true" disabled>Next exact match</button>
-            </div>
-            <p id="exact-match-status" class="search-count exact-match-status" role="status" aria-live="polite"></p>
-          </div>
-          <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
-        </div>
-        <div id="export-panel" class="export-panel" hidden>
-          <div class="export-actions">
-            <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized visible output</button>
-            <button id="download-visible-json" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized JSON</button>
-          </div>
-          <p id="export-status" class="export-status">Downloads only the currently visible sanitized output.</p>
-        </div>
+      <div class="workspace-shell">
         <nav id="section-nav" class="section-nav" aria-label="Parsed sections" hidden></nav>
-        <p id="empty-results" class="empty-results" hidden>No matches in parsed output.</p>
-        <div id="sections" class="sections"></div>
-      </section>
+        <section class="results workspace-content" aria-label="Report workspace">
+          <section class="workspace-controls" aria-label="Workspace controls and status">
+            <div id="status" class="status" role="status" aria-live="polite">No report loaded yet.</div>
+            <div id="privacy-panel" class="privacy-panel" hidden>
+              <p id="privacy-mode-label" class="privacy-mode-label">Privacy mode: Sanitized view</p>
+              <button id="privacy-toggle" class="privacy-toggle" type="button" aria-pressed="false" aria-describedby="privacy-mode-label">
+                Switch to raw local view
+              </button>
+              <p id="privacy-warning" class="privacy-warning" hidden>
+                Raw local view may show device or report identifiers. Nothing is uploaded.
+              </p>
+            </div>
+            <section id="comparison-panel" class="comparison-panel" aria-labelledby="comparison-title" hidden>
+              <div class="comparison-panel__header">
+                <div>
+                  <h2 id="comparison-title">Compare reports</h2>
+                  <p>Compare 2 or 3 reports of the same type. Comparison is sanitized only.</p>
+                </div>
+              </div>
+              <div id="comparison-list" class="comparison-list" role="list" aria-label="Reports selected for comparison"></div>
+              <div class="comparison-actions">
+                <button id="add-to-comparison" class="comparison-button" type="button" aria-describedby="comparison-status" disabled>Add to comparison</button>
+                <button id="compare-reports" class="comparison-button comparison-button--primary" type="button" aria-describedby="comparison-status" disabled>Compare</button>
+                <button id="clear-comparison" class="comparison-button" type="button" aria-describedby="comparison-status" disabled>Clear comparison</button>
+              </div>
+              <p id="comparison-status" class="comparison-status" role="status" aria-live="polite">No reports added.</p>
+            </section>
+            <div id="search-panel" class="search-panel" hidden>
+              <label class="search-field" for="result-search">
+                <span>Search parsed output</span>
+                <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text" aria-describedby="search-count">
+              </label>
+              <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
+              <div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>
+                <span id="search-navigation-label" class="search-navigation__label">Search result navigation</span>
+                <div class="search-navigation__controls">
+                  <button id="search-previous" class="search-navigation__button" type="button" aria-label="Previous matching section" aria-disabled="true" disabled>Previous</button>
+                  <span id="search-position" class="search-navigation__position">Search navigation inactive.</span>
+                  <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
+                </div>
+              </div>
+              <div id="exact-match-navigation" class="search-navigation exact-match-navigation" role="group" aria-labelledby="exact-match-navigation-label" hidden>
+                <span id="exact-match-navigation-label" class="search-navigation__label">Exact-match navigation</span>
+                <div class="search-navigation__controls">
+                  <button id="exact-match-previous" class="search-navigation__button" type="button" aria-label="Previous exact match" aria-disabled="true" disabled>Previous exact match</button>
+                  <span id="exact-match-position" class="search-navigation__position">Exact-match navigation inactive.</span>
+                  <button id="exact-match-next" class="search-navigation__button" type="button" aria-label="Next exact match" aria-disabled="true" disabled>Next exact match</button>
+                </div>
+                <p id="exact-match-status" class="search-count exact-match-status" role="status" aria-live="polite"></p>
+              </div>
+              <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
+            </div>
+            <div id="export-panel" class="export-panel" hidden>
+              <div class="export-actions">
+                <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized visible output</button>
+                <button id="download-visible-json" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized JSON</button>
+              </div>
+              <p id="export-status" class="export-status">Downloads only the currently visible sanitized output.</p>
+            </div>
+          </section>
+          <p id="empty-results" class="empty-results" hidden>No matches in parsed output.</p>
+          <div id="sections" class="sections"></div>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="./src/main.js"></script>

@@ -571,13 +571,13 @@ large-report budgets. Safari, Firefox, Mobile Safari, physical devices, native
 screen readers, heap snapshots, Playwright through WSL, and runtime offline
 reload remain unavailable environmental lanes and are not claimed.
 
-## Planned Milestone: v2.0.0
+## Active Milestone: v2.0.0
 
 Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
-Status: `Planned`
+Status: `In progress`
 
-Implementation status: `Slice 20A complete and frozen; Slice 20B next but not started; production implementation not started`
+Implementation status: `Slices 20A and 20B complete and frozen; Slice 20C next but not started`
 
 ### Scope Decision
 
@@ -606,16 +606,17 @@ material on eligible control chrome only.
 All v1.9 parser, classification, `SectionModel[]`, sanitization, Raw Local View,
 comparison, visible-only search, exact-match, copy, text/JSON export, schema,
 capped-content, local-alias, service-worker/PWA, keyboard, responsive, and
-performance behavior remains frozen. No dependency, tag, GitHub Release, or
-production implementation is part of this approval reconciliation.
+performance behavior remains frozen. Slice 20B changed only the approved
+presentation foundation and shell. No dependency, tag, or GitHub Release was
+added.
 
-### Planned Slices
+### Slices
 
 | Slice | Status | Scope |
 | --- | --- | --- |
 | 20A | Complete and frozen | Isolated sanitized prototype and visual design approval recorded for `b86a44cf2cbb0a3400a307ede92e7623c7417b48` |
-| 20B | Next — not started | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
-| 20C | Planned | Compact import state, desktop section rail, and accessible section sheet |
+| 20B | Complete and frozen | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
+| 20C | Next — not started | Compact import state, desktop section rail, and accessible section sheet |
 | 20D | Planned | Continuous opaque report content, tables, charts, and CoreAnalytics presentation |
 | 20E | Planned | Search, section/exact navigation, copy/export, and contextual report actions |
 | 20F | Planned | Comparison and Raw Local View workspace treatment |
@@ -625,6 +626,7 @@ production implementation is part of this approval reconciliation.
 The Slice 20A prototype at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48` received visual approval for its
 structure, visual system, interaction/accessibility behavior, and performance
-review. Slice 20A is complete and frozen. Slice 20B is next but not started;
-this approval reconciliation does not begin production implementation.
+review. Slice 20A is complete and frozen. Slice 20B is complete and frozen
+after full regression, accessibility, responsive, browser, performance, and
+PWA validation. Slice 20C is next but not started.
 

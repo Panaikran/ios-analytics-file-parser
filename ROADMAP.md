@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.9.0` released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` has completed and frozen Slice 20A; Slice 20B is next but not started, and production implementation has not started.
+Status: `v1.9.0` released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` has completed and frozen Slices 20A and 20B; Slice 20C is next but not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -31,7 +31,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | Visible Search Contract Integrity | Released | `v1.9.0` | Released 2026-07-15: declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
-| Apple-Inspired Inspector Workspace | Planned | `v2.0.0` | Slice 20A prototype approved and frozen at `b86a44cf2cbb0a3400a307ede92e7623c7417b48`; Slice 20B is next but not started |
+| Apple-Inspired Inspector Workspace | In progress | `v2.0.0` | Slices 20A and 20B are complete and frozen; Slice 20C is next but not started |
 
 ## Project Constraints
 
@@ -797,9 +797,9 @@ reproducible shared-contract defect, corrected in the shared filter path.
 - [x] Manual release review approved.
 - [x] The annotated `v1.9.0` tag and published, non-draft, non-prerelease GitHub Release point to the release commit.
 
-## Planned Roadmap: v2.0.0
+## Active Roadmap: v2.0.0
 
-Status: Planned. Slice 20A is complete and frozen. Slice 20B is next but not started, and production implementation has not started.
+Status: In progress. Slices 20A and 20B are complete and frozen. Slice 20C is next but not started.
 
 Theme: Apple-Inspired Inspector Workspace.
 
@@ -829,8 +829,8 @@ rollback points, risks, and release gates are in `PHASE_20_PLAN.md`.
 Slices:
 
 1. 20A — complete and frozen: isolated prototype and visual design approval recorded for `b86a44cf2cbb0a3400a307ede92e7623c7417b48`.
-2. 20B — next, not started: tokens, themes, and workspace shell.
-3. 20C — import state and workspace navigation.
+2. 20B — complete and frozen: semantic tokens, light/dark themes, restrained material fallbacks, responsive workspace shell, and preserved v1.9 behavior.
+3. 20C — next, not started: import state and workspace navigation.
 4. 20D — report content system.
 5. 20E — search, exact match, and report actions.
 6. 20F — comparison and Raw Local View.
@@ -882,8 +882,9 @@ These ideas are intentionally out of scope for the completed v1.9 milestone unle
 v1.9.0 is released and fully closed. v2.0.0 interface redesign planning is
 approved in `docs/design/V2_INTERFACE_DESIGN.md` and `PHASE_20_PLAN.md`. Slice
 20A is complete and frozen following visual approval of prototype commit
-`b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slice 20B is next but not
-started; production implementation remains inactive.
+`b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slice 20B is complete and frozen
+after production shell, accessibility, browser, performance, PWA, and regression
+validation. Slice 20C is next but not started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

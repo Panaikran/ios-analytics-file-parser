@@ -110,6 +110,7 @@ const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url)
 const appStateSource = await readFile(new URL('../src/appState.js', import.meta.url), 'utf8');
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
+const tokenStyleText = await readFile(new URL('../styles/tokens.css', import.meta.url), 'utf8');
 const manifest = JSON.parse(manifestText);
 const precacheBody = serviceWorkerText.match(/const PRECACHE_URLS = \[(?<body>[^]*?)\];/)?.groups?.body ?? '';
 const precacheUrls = [...precacheBody.matchAll(/'([^']+)'/g)].map((match) => match[1]);
@@ -119,6 +120,14 @@ assert.match(indexHtmlText, /<link rel="manifest" href=".\/manifest.webmanifest"
 assert.match(indexHtmlText, /<link rel="apple-touch-icon" href=".\/icons\/apple-touch-icon.png">/, 'page links the Apple touch icon with a GitHub Pages-safe relative path');
 assert.match(indexHtmlText, /<a class="skip-link" href="#main-content">Skip to main content<\/a>/, 'page includes a keyboard skip link to main content');
 assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main content exposes a stable skip-link target');
+assert.match(indexHtmlText, /<meta name="color-scheme" content="light dark">/, 'page advertises production light and dark color schemes');
+assert.match(indexHtmlText, /name="theme-color" content="#f5f5f7" media="\(prefers-color-scheme: light\)"/, 'light browser chrome follows the approved canvas token');
+assert.match(indexHtmlText, /name="theme-color" content="#000000" media="\(prefers-color-scheme: dark\)"/, 'dark browser chrome follows the approved canvas token');
+assert.match(indexHtmlText, /<header class="intro">[^]*<h1>iOS Analytics File Parser<\/h1>/, 'application identity keeps one logical h1 in a semantic header');
+assert.match(indexHtmlText, /<div class="workspace-shell">\s*<nav id="section-nav"[^]*<section class="results workspace-content" aria-label="Report workspace">/, 'workspace shell keeps navigation before report content in DOM order');
+assert.match(indexHtmlText, /<section class="workspace-controls" aria-label="Workspace controls and status">/, 'workspace controls and status expose a named region');
+assert.match(styleText, /^@import url\("\.\/tokens\.css"\);/, 'production stylesheet loads the dedicated token foundation first');
+assert.doesNotMatch(`${indexHtmlText}\n${styleText}\n${mainScriptText}`, /Prototype review controls|scenario-select|theme-select|ORCHID-LOCK-7391/, 'production shell excludes prototype-only review controls and synthetic helper data');
 assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file">/, 'file picker has an explicit accessible name without extension filters');
 assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
 assert.match(indexHtmlText, /Install for quick access\. Installation saves the app shell, not\s+your reports\./, 'install guidance clarifies reports are not saved');
@@ -143,6 +152,43 @@ assert.match(indexHtmlText, /id="clear-comparison"[^>]*aria-describedby="compari
 assert.match(indexHtmlText, /id="comparison-status"[^>]*role="status"[^>]*aria-live="polite"/, 'comparison workflow exposes calm status announcements');
 assert.match(indexHtmlText, /id="download-visible-export"[^>]*aria-describedby="export-status"[^>]*disabled/, 'visible export starts disabled with an accessible status description');
 assert.match(indexHtmlText, /id="export-status"/, 'visible export provides a concise scope description');
+for (const token of [
+  '--color-page',
+  '--color-control-surface',
+  '--color-content',
+  '--color-text-primary',
+  '--color-text-secondary',
+  '--color-text-inverse',
+  '--color-accent',
+  '--color-border-subtle',
+  '--color-focus-ring',
+  '--color-disabled-foreground',
+  '--color-code-surface',
+  '--font-ui',
+  '--font-technical',
+  '--size-touch-target-min',
+  '--size-navigation-width',
+  '--radius-medium',
+  '--elevation-control',
+  '--material-background',
+  '--motion-state',
+]) {
+  assert.match(tokenStyleText, new RegExp(`${token}:`), `token foundation defines ${token}`);
+}
+assert.match(tokenStyleText, /@media \(prefers-color-scheme: dark\)/, 'token foundation maps a complete dark theme from the system preference');
+assert.match(tokenStyleText, /--font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;/, 'token foundation uses the approved system font stack without an external font');
+assert.match(tokenStyleText, /--font-technical: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;/, 'technical values use a true monospace stack');
+assert.match(tokenStyleText, /--size-touch-target-min: 2\.75rem;/, 'touch target foundation remains at least 44 CSS pixels at the default root size');
+assert.doesNotMatch(tokenStyleText, /https?:|@font-face|fonts\.googleapis/, 'token foundation adds no external font or network resource');
+assert.match(styleText, /\.workspace-shell:has\(> \.section-nav:not\(\[hidden\]\)\)\s*\{[^]*grid-template-columns: var\(--size-navigation-width\) minmax\(0, 1fr\)/, 'desktop shell establishes the approved navigation and content regions');
+assert.match(styleText, /@media \(prefers-reduced-transparency: reduce\)/, 'shell includes a reduced-transparency fallback');
+assert.match(styleText, /@media \(prefers-contrast: more\)/, 'shell includes an increased-contrast fallback');
+assert.match(styleText, /@media \(forced-colors: active\)/, 'shell includes forced-colors behavior');
+assert.match(styleText, /@supports \(\s*\(backdrop-filter: blur\(1px\)\) or\s*\(-webkit-backdrop-filter: blur\(1px\)\)\s*\)/, 'restrained material enhancement is feature-detected');
+const materialEnhancement = styleText.slice(styleText.indexOf('@supports ('), styleText.indexOf('@media (min-width: 24.375rem)'));
+assert.match(materialEnhancement, /\.section-nav,\s*\.search-panel/, 'material enhancement is limited to navigation and search control chrome');
+assert.doesNotMatch(materialEnhancement, /\.section-card|\.frame-table|\.chart|\.comparison-panel|\.input-panel|\.status/, 'material enhancement excludes report, table, chart, comparison, form, and status content');
+assert.doesNotMatch(styleText, /linear-gradient|radial-gradient|conic-gradient/, 'production shell does not introduce decorative gradients');
 assert.deepEqual(
   {
     name: manifest.name,
@@ -159,8 +205,8 @@ assert.deepEqual(
     startUrl: './',
     scope: './',
     display: 'standalone',
-    backgroundColor: '#0d0d0f',
-    themeColor: '#0d0d0f',
+    backgroundColor: '#f5f5f7',
+    themeColor: '#f5f5f7',
   },
   'manifest keeps the expected install identity and GitHub Pages-safe launch scope'
 );
@@ -192,8 +238,9 @@ assert.doesNotMatch(serviceWorkerText, /cache\.add\(/, 'service worker does not 
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
-assert.match(serviceWorkerText, /index\.html, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists key precached asset groups');
-assert.match(serviceWorkerText, /v1\.8\.0-slice18b-exact-match-2026-07-14/, 'service worker cache version reflects the Slice 18B precached asset update');
+assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists both production stylesheets');
+assert.match(serviceWorkerText, /v2\.0\.0-slice20b-workspace-shell-2026-07-15/, 'service worker cache version reflects the Slice 20B production shell update');
+assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.match(serviceWorkerText, /\.\/src\/search\/exactMatch\.js/, 'service worker precaches the exact-match helper');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
@@ -323,7 +370,9 @@ assert.match(styleText, /\.search-navigation__button\s*{[^}]*min-height:\s*44px;
 assert.match(styleText, /\.search-navigation\s*{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/s, 'search navigation wraps safely in the search panel');
 assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
 assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
-assert.match(styleText, /\.skip-link:focus-visible\s*{[^}]*transform:\s*translateY\(0\);[^}]*outline:/s, 'skip link becomes visible with a focus outline');
+assert.match(styleText, /\.skip-link\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'skip link keeps the shared 44px touch and focus target');
+assert.match(styleText, /\.skip-link:focus-visible\s*{[^}]*transform:\s*translateY\(0\);/s, 'skip link becomes visible when focused');
+assert.match(styleText, /:focus-visible\s*{[^}]*outline:\s*var\(--border-focus\) solid var\(--color-focus-ring\);/s, 'all keyboard focus uses the shared visible focus foundation');
 assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-motion users receive motion guardrails');
 assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');

@@ -2,11 +2,11 @@
 
 Version: `v2.0.0`
 
-Status: `Planned`
+Status: `In progress`
 
-Implementation status: `Prototype approved; production implementation not started`
+Implementation status: `Slices 20A and 20B complete and frozen; Slice 20C next but not started`
 
-Release status: `Not scheduled; no implementation or release-readiness claim`
+Release status: `Not scheduled; implementation in progress; no release-readiness claim`
 
 ## Title
 
@@ -85,8 +85,8 @@ frozen.
 
 ## Slices
 
-Slice 20A is complete and frozen. Slice 20B is next but not started; no
-production implementation slice is active.
+Slices 20A and 20B are complete and frozen. Slice 20C is next but not started;
+no later implementation slice is active.
 
 ### Slice 20A — Isolated Prototype and Design Approval
 
@@ -120,7 +120,17 @@ Status: `Complete and frozen`
 
 ### Slice 20B — Tokens, Themes, and Workspace Shell
 
-Status: `Next — not started`
+Status: `Complete and frozen`
+
+- **Completion record:** the approved semantic token system, system-driven light
+  and dark foundations, typography, responsive two-region shell, restrained
+  control-layer material, preference fallbacks, focus/touch foundations, and
+  service-worker asset registration were implemented on 2026-07-15.
+- **Validation record:** the full Node/assert suite, JavaScript syntax checks,
+  large-report benchmark, retained browser workflow/performance harness,
+  required responsive widths, accessibility checks, contrast checks, and
+  Hallmark anti-slop audit passed. The approved prototype remained frozen and
+  all released workflow contracts were preserved.
 
 - **Objective:** introduce the approved semantic tokens, light/dark themes,
   content/control layers, and responsive workspace shell.
@@ -143,7 +153,7 @@ Status: `Next — not started`
 
 ### Slice 20C — Import State and Workspace Navigation
 
-Status: `Planned`
+Status: `Next — not started`
 
 - **Objective:** make import calm and compact, then introduce desktop section
   rail and the accessible tablet/mobile section sheet.
@@ -349,5 +359,6 @@ before production implementation.
 
 Slice 20A is complete and frozen with visual approval recorded for prototype
 commit `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. There are no unresolved major
-design decisions. Slice 20B is next but not started, and no production
-implementation slice is active.
+design decisions. Slice 20B is complete and frozen after validated production
+translation of the tokens, themes, and shell. Slice 20C is next but not started,
+and no later implementation slice is active.
