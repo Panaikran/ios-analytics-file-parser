@@ -4,7 +4,7 @@ Version: `v2.0.0`
 
 Status: `Planned`
 
-Implementation status: `Not started`
+Implementation status: `Prototype approved; production implementation not started`
 
 Release status: `Not scheduled; no implementation or release-readiness claim`
 
@@ -83,13 +83,20 @@ frozen.
 7. Documentation describes only verified implementation; no slice or release
    status advances without evidence.
 
-## Planned Slices
+## Slices
 
-No slice is active or complete.
+Slice 20A is complete and frozen. Slice 20B is next but not started; no
+production implementation slice is active.
 
 ### Slice 20A — Isolated Prototype and Design Approval
 
-Status: `Planned`
+Status: `Complete and frozen`
+
+- **Approved prototype:** `b86a44cf2cbb0a3400a307ede92e7623c7417b48`.
+- **Approval record:** visual approval recorded on 2026-07-15 for the desktop
+  workspace, mobile navigation, import hierarchy, report density, search and
+  actions, comparison, Raw Local View, light/dark themes, restrained material,
+  geometry, typography, spacing, motion, and accessibility fallbacks.
 
 - **Objective:** validate the frozen information architecture, design tokens,
   material scope, responsive behavior, and accessibility interactions before
@@ -113,7 +120,7 @@ Status: `Planned`
 
 ### Slice 20B — Tokens, Themes, and Workspace Shell
 
-Status: `Planned`
+Status: `Next — not started`
 
 - **Objective:** introduce the approved semantic tokens, light/dark themes,
   content/control layers, and responsive workspace shell.
@@ -340,5 +347,7 @@ desktop density, motion, and accessibility fallbacks are defined in
 it may not silently replace the decision. Record and approve the correction
 before production implementation.
 
-There are no unresolved major design decisions and no active implementation
-slice.
+Slice 20A is complete and frozen with visual approval recorded for prototype
+commit `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. There are no unresolved major
+design decisions. Slice 20B is next but not started, and no production
+implementation slice is active.

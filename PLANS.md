@@ -577,7 +577,7 @@ Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
 Status: `Planned`
 
-Implementation status: `Not started; no slice is active or complete`
+Implementation status: `Slice 20A complete and frozen; Slice 20B next but not started; production implementation not started`
 
 ### Scope Decision
 
@@ -607,14 +607,14 @@ All v1.9 parser, classification, `SectionModel[]`, sanitization, Raw Local View,
 comparison, visible-only search, exact-match, copy, text/JSON export, schema,
 capped-content, local-alias, service-worker/PWA, keyboard, responsive, and
 performance behavior remains frozen. No dependency, tag, GitHub Release, or
-implementation status change is part of this planning commit.
+production implementation is part of this approval reconciliation.
 
 ### Planned Slices
 
 | Slice | Status | Scope |
 | --- | --- | --- |
-| 20A | Planned | Isolated sanitized prototype and design approval |
-| 20B | Planned | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
+| 20A | Complete and frozen | Isolated sanitized prototype and visual design approval recorded for `b86a44cf2cbb0a3400a307ede92e7623c7417b48` |
+| 20B | Next — not started | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
 | 20C | Planned | Compact import state, desktop section rail, and accessible section sheet |
 | 20D | Planned | Continuous opaque report content, tables, charts, and CoreAnalytics presentation |
 | 20E | Planned | Search, section/exact navigation, copy/export, and contextual report actions |
@@ -622,6 +622,9 @@ implementation status change is part of this planning commit.
 | 20G | Planned | Responsive and accessibility hardening across all required preference modes |
 | 20H | Planned | Browser, performance, PWA update-path, documentation, and release-readiness validation |
 
-Implementation may begin only after the separate prototype records approval of
-structure, visual system, interaction/accessibility behavior, and performance.
+The Slice 20A prototype at
+`b86a44cf2cbb0a3400a307ede92e7623c7417b48` received visual approval for its
+structure, visual system, interaction/accessibility behavior, and performance
+review. Slice 20A is complete and frozen. Slice 20B is next but not started;
+this approval reconciliation does not begin production implementation.
 
