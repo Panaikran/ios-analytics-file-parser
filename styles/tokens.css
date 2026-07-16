@@ -28,7 +28,7 @@
   --color-error-surface: #fff2f0;
   --color-success: #147d32;
   --color-success-surface: #eef9f1;
-  --color-disabled-foreground: #6e6e73;
+  --color-disabled-foreground: #515154;
   --color-disabled-surface: #e5e5ea;
   --color-code-surface: #f5f5f7;
   --color-table-divider: rgba(0, 0, 0, 0.14);
@@ -146,7 +146,7 @@
     --color-error-surface: #381b1a;
     --color-success: #30d158;
     --color-success-surface: #14351d;
-    --color-disabled-foreground: #aeaeb2;
+    --color-disabled-foreground: #c7c7cc;
     --color-disabled-surface: #3a3a3c;
     --color-code-surface: #2c2c2e;
     --color-table-divider: rgba(255, 255, 255, 0.16);

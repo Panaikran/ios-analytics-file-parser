@@ -198,6 +198,18 @@
 
       async function benchmarkReport(text, query, parserType) {
         let sections;
+        const coldStarted = performance.now();
+        sections = parseInput(text);
+        renderParsedSections(sections);
+        await nextFrame();
+        const coldParseToRenderMs = performance.now() - coldStarted;
+
+        const parseOnly = await measureAsync(() => {
+          sections = parseInput(text);
+        });
+        const renderOnly = await measureAsync(() => {
+          renderParsedSections(sections);
+        });
         const parseToRender = await measureAsync(() => {
           sections = parseInput(text);
           renderParsedSections(sections);
@@ -257,6 +269,9 @@
         const clearReport = await measureAsync(() => clearRenderedState());
 
         return {
+          coldParseToRenderMs,
+          parseOnly,
+          renderOnly,
           parseToRender,
           search,
           noResultsSearch,
@@ -578,6 +593,9 @@
           comparisonSetupHidden: document.querySelector('#comparison-panel').hidden,
           searchLabel: document.querySelector('#result-search')?.labels?.[0]?.textContent.trim() ?? '',
           rawScrollRegionCount: document.querySelectorAll('#sections .raw-local-view__content[role="region"][tabindex="0"]').length,
+          visibleH1Text: [...document.querySelectorAll('h1')]
+            .find((heading) => heading.getClientRects().length > 0)?.textContent.trim() ?? '',
+          reportHeadingLevel: document.querySelector('#report-document-title')?.tagName ?? '',
           viewport: { width: window.innerWidth, height: window.innerHeight },
           pageOverflow: document.documentElement.scrollWidth > window.innerWidth,
         });

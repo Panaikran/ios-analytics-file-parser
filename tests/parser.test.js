@@ -133,7 +133,11 @@ assert.match(indexHtmlText, /Supports selected \.ips, \.crash, \.ips\.ca\.synced
 assert.match(indexHtmlText, /<details id="import-options" class="import-options">[^]*<summary>Paste text or use an example<\/summary>/, 'paste and example routes are grouped as restrained secondary import options');
 assert.doesNotMatch(indexHtmlText, /trusted by|\d+[,+]?\d* users|AI-powered|testimonial|customer logo/i, 'import state contains no invented metrics, claims, testimonials, or marketing proof');
 assert.match(indexHtmlText, /<div class="workspace-shell">\s*<nav id="section-nav"[^]*<section class="results workspace-content" aria-label="Report workspace">/, 'workspace shell keeps navigation before report content in DOM order');
-assert.match(indexHtmlText, /id="workspace-heading" tabindex="-1">Inspector workspace<\/h2>/, 'workspace exposes a focusable orientation heading after successful parsing');
+assert.match(
+  indexHtmlText,
+  /<h1 id="workspace-heading" tabindex="-1"><span class="visually-hidden">iOS Analytics File Parser — <\/span>Inspector workspace<\/h1>/,
+  'populated workspace exposes the application identity as its single focusable h1'
+);
 assert.match(indexHtmlText, /id="sections-trigger"[^>]*aria-haspopup="dialog"[^>]*aria-controls="section-dialog"[^>]*hidden/, 'tablet and mobile navigation use a labeled native-dialog trigger');
 assert.match(indexHtmlText, /<dialog id="section-dialog"[^>]*aria-labelledby="section-dialog-title"[^>]*aria-describedby="section-dialog-description">/, 'section sheet uses native dialog semantics with a title and description');
 assert.match(indexHtmlText, /id="section-dialog-close"[^>]*>Close<\/button>/, 'section dialog includes an explicit close control');
@@ -196,8 +200,11 @@ assert.match(tokenStyleText, /@media \(prefers-color-scheme: dark\)/, 'token fou
 assert.match(tokenStyleText, /--font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;/, 'token foundation uses the approved system font stack without an external font');
 assert.match(tokenStyleText, /--font-technical: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, monospace;/, 'technical values use a true monospace stack');
 assert.match(tokenStyleText, /--size-touch-target-min: 2\.75rem;/, 'touch target foundation remains at least 44 CSS pixels at the default root size');
+assert.match(tokenStyleText, /--color-disabled-foreground: #515154;/, 'light-theme disabled text remains readable without appearing active');
+assert.match(tokenStyleText, /@media \(prefers-color-scheme: dark\)[^]*--color-disabled-foreground: #c7c7cc;/, 'dark-theme disabled text remains readable without opacity dimming');
 assert.doesNotMatch(tokenStyleText, /https?:|@font-face|fonts\.googleapis/, 'token foundation adds no external font or network resource');
 assert.match(styleText, /\.workspace-shell:has\(> \.section-nav:not\(\[hidden\]\)\)\s*\{[^]*grid-template-columns: var\(--size-navigation-width\) minmax\(0, 1fr\)/, 'desktop shell establishes the approved navigation and content regions');
+assert.match(styleText, /h1\s*{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/s, 'display headings can shrink and wrap safely in narrow flex and grid contexts');
 assert.match(styleText, /@media \(prefers-reduced-transparency: reduce\)/, 'shell includes a reduced-transparency fallback');
 assert.match(styleText, /@media \(prefers-contrast: more\)/, 'shell includes an increased-contrast fallback');
 assert.match(styleText, /@media \(forced-colors: active\)/, 'shell includes forced-colors behavior');
@@ -380,11 +387,16 @@ assert.match(browserHarnessSource, /matchRegions,\s*activeExactMatchId/, 'browse
 assert.match(browserHarnessSource, /exactMatchRenderingWorkflow/, 'browser harness includes a focused exact-match rendering workflow');
 assert.match(browserHarnessSource, /visibleSearchContractWorkflow/, 'browser harness covers hidden-only and visible-cell rendering transitions');
 assert.match(browserHarnessSource, /applicationWorkflow/, 'browser harness covers live search, report, comparison, Raw Local View, and Clear Report transitions');
+assert.match(browserHarnessSource, /visibleH1Text:/, 'browser harness records the active mode h1 for heading-hierarchy QA');
+assert.match(browserHarnessSource, /reportHeadingLevel:/, 'browser harness records the report identity heading level for heading-hierarchy QA');
 assert.match(browserHarnessSource, /mobileNavigation\.modal = sectionDialog\.matches\(':modal'\)/, 'browser harness verifies native modal section navigation at sub-desktop widths');
 assert.match(browserHarnessSource, /mobileNavigation\.focusReturned = document\.activeElement === sectionsTrigger/, 'browser harness verifies explicit dialog close returns focus');
 assert.match(browserHarnessSource, /mobileNavigation\.replacementClosed = !sectionDialog\.open/, 'browser harness verifies report replacement closes stale mobile navigation');
 assert.match(browserHarnessSource, /clearReturnedToImport/, 'browser harness verifies Clear Report returns focus to the import action');
 assert.match(browserHarnessSource, /Promise\.race\(\[/, 'browser harness bounds frame settlement when headless animation frames are unavailable');
+assert.match(browserHarnessSource, /coldParseToRenderMs/, 'browser harness separates the first cold report render from warmed samples');
+assert.match(browserHarnessSource, /const parseOnly = await measureAsync/, 'browser harness isolates browser parse timing from document rendering');
+assert.match(browserHarnessSource, /const renderOnly = await measureAsync/, 'browser harness isolates document rendering from browser parse timing');
 assert.match(browserHarnessSource, /targetIdsUnique: new Set\(targetIds\)\.size === targetIds\.length/, 'browser harness checks deterministic unique target identities');
 assert.match(browserHarnessSource, /hostileImageCount: document\.querySelectorAll\('#sections img'\)\.length/, 'browser harness checks hostile report text does not create image elements');
 assert.match(browserHarnessSource, /hostileTextPreserved:/, 'browser harness checks hostile report text remains literal after highlighting');
@@ -405,6 +417,11 @@ assert.match(styleText, /\.section-copy__feedback\s*{[^}]*max-width:\s*100%;[^}]
 assert.match(styleText, /\.coreanalytics-overview__chip\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'CoreAnalytics facet chips wrap long rendered values');
 assert.match(styleText, /\.section-nav__link\s*{[^}]*min-height:\s*44px;/s, 'section nav chips have practical mobile touch targets');
 assert.match(styleText, /\.search-navigation__button\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'search navigation buttons use the shared 44px touch-target foundation');
+assert.match(
+  styleText,
+  /\.clear-report:disabled,\s*\.comparison-button:disabled,\s*\.export-button:disabled,\s*\.search-navigation__button:disabled,\s*\.search-navigation__button\[aria-disabled="true"\]\s*{[^}]*opacity:\s*1;[^}]*background:\s*var\(--color-disabled-surface\);[^}]*color:\s*var\(--color-disabled-foreground\);/s,
+  'disabled action and navigation labels remain readable on a semantic solid surface'
+);
 assert.match(styleText, /\.search-navigation__controls\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*auto minmax\(4\.5rem, 1fr\) auto;/s, 'search movement keeps its position readable between reachable controls');
 assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
 assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
