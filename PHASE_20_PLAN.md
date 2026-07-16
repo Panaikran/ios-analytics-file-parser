@@ -4,7 +4,7 @@ Version: `v2.0.0`
 
 Status: `In progress`
 
-Implementation status: `Slices 20A and 20B complete and frozen; Slice 20C next but not started`
+Implementation status: `Slices 20A–20C complete and frozen; Slice 20D next but not started`
 
 Release status: `Not scheduled; implementation in progress; no release-readiness claim`
 
@@ -85,7 +85,7 @@ frozen.
 
 ## Slices
 
-Slices 20A and 20B are complete and frozen. Slice 20C is next but not started;
+Slices 20A–20C are complete and frozen. Slice 20D is next but not started;
 no later implementation slice is active.
 
 ### Slice 20A — Isolated Prototype and Design Approval
@@ -153,7 +153,14 @@ Status: `Complete and frozen`
 
 ### Slice 20C — Import State and Workspace Navigation
 
-Status: `Next — not started`
+Status: `Complete and frozen`
+
+- **Completion record:** the focused implementation commit
+  `feat(v2.0): implement import state and workspace navigation` translated the
+  approved calm import hierarchy, desktop section rail, accessible tablet/mobile
+  section dialog, active-section tracking, and report-entry/reset focus behavior
+  without changing report, search, comparison, Raw Local View, export, or parser
+  contracts.
 
 - **Objective:** make import calm and compact, then introduce desktop section
   rail and the accessible tablet/mobile section sheet.
@@ -176,7 +183,7 @@ Status: `Next — not started`
 
 ### Slice 20D — Report Content System
 
-Status: `Planned`
+Status: `Next — not started`
 
 - **Objective:** convert report output from repeated cards to a continuous,
   opaque, accessible inspection document.
@@ -359,6 +366,7 @@ before production implementation.
 
 Slice 20A is complete and frozen with visual approval recorded for prototype
 commit `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. There are no unresolved major
-design decisions. Slice 20B is complete and frozen after validated production
-translation of the tokens, themes, and shell. Slice 20C is next but not started,
-and no later implementation slice is active.
+design decisions. Slices 20B and 20C are complete and frozen after validated
+production translation of the shell, calm import state, and responsive workspace
+navigation. Slice 20D is next but not started, and no later implementation slice
+is active.

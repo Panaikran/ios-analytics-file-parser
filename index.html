@@ -20,18 +20,64 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <main id="main-content" class="app-shell">
-      <header class="intro">
-        <p class="privacy-badge">Parsed locally - not uploaded</p>
-        <h1>iOS Analytics File Parser</h1>
-        <p>
-          Open iPhone and iPad diagnostic reports and inspect them as structured
-          sections. Reports are parsed in this browser session only.
+      <header id="import-intro" class="intro">
+        <p class="app-identity">iOS Analytics File Parser</p>
+        <h1>Inspect iOS diagnostic reports with clarity.</h1>
+        <p class="import-purpose">
+          Turn supported iPhone and iPad analytics files into structured,
+          readable sections in this browser session.
         </p>
-        <div class="trust-strip" aria-label="Privacy guarantees">
-          <span>No uploads</span>
-          <span>No analytics</span>
-          <span>No saved reports</span>
+        <p class="privacy-assurance">
+          Reports stay on this device. Nothing is uploaded, tracked, or saved.
+        </p>
+      </header>
+
+      <section class="input-panel" id="input-panel" aria-labelledby="input-title">
+        <div class="input-panel__heading">
+          <h2 id="input-title">Open a report</h2>
+          <p id="input-help" class="import-help">
+            Supports selected .ips, .crash, .ips.ca.synced, panic-full,
+            JetsamEvent, and analytics text reports up to 20 MB.
+          </p>
         </div>
+
+        <div class="import-primary-actions">
+          <label class="file-picker">
+            <span id="file-picker-label">Choose file</span>
+            <input id="file-input" type="file" aria-label="Choose report file" aria-describedby="input-help status">
+          </label>
+
+          <button id="clear-report" class="clear-report" type="button" disabled hidden>Clear report</button>
+        </div>
+
+        <details class="format-guidance">
+          <summary>Supported formats and limits</summary>
+          <p>
+            Supported families include App Crash, legacy .crash, watchdog,
+            JetsamEvent, panic-full, analytics text, CoreAnalytics, Accessory
+            Crash, CPU Resource, Disk Writes Resource, and Stackshot Resource.
+          </p>
+        </details>
+
+        <details id="import-options" class="import-options">
+          <summary>Paste text or use an example</summary>
+          <div class="import-options__content">
+            <div class="example-picker" aria-labelledby="examples-title">
+              <h3 id="examples-title">Try an example</h3>
+              <div id="example-controls" class="example-controls"></div>
+            </div>
+
+            <label class="paste-field" for="paste-input">
+              <span>Paste report text</span>
+              <textarea id="paste-input" rows="9" placeholder="Paste .ips JSON or .crash text here" aria-describedby="input-help status"></textarea>
+            </label>
+
+            <button id="parse-paste" class="parse-paste" type="button">Parse pasted text</button>
+          </div>
+        </details>
+      </section>
+
+      <aside class="import-support" aria-label="App installation and offline status">
         <details class="install-help">
           <summary>Install app</summary>
           <div class="install-help__content">
@@ -46,33 +92,17 @@
           </div>
         </details>
         <div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden></div>
-      </header>
-
-      <section class="input-panel" id="input-panel" aria-labelledby="input-title">
-        <h2 id="input-title">Load a report</h2>
-        <label class="file-picker">
-          <span>Choose file</span>
-          <input id="file-input" type="file" aria-label="Choose report file">
-        </label>
-
-        <button id="clear-report" class="clear-report" type="button" disabled>Clear report</button>
-
-        <div class="example-picker" aria-labelledby="examples-title">
-          <h3 id="examples-title">Try an example</h3>
-          <div id="example-controls" class="example-controls"></div>
-        </div>
-
-        <label class="paste-field">
-          <span>Or paste report text</span>
-          <textarea id="paste-input" rows="9" placeholder="Paste .ips JSON or .crash text here"></textarea>
-        </label>
-
-        <button id="parse-paste" class="parse-paste" type="button">Parse pasted text</button>
-      </section>
+      </aside>
 
       <div class="workspace-shell">
         <nav id="section-nav" class="section-nav" aria-label="Parsed sections" hidden></nav>
         <section class="results workspace-content" aria-label="Report workspace">
+          <header id="workspace-header" class="workspace-header" hidden>
+            <h2 id="workspace-heading" tabindex="-1">Inspector workspace</h2>
+            <button id="sections-trigger" class="sections-trigger" type="button" aria-haspopup="dialog" aria-controls="section-dialog" hidden>
+              Sections
+            </button>
+          </header>
           <section class="workspace-controls" aria-label="Workspace controls and status">
             <div id="status" class="status" role="status" aria-live="polite">No report loaded yet.</div>
             <div id="privacy-panel" class="privacy-panel" hidden>
@@ -137,6 +167,17 @@
         </section>
       </div>
     </main>
+
+    <dialog id="section-dialog" class="section-dialog" aria-labelledby="section-dialog-title" aria-describedby="section-dialog-description">
+      <div class="section-dialog__header">
+        <div>
+          <h2 id="section-dialog-title">Report sections</h2>
+          <p id="section-dialog-description">Choose a visible report section.</p>
+        </div>
+        <button id="section-dialog-close" class="section-dialog__close" type="button">Close</button>
+      </div>
+      <nav id="mobile-section-nav" class="mobile-section-nav" aria-label="Report sections"></nav>
+    </dialog>
 
     <script type="module" src="./src/main.js"></script>
   </body>

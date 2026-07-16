@@ -577,7 +577,7 @@ Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
 Status: `In progress`
 
-Implementation status: `Slices 20A and 20B complete and frozen; Slice 20C next but not started`
+Implementation status: `Slices 20A–20C complete and frozen; Slice 20D next but not started`
 
 ### Scope Decision
 
@@ -616,8 +616,8 @@ added.
 | --- | --- | --- |
 | 20A | Complete and frozen | Isolated sanitized prototype and visual design approval recorded for `b86a44cf2cbb0a3400a307ede92e7623c7417b48` |
 | 20B | Complete and frozen | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
-| 20C | Next — not started | Compact import state, desktop section rail, and accessible section sheet |
-| 20D | Planned | Continuous opaque report content, tables, charts, and CoreAnalytics presentation |
+| 20C | Complete and frozen | Compact import state, desktop section rail, accessible section dialog, and safe workspace-entry/reset focus |
+| 20D | Next — not started | Continuous opaque report content, tables, charts, and CoreAnalytics presentation |
 | 20E | Planned | Search, section/exact navigation, copy/export, and contextual report actions |
 | 20F | Planned | Comparison and Raw Local View workspace treatment |
 | 20G | Planned | Responsive and accessibility hardening across all required preference modes |
@@ -626,7 +626,9 @@ added.
 The Slice 20A prototype at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48` received visual approval for its
 structure, visual system, interaction/accessibility behavior, and performance
-review. Slice 20A is complete and frozen. Slice 20B is complete and frozen
-after full regression, accessibility, responsive, browser, performance, and
-PWA validation. Slice 20C is next but not started.
+review. Slice 20A is complete and frozen. Slices 20B and 20C are complete and
+frozen after full regression, accessibility, responsive, browser, performance,
+and PWA validation. Slice 20C is recorded by the focused implementation commit
+`feat(v2.0): implement import state and workspace navigation`. Slice 20D is next
+but not started.
 

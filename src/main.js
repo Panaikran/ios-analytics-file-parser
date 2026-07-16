@@ -26,9 +26,14 @@ import { createExactMatchTargets } from './search/exactMatch.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
 import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
-import { renderSectionNav } from './ui/renderSectionNav.js';
+import { createWorkspaceNavigation } from './ui/workspaceNavigation.js';
 
+const appShell = document.querySelector('.app-shell');
+const importIntro = document.querySelector('#import-intro');
 const inputPanel = document.querySelector('#input-panel');
+const inputTitle = document.querySelector('#input-title');
+const filePickerLabel = document.querySelector('#file-picker-label');
+const importOptions = document.querySelector('#import-options');
 const fileInput = document.querySelector('#file-input');
 const pasteInput = document.querySelector('#paste-input');
 const parsePasteButton = document.querySelector('#parse-paste');
@@ -62,7 +67,14 @@ const exportPanel = document.querySelector('#export-panel');
 const downloadVisibleExportButton = document.querySelector('#download-visible-export');
 const downloadVisibleJsonButton = document.querySelector('#download-visible-json');
 const exportStatus = document.querySelector('#export-status');
+const workspaceShell = document.querySelector('.workspace-shell');
+const workspaceHeader = document.querySelector('#workspace-header');
+const workspaceHeading = document.querySelector('#workspace-heading');
 const sectionNavElement = document.querySelector('#section-nav');
+const sectionsTrigger = document.querySelector('#sections-trigger');
+const sectionDialog = document.querySelector('#section-dialog');
+const sectionDialogClose = document.querySelector('#section-dialog-close');
+const mobileSectionNav = document.querySelector('#mobile-section-nav');
 const emptyResults = document.querySelector('#empty-results');
 const sectionsElement = document.querySelector('#sections');
 const offlineStatus = document.querySelector('#offline-status');
@@ -90,6 +102,16 @@ let denseTableState = createInitialDenseTableState();
 let lastOfflineStatusKey = '';
 let waitingServiceWorker = null;
 let reloadAfterControllerChange = false;
+let pendingWorkspaceFocus = false;
+
+const workspaceNavigation = createWorkspaceNavigation({
+  desktopNav: sectionNavElement,
+  mobileNav: mobileSectionNav,
+  dialog: sectionDialog,
+  trigger: sectionsTrigger,
+  closeButton: sectionDialogClose,
+  fallbackFocus: searchInput,
+});
 
 function createInitialDenseTableState() {
   return {
@@ -115,8 +137,18 @@ function renderApp() {
   reconcileSearchNavigationState(searchResult.navigationTargets, searchResult.active && (appState.sanitize || comparisonMode));
   reconcileExactMatchState(searchResult.matchRegions, searchResult.active && (appState.sanitize || comparisonMode));
 
+  appShell.dataset.workspace = hasParsedSections ? 'active' : 'empty';
+  importIntro.hidden = hasParsedSections || comparisonMode;
   inputPanel.hidden = comparisonMode;
+  inputTitle.textContent = hasParsedSections ? 'Open another report' : 'Open a report';
+  filePickerLabel.textContent = hasParsedSections ? 'Open another report' : 'Choose file';
+  if (hasParsedSections) importOptions.open = false;
+  workspaceShell.hidden = !hasParsedSections && appState.statusTone !== 'error';
+  workspaceHeader.hidden = !hasParsedSections;
   renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
+  const blockingImportError = !hasParsedSections && appState.statusTone === 'error';
+  statusElement.setAttribute('role', blockingImportError ? 'alert' : 'status');
+  statusElement.setAttribute('aria-live', blockingImportError ? 'assertive' : 'polite');
   renderPrivacyControls(appState.sections.length > 0);
   renderComparisonControls(appState.sections.length > 0);
   renderSearchControls(searchMetadata, hasParsedSections);
@@ -126,7 +158,6 @@ function renderApp() {
     serializeSectionsForJsonExport(eligibleExportSections, { mode: comparisonMode ? 'comparison' : 'single' }),
     eligibleExportSections.length > 0
   );
-  renderSectionNav(sectionNavElement, visibleSections);
   renderSections(sectionsElement, visibleSections, {
     onCopySection: copySection,
     denseTableState,
@@ -143,11 +174,21 @@ function renderApp() {
     matchRegions: searchResult.matchRegions,
     activeExactMatchId: exactMatchTargets[activeExactMatchIndex]?.id ?? '',
   });
+  workspaceNavigation.update(visibleSections);
   if (restoreCoreAnalyticsFacetFocus) {
     document.querySelector('.coreanalytics-overview__chip[aria-pressed="true"]')?.focus();
   }
   emptyResults.hidden = !emptySearch;
   clearButton.disabled = !appState.sourceText && !appState.sections.length;
+  clearButton.hidden = clearButton.disabled;
+
+  if (pendingWorkspaceFocus && hasParsedSections) {
+    pendingWorkspaceFocus = false;
+    queueMicrotask(() => {
+      workspaceHeading.focus({ preventScroll: true });
+      workspaceHeading.scrollIntoView({ block: 'start' });
+    });
+  }
 }
 
 function getEligibleExportSections(activeSections, visibleSections) {
@@ -365,6 +406,7 @@ function exitComparisonMode() {
 }
 
 function showParsedReport(text, sourceLabel) {
+  pendingWorkspaceFocus = false;
   exitComparisonMode();
   clearSearchState();
   comparisonMessage = comparisonSetupMessage(validateComparison(comparisonEntries), comparisonEntries.length);
@@ -398,6 +440,7 @@ function showParsedReport(text, sourceLabel) {
   try {
     const sections = parseInput(sourceText, { sanitize: nextReportState.sanitize });
     appState = withParsedReport(nextReportState, { sourceText, sourceLabel, detectedType, sections });
+    pendingWorkspaceFocus = sections.length > 0;
   } catch {
     appState = withParseError(nextReportState, { sourceText, sourceLabel, detectedType });
   }
@@ -406,6 +449,7 @@ function showParsedReport(text, sourceLabel) {
 }
 
 function clearReport() {
+  pendingWorkspaceFocus = false;
   appState = createInitialAppState();
   comparisonEntries = [];
   comparisonMessage = 'No reports added.';
@@ -416,6 +460,8 @@ function clearReport() {
   pasteInput.value = '';
   inputPanel.classList.remove('input-panel--drag-over');
   renderApp();
+  importIntro.scrollIntoView({ block: 'start' });
+  fileInput.focus({ preventScroll: true });
 }
 
 function reparseCurrentSourceWithPrivacyMode(sanitize) {
@@ -661,13 +707,7 @@ function findExactMatchElement(targetId) {
 }
 
 function markCurrentSectionNavigation(sectionId) {
-  for (const link of sectionNavElement.querySelectorAll('.section-nav__link')) {
-    if (link.getAttribute('href') === `#${sectionId}`) {
-      link.setAttribute('aria-current', 'true');
-    } else {
-      link.removeAttribute('aria-current');
-    }
-  }
+  workspaceNavigation.markCurrent(sectionId);
 }
 
 function scrollExactMatchIntoView(target) {

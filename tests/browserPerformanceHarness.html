@@ -103,6 +103,9 @@
 
       function accessibilityReport() {
         const controls = [...document.querySelectorAll('button, input, textarea, a')];
+        const unavailableControls = controls.filter((control) =>
+          control.closest('details:not([open]), dialog:not([open]), [hidden]')
+        );
         const unnamed = controls
           .filter((control) => {
             const label = control.getAttribute('aria-label') || control.getAttribute('aria-labelledby');
@@ -112,10 +115,17 @@
           })
           .map((control) => control.id || control.tagName.toLowerCase());
         const focusFailures = controls
-          .filter((control) => !control.disabled && control.getClientRects().length > 0)
+          .filter((control) => !unavailableControls.includes(control) && !control.disabled && control.getClientRects().length > 0)
           .filter((control) => {
             control.focus();
             return document.activeElement !== control;
+          })
+          .map((control) => control.id || control.tagName.toLowerCase());
+        const hiddenFocusLeaks = unavailableControls
+          .filter((control) => !control.disabled)
+          .filter((control) => {
+            control.focus();
+            return document.activeElement === control;
           })
           .map((control) => control.id || control.tagName.toLowerCase());
 
@@ -123,6 +133,7 @@
           controlCount: controls.length,
           unnamedControls: unnamed,
           focusFailures,
+          hiddenFocusLeaks,
           exportControls: ['download-visible-export', 'download-visible-json'].map((id) => ({
             id,
             present: Boolean(document.querySelector(`#${id}`)),
@@ -401,11 +412,47 @@
           renderedMarkCount: document.querySelectorAll('#sections mark.exact-match').length,
           textExportDisabled: document.querySelector('#download-visible-export').disabled,
           jsonExportDisabled: document.querySelector('#download-visible-json').disabled,
+          desktopNavigationHidden: document.querySelector('#section-nav').hidden,
+          sectionsTriggerHidden: document.querySelector('#sections-trigger').hidden,
+          sectionDialogOpen: document.querySelector('#section-dialog').open,
+          duplicateIdCount: [...document.querySelectorAll('[id]')]
+            .filter((element, index, elements) => elements.findIndex((candidate) => candidate.id === element.id) !== index)
+            .length,
         });
 
         pasteInput.value = coreText;
         document.querySelector('#parse-paste').click();
         await nextFrame();
+        const workspaceFocusMoved = document.activeElement === document.querySelector('#workspace-heading');
+        const sectionsTrigger = document.querySelector('#sections-trigger');
+        const sectionDialog = document.querySelector('#section-dialog');
+        const mobileNavigation = { availableAtViewport: !sectionsTrigger.hidden };
+        if (!sectionsTrigger.hidden) {
+          sectionsTrigger.focus();
+          sectionsTrigger.click();
+          await nextFrame();
+          mobileNavigation.open = sectionDialog.open;
+          mobileNavigation.modal = sectionDialog.matches(':modal');
+          mobileNavigation.entryFocus = document.activeElement?.closest('#mobile-section-nav') === document.querySelector('#mobile-section-nav');
+
+          document.querySelector('#section-dialog-close').click();
+          await nextFrame();
+          mobileNavigation.explicitClose = !sectionDialog.open;
+          mobileNavigation.focusReturned = document.activeElement === sectionsTrigger;
+
+          sectionsTrigger.click();
+          await nextFrame();
+          document.querySelector('#mobile-section-nav .section-nav__link').click();
+          await nextFrame();
+          mobileNavigation.selectionClosed = !sectionDialog.open;
+          mobileNavigation.selectionFocusedSection = document.activeElement?.closest('#sections > article') !== null;
+          mobileNavigation.currentStateCount = document.querySelectorAll('.section-nav__link[aria-current="location"]').length;
+
+          sectionsTrigger.click();
+          document.querySelector('#parse-paste').click();
+          await nextFrame();
+          mobileNavigation.replacementClosed = !sectionDialog.open;
+        }
         await setSearch(visibleQuery);
         const visibleSearch = state();
         const exactNext = document.querySelector('#exact-match-next');
@@ -452,11 +499,15 @@
         await nextFrame();
         const comparisonCleared = state();
 
+        if (!document.querySelector('#sections-trigger').hidden) document.querySelector('#sections-trigger').click();
         document.querySelector('#clear-report').click();
         await nextFrame();
         const reportCleared = state();
+        const clearReturnedToImport = document.activeElement === document.querySelector('#file-input');
 
         return {
+          workspaceFocusMoved,
+          mobileNavigation,
           visibleSearch,
           nextFocusRetained,
           clearedSearch,
@@ -469,6 +520,7 @@
           comparisonVisibleSearch,
           comparisonCleared,
           reportCleared,
+          clearReturnedToImport,
         };
       }
 

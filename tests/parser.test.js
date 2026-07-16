@@ -107,6 +107,8 @@ const indexHtmlText = await readFile(new URL('../index.html', import.meta.url), 
 const manifestText = await readFile(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
 const serviceWorkerText = await readFile(new URL('../service-worker.js', import.meta.url), 'utf8');
 const mainScriptText = await readFile(new URL('../src/main.js', import.meta.url), 'utf8');
+const renderSectionNavSource = await readFile(new URL('../src/ui/renderSectionNav.js', import.meta.url), 'utf8');
+const workspaceNavigationSource = await readFile(new URL('../src/ui/workspaceNavigation.js', import.meta.url), 'utf8');
 const appStateSource = await readFile(new URL('../src/appState.js', import.meta.url), 'utf8');
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
@@ -123,12 +125,21 @@ assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main 
 assert.match(indexHtmlText, /<meta name="color-scheme" content="light dark">/, 'page advertises production light and dark color schemes');
 assert.match(indexHtmlText, /name="theme-color" content="#f5f5f7" media="\(prefers-color-scheme: light\)"/, 'light browser chrome follows the approved canvas token');
 assert.match(indexHtmlText, /name="theme-color" content="#000000" media="\(prefers-color-scheme: dark\)"/, 'dark browser chrome follows the approved canvas token');
-assert.match(indexHtmlText, /<header class="intro">[^]*<h1>iOS Analytics File Parser<\/h1>/, 'application identity keeps one logical h1 in a semantic header');
+assert.match(indexHtmlText, /<header id="import-intro" class="intro">[^]*<p class="app-identity">iOS Analytics File Parser<\/p>[^]*<h1>Inspect iOS diagnostic reports with clarity\.<\/h1>/, 'calm import state keeps application identity and one logical h1 in a semantic header');
+assert.match(indexHtmlText, /Reports stay on this device\. Nothing is uploaded, tracked, or saved\./, 'import state states the local-only privacy assurance in plain text');
+assert.match(indexHtmlText, /Supports selected \.ips, \.crash, \.ips\.ca\.synced, panic-full,\s+JetsamEvent, and analytics text reports up to 20 MB\./, 'import state presents concise supported-format and size guidance');
+assert.match(indexHtmlText, /<details id="import-options" class="import-options">[^]*<summary>Paste text or use an example<\/summary>/, 'paste and example routes are grouped as restrained secondary import options');
+assert.doesNotMatch(indexHtmlText, /trusted by|\d+[,+]?\d* users|AI-powered|testimonial|customer logo/i, 'import state contains no invented metrics, claims, testimonials, or marketing proof');
 assert.match(indexHtmlText, /<div class="workspace-shell">\s*<nav id="section-nav"[^]*<section class="results workspace-content" aria-label="Report workspace">/, 'workspace shell keeps navigation before report content in DOM order');
+assert.match(indexHtmlText, /id="workspace-heading" tabindex="-1">Inspector workspace<\/h2>/, 'workspace exposes a focusable orientation heading after successful parsing');
+assert.match(indexHtmlText, /id="sections-trigger"[^>]*aria-haspopup="dialog"[^>]*aria-controls="section-dialog"[^>]*hidden/, 'tablet and mobile navigation use a labeled native-dialog trigger');
+assert.match(indexHtmlText, /<dialog id="section-dialog"[^>]*aria-labelledby="section-dialog-title"[^>]*aria-describedby="section-dialog-description">/, 'section sheet uses native dialog semantics with a title and description');
+assert.match(indexHtmlText, /id="section-dialog-close"[^>]*>Close<\/button>/, 'section dialog includes an explicit close control');
+assert.match(indexHtmlText, /id="mobile-section-nav"[^>]*aria-label="Report sections"/, 'section dialog includes a named navigation landmark');
 assert.match(indexHtmlText, /<section class="workspace-controls" aria-label="Workspace controls and status">/, 'workspace controls and status expose a named region');
 assert.match(styleText, /^@import url\("\.\/tokens\.css"\);/, 'production stylesheet loads the dedicated token foundation first');
 assert.doesNotMatch(`${indexHtmlText}\n${styleText}\n${mainScriptText}`, /Prototype review controls|scenario-select|theme-select|ORCHID-LOCK-7391/, 'production shell excludes prototype-only review controls and synthetic helper data');
-assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file">/, 'file picker has an explicit accessible name without extension filters');
+assert.match(indexHtmlText, /<input id="file-input" type="file" aria-label="Choose report file" aria-describedby="input-help status">/, 'file picker has an explicit accessible name and linked help/error status without extension filters');
 assert.doesNotMatch(indexHtmlText, /id="file-input"[^>]*accept=/, 'file picker has no accept attribute that could grey out .ips files on Safari');
 assert.match(indexHtmlText, /Install for quick access\. Installation saves the app shell, not\s+your reports\./, 'install guidance clarifies reports are not saved');
 assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Screen\./, 'install guidance includes iPhone and iPad Add to Home Screen steps');
@@ -239,8 +250,9 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists both production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-slice20b-workspace-shell-2026-07-15/, 'service worker cache version reflects the Slice 20B production shell update');
+assert.match(serviceWorkerText, /v2\.0\.0-slice20c-import-navigation-2026-07-15/, 'service worker cache version reflects the Slice 20C import and navigation update');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
+assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/exactMatch\.js/, 'service worker precaches the exact-match helper');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
@@ -269,6 +281,21 @@ assert.match(parserIndexSource, /type === 'resource-cpu'[^]*parseCpuResource\(in
 assert.match(parserIndexSource, /type === 'resource-diskwrites'[^]*parseDiskWritesResource\(input, options\)/, 'parseInput routes Disk Writes Resource input through the Disk Writes Resource parser');
 assert.match(parserIndexSource, /type === 'resource-stackshot'[^]*parseResourceStackshot\(input, options\)/, 'parseInput routes Stackshot Resource input through the Stackshot Resource parser');
 assert.match(mainScriptText, /classifyDiagnostic\(sourceText\)/, 'main app classifies reports before unsupported UI messaging');
+assert.match(mainScriptText, /createWorkspaceNavigation\(\{[^]*desktopNav: sectionNavElement[^]*mobileNav: mobileSectionNav[^]*dialog: sectionDialog/, 'main app wires one navigation controller to desktop and mobile surfaces');
+assert.match(mainScriptText, /pendingWorkspaceFocus = sections\.length > 0;/, 'successful parsing schedules workspace-entry focus only when visible sections exist');
+assert.match(mainScriptText, /if \(pendingWorkspaceFocus && hasParsedSections\)[^]*workspaceHeading\.focus\(\{ preventScroll: true \}\)/, 'scheduled workspace-entry focus targets the workspace heading after rendering');
+assert.match(mainScriptText, /workspaceShell\.hidden = !hasParsedSections && appState\.statusTone !== 'error'/, 'initial state hides empty workspace chrome while parse errors remain recoverable');
+assert.match(mainScriptText, /importIntro\.scrollIntoView\(\{ block: 'start' \}\);\s*fileInput\.focus\(\{ preventScroll: true \}\);/, 'Clear Report returns focus to the primary import action');
+assert.match(workspaceNavigationSource, /dialog\.showModal\(\)/, 'mobile Sections control opens a native modal dialog');
+assert.match(workspaceNavigationSource, /closeButton\.addEventListener\('click', \(\) => dialog\.close\(\)\)/, 'mobile section dialog explicit close uses the native close path');
+assert.match(workspaceNavigationSource, /if \(event\.key !== 'Escape'\) return;[^]*event\.preventDefault\(\);[^]*dialog\.close\(\)/, 'mobile section dialog supports an explicit Escape close path');
+assert.match(workspaceNavigationSource, /dialog\.addEventListener\('close'[^]*if \(!trigger\.hidden\) trigger\.focus\(\)/, 'dialog close and Escape return focus to the invoking control');
+assert.match(workspaceNavigationSource, /if \(desktopMedia\.matches && dialog\.open\)[^]*focusDesktopAfterClose = true;[^]*dialog\.close\(\)/, 'open mobile navigation closes safely when the viewport crosses to desktop');
+assert.match(workspaceNavigationSource, /suppressFocusReturn = true;[^]*dialog\.close\(\);[^]*const nextFocus = trigger\.hidden \? fallbackFocus : trigger;[^]*nextFocus\?\.focus\(\)/, 'content replacement closes mobile navigation without leaving focus on a control that becomes hidden');
+assert.match(workspaceNavigationSource, /observer\?\.disconnect\(\);[^]*new IntersectionObserver/, 'section replacement disconnects stale observers before active-section tracking restarts');
+assert.match(workspaceNavigationSource, /rootMargin: '-12% 0px -68% 0px'/, 'active-section tracking uses a bounded observation zone rather than a raw scroll handler');
+assert.doesNotMatch(workspaceNavigationSource, /addEventListener\(['"]scroll|setInterval|innerHTML|localStorage|sessionStorage|fetch\(/, 'navigation adds no continuous scroll handler, unsafe HTML, persistence, or network behavior');
+assert.match(renderSectionNavSource, /aria-current', 'location'/, 'section navigation exposes the current location with appropriate semantics');
 assert.match(mainScriptText, /getUnsupportedDiagnosticMessage\(classification\)/, 'main app uses safe recognized-unsupported diagnostic messages');
 assert.match(mainScriptText, /import \{ createComparisonSections, validateComparison \} from '\.\/comparison\/comparisonModel\.js';/, 'main app reuses the pure comparison model');
 assert.match(mainScriptText, /import \{ downloadTextFile \} from '\.\/clipboard\/downloadText\.js';/, 'main app delegates downloads to the focused text-download helper');
@@ -346,6 +373,10 @@ assert.match(browserHarnessSource, /matchRegions,\s*activeExactMatchId/, 'browse
 assert.match(browserHarnessSource, /exactMatchRenderingWorkflow/, 'browser harness includes a focused exact-match rendering workflow');
 assert.match(browserHarnessSource, /visibleSearchContractWorkflow/, 'browser harness covers hidden-only and visible-cell rendering transitions');
 assert.match(browserHarnessSource, /applicationWorkflow/, 'browser harness covers live search, report, comparison, Raw Local View, and Clear Report transitions');
+assert.match(browserHarnessSource, /mobileNavigation\.modal = sectionDialog\.matches\(':modal'\)/, 'browser harness verifies native modal section navigation at sub-desktop widths');
+assert.match(browserHarnessSource, /mobileNavigation\.focusReturned = document\.activeElement === sectionsTrigger/, 'browser harness verifies explicit dialog close returns focus');
+assert.match(browserHarnessSource, /mobileNavigation\.replacementClosed = !sectionDialog\.open/, 'browser harness verifies report replacement closes stale mobile navigation');
+assert.match(browserHarnessSource, /clearReturnedToImport/, 'browser harness verifies Clear Report returns focus to the import action');
 assert.match(browserHarnessSource, /Promise\.race\(\[/, 'browser harness bounds frame settlement when headless animation frames are unavailable');
 assert.match(browserHarnessSource, /targetIdsUnique: new Set\(targetIds\)\.size === targetIds\.length/, 'browser harness checks deterministic unique target identities');
 assert.match(browserHarnessSource, /hostileImageCount: document\.querySelectorAll\('#sections img'\)\.length/, 'browser harness checks hostile report text does not create image elements');
@@ -375,6 +406,7 @@ assert.match(styleText, /\.skip-link:focus-visible\s*{[^}]*transform:\s*translat
 assert.match(styleText, /:focus-visible\s*{[^}]*outline:\s*var\(--border-focus\) solid var\(--color-focus-ring\);/s, 'all keyboard focus uses the shared visible focus foundation');
 assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-motion users receive motion guardrails');
 assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
+assert.match(styleText, /\.file-picker:focus-within span\s*{[^}]*outline:\s*var\(--border-focus\) solid var\(--color-focus-ring\);/s, 'visually hidden native file input exposes focus on its visible picker surface');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
 assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
 assert.match(styleText, /\.exact-match\s*{[^}]*text-decoration:\s*underline;/s, 'non-active matches remain identifiable beyond color');
@@ -3429,6 +3461,13 @@ assert.deepEqual(
   ipsSections.map((section) => ({ id: section.id, label: section.title, href: `#${section.id}` })),
   'section nav items use section IDs and titles as jump-link labels'
 );
+const hiddenNavigationHelper = 'HIDDEN-NAVIGATION-HELPER-SENTINEL';
+const safeNavigationItems = createSectionNavItems([{
+  id: 'safe-navigation-section',
+  title: 'Visible navigation title',
+  helper: hiddenNavigationHelper,
+}]);
+assert.equal(JSON.stringify(safeNavigationItems).includes(hiddenNavigationHelper), false, 'section navigation excludes hidden helper properties');
 assert.deepEqual(
   parseInput(realSchemaJetsamText),
   parseInput(realSchemaJetsamText, { sanitize: true }),
