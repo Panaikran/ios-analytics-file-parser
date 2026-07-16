@@ -263,7 +263,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-slice20d-report-content-2026-07-16/, 'service worker cache version reflects the Slice 20D report content update');
+assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16/, 'service worker cache version reflects the complete v2.0 production shell');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');

@@ -25,10 +25,10 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 | Item | Status |
 | --- | --- |
-| Latest released version | `v1.9.0` (2026-07-15) |
-| Active phase | `v1.9.0 — Visible Search Contract Integrity` released and fully closed |
-| Current focus | `v2.0.0 — Apple-Inspired Inspector Workspace` planned; implementation not started |
-| Next milestone | `v2.0.0` design and milestone plan approved; no implementation slice is active |
+| Latest released version | `v2.0.0` (2026-07-16) |
+| Active phase | `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 closed |
+| Current focus | No implementation milestone is active |
+| Next milestone | Future work remains planning-only; v2.1.0 implementation has not started |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -55,7 +55,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.7.0 | Released 2026-07-14: Comparison Workflow Clarity |
 | v1.8.0 | Released 2026-07-14: Precision Search & Deep Inspection |
 | v1.9.0 | Released 2026-07-15: Visible Search Contract Integrity |
-| v2.0.0 | Planned: Apple-Inspired Inspector Workspace; implementation not started |
+| v2.0.0 | Released 2026-07-16: Apple-Inspired Inspector Workspace |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -63,7 +63,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v1.9.0 — Visible Search Contract Integrity` is the latest stable release, tagged and published on 2026-07-15 as a non-draft, non-prerelease GitHub Release. It aligns table-row filtering with declared visible columns while preserving visible-cell search, exact-match metadata, navigation, copy, export, comparison, Raw Local View, privacy, local-only, and offline boundaries.
+`v2.0.0 — Apple-Inspired Inspector Workspace` is the latest stable release. It reorganizes the existing local parser into a responsive, accessible inspection workspace with light and dark themes, continuous report content, deliberate navigation and controls, Multi-Report Comparison, and Raw Local View while preserving the released parser, search, export, privacy, and offline contracts.
 
 ## Why This Exists
 
@@ -152,6 +152,8 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Search Result Navigation | Implemented in `v1.6.0`: section-level Previous/Next movement through visible matching sections |
 | Precision Search & Deep Inspection | Implemented in `v1.8.0`: exact-match metadata, safe highlighting, and non-wrapping Previous/Next exact-match navigation within visible sanitized content |
 | Visible Search Contract Integrity | Released in `v1.9.0`: table-row search follows declared visible columns only |
+| Inspector Workspace | Released in `v2.0.0`: responsive shell, calm import state, section navigation, continuous report content, and restrained control surfaces |
+| Light and dark themes | Supported through `prefers-color-scheme`, with reduced-transparency, increased-contrast, forced-colors, and reduced-motion fallbacks |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
 | Structured Sanitized JSON Export | Supported: visible single-report and comparison `.json` downloads |
@@ -193,6 +195,15 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Sysdiagnose archive extraction | Not supported |
 
 ## Current Features
+
+### Inspector Workspace
+
+- A calm import state becomes a two-region desktop workspace after parsing.
+- Tablet and mobile use an accessible section-navigation dialog instead of a stacked desktop rail.
+- Parsed report content stays on one opaque, continuous document surface with semantic field relationships, tables, and textual chart equivalents.
+- Search, exact-match navigation, and report actions use compact responsive control chrome; report content never uses glass.
+- Multi-Report Comparison and Raw Local View have distinct, privacy-preserving workspace treatments.
+- Neutral light and dark themes follow the system preference and retain solid, high-contrast fallbacks.
 
 ### Input
 
@@ -309,6 +320,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - Updates require the user to press `Reload app`; the app does not auto-reload while a report may be open.
 - `v0.4.1-alpha` fixes update activation by keeping the `skipWaiting()` request alive during the service worker message event.
 - `v0.8.0-alpha` platform hardening keeps the service worker on an explicit precache allowlist, adds static guards for manifest and cache boundaries, and redirects unsupported nested navigations back to the app root so relative assets do not break.
+- `v2.0.0` advances the cache identity for the complete Inspector Workspace while retaining the explicit app-shell allowlist and update flow.
 - Offline setup failures are non-blocking; online parsing still works.
 
 ### Accessibility And Mobile
@@ -329,6 +341,7 @@ The v0.5.0-alpha viewer adds a non-mutating CoreAnalytics overview above the exi
 - v1.6 Search Result Navigation uses native Previous and Next buttons, accessible names, `aria-disabled` boundary state, visible focus, logical tab order, existing status announcements, stable-anchor movement, and touch-safe controls.
 - v1.7 comparison setup uses programmatic input labels, associated privacy help text, native keyboard-editable controls, predictable focus restoration after removal, updated positional names, and responsive touch-safe layout. Labels remain ephemeral. No native screen-reader certification or Safari/Firefox validation is claimed.
 - v1.8 exact-match inspection uses distinct native section and exact-match controls, keyboard operation, visible focus, active-match styling beyond color, concise live-status feedback, reduced-motion handling, and responsive touch-safe controls. No native screen-reader certification or Safari/Firefox validation is claimed.
+- v2.0 adds semantic report documents and tables, persistent search labels, an accessible mobile section dialog, responsive action disclosure, system light/dark themes, and reduced-transparency, increased-contrast, forced-colors, and reduced-motion fallbacks. It targets WCAG 2.2 AA where applicable; no formal certification is claimed.
 
 ## Running Locally
 
@@ -649,6 +662,7 @@ After first successful service worker setup, these fictional examples are availa
 - [Phase 15 Summary](PHASE_15_SUMMARY.md)
 - [Phase 16 Summary](PHASE_16_SUMMARY.md)
 - [Phase 19 Summary](PHASE_19_SUMMARY.md)
+- [Phase 20 Summary](PHASE_20_SUMMARY.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -683,12 +697,12 @@ After first successful service worker setup, these fictional examples are availa
 - Human-readable explanations are conservative and generic; they do not symbolicate, inspect full raw stacks, or identify the exact faulty function.
 - Comparison accepts only 2 or 3 reports that share a supported `parserType`; mixed types, raw-mode reports, fuzzy matching, and source-text comparison are not supported. Local labels are intentionally ephemeral and are not exported.
 - No AI diagnosis or exact root-cause analysis is provided.
-- Section navigation marks clicked links only; there is no scroll-spy observer.
+- Section navigation tracks the current visible report section and resets safely when report content changes.
 - Dense table state is UI-only and resets on new report, Clear Report, and privacy reparse.
 - Copy reflects currently visible dense-table content and does not include collapsed hidden rows.
 - Sanitized Visible Export is limited to visible `.txt` and `.json` output. Raw, original-file, CSV, PDF, and persistent export history are not supported.
 - Examples and PWA behavior require serving the repository through a local server or GitHub Pages.
-- Current UI is dark themed; dark/light mode via `prefers-color-scheme` is not implemented.
+- Theme selection follows `prefers-color-scheme`; there is no in-app theme setting or stored theme preference.
 - Panic parsing is regex/section based and may need expansion for uncommon layouts.
 - Jetsam culprit selection is heuristic when no explicit victim exists.
 - No symbolication.
@@ -721,6 +735,7 @@ After first successful service worker setup, these fictional examples are availa
 | v1.7.0 | Released 2026-07-14 | Comparison Workflow Clarity with ephemeral local labels, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | v1.8.0 | Released 2026-07-14 | Precision Search & Deep Inspection: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | v1.9.0 | Released 2026-07-15 | Visible Search Contract Integrity: declared visible-column row filtering with workflow, privacy, accessibility, responsive, browser, export, and performance hardening |
+| v2.0.0 | Released 2026-07-16 | Apple-Inspired Inspector Workspace: responsive shell, light/dark themes, import/navigation, continuous report content, search/actions, comparison, Raw Local View, accessibility, and PWA hardening |
 
 The project keeps the same constraints:
 
@@ -791,7 +806,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v1.9.0 — Visible Search Contract Integrity` is released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` is planned, with no implementation slice active. The approved direction is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md) and [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md). MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
+`v2.0.0 — Apple-Inspired Inspector Workspace` is released and Phase 20 is fully closed on 2026-07-16. The implemented design is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md), [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md), and [`PHASE_20_SUMMARY.md`](PHASE_20_SUMMARY.md). No later implementation milestone is active. MetricKit, speculative performance optimization, additional parser families, battery and charging analysis, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v1.9.0` released and fully closed on 2026-07-15. `v2.0.0 — Apple-Inspired Inspector Workspace` has completed and frozen Slices 20A–20G; Slice 20H is next but not started.
+Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. No later implementation milestone is active.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -31,7 +31,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Comparison Workflow Clarity | Released | `v1.7.0` | Released 2026-07-14: ephemeral local labels, generic positional identity, clearer setup feedback, focus restoration, and privacy-safe export isolation |
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | Visible Search Contract Integrity | Released | `v1.9.0` | Released 2026-07-15: declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
-| Apple-Inspired Inspector Workspace | In progress | `v2.0.0` | Slices 20A–20G are complete and frozen; Slice 20H is next but not started |
+| Apple-Inspired Inspector Workspace | Released | `v2.0.0` | Released 2026-07-16: all Slices 20A–20H complete and frozen; Phase 20 closed |
 
 ## Project Constraints
 
@@ -797,9 +797,9 @@ reproducible shared-contract defect, corrected in the shared filter path.
 - [x] Manual release review approved.
 - [x] The annotated `v1.9.0` tag and published, non-draft, non-prerelease GitHub Release point to the release commit.
 
-## Active Roadmap: v2.0.0
+## Completed Roadmap: v2.0.0
 
-Status: In progress. Slices 20A–20G are complete and frozen. Slice 20H is next but not started.
+Status: Released on 2026-07-16. Slices 20A–20H are complete and frozen; Phase 20 is closed.
 
 Theme: Apple-Inspired Inspector Workspace.
 
@@ -835,15 +835,16 @@ Slices:
 5. 20E — complete and frozen: search, exact match, and report actions.
 6. 20F — complete and frozen: comparison and Raw Local View workspace treatment.
 7. 20G — complete and frozen: responsive and accessibility hardening.
-8. 20H — next, not started: browser, performance, PWA, and release documentation.
+8. 20H — complete and frozen: final browser, performance, PWA, documentation, and release validation.
 
 No parser, `SectionModel[]`, sanitizer, comparison model, search semantic,
-copy/export contract, schema, dependency, backend, persistence, service-worker
-strategy, tag, or GitHub Release change is authorized by this planning entry.
+copy/export contract, schema, dependency, backend, persistence, or
+service-worker strategy changed during Phase 20. Release publication is
+recorded in `PHASE_20_SUMMARY.md`.
 
 ## Future Hardening And Exploratory Work
 
-These items remain outside the completed v1.9 scope unless explicitly approved later.
+These items remain outside the completed v2.0 scope unless explicitly approved later.
 
 | Area | Future work |
 | --- | --- |
@@ -854,13 +855,13 @@ These items remain outside the completed v1.9 scope unless explicitly approved l
 
 ## Historical Planning Notes
 
-The original four-week checklist and task IDs have been replaced by completed milestone summaries and active milestone slices above. Those old checklist items were useful while planning, but they no longer reflect the released project state.
+The original four-week checklist and task IDs have been replaced by completed milestone summaries and slice records above. Those old checklist items were useful while planning, but they no longer reflect the released project state.
 
 The current source of truth is:
 
 - `README.md` for user-facing support and limitations.
 - `CHANGELOG.md` for release history.
-- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, `PHASE_17_SUMMARY.md`, `PHASE_18_SUMMARY.md`, and `PHASE_19_SUMMARY.md` for phase details.
+- `PHASE_1_SUMMARY.md`, `PHASE_2_SUMMARY.md`, `PHASE_3_SUMMARY.md`, `PHASE_4_SUMMARY.md`, `PHASE_5_SUMMARY.md`, `PHASE_6_SUMMARY.md`, `PHASE_7_SUMMARY.md`, `PHASE_8_SUMMARY.md`, `PHASE_9_SUMMARY.md`, `PHASE_11_SUMMARY.md`, `PHASE_12_SUMMARY.md`, `PHASE_13_SUMMARY.md`, `PHASE_14_SUMMARY.md`, `PHASE_15_SUMMARY.md`, `PHASE_16_SUMMARY.md`, `PHASE_17_SUMMARY.md`, `PHASE_18_SUMMARY.md`, `PHASE_19_SUMMARY.md`, and `PHASE_20_SUMMARY.md` for phase details.
 - This roadmap for active and future project direction.
 
 ## Exploratory Ideas
@@ -879,19 +880,11 @@ These ideas are intentionally out of scope for the completed v1.9 milestone unle
 
 ## Next Planning Step
 
-v1.9.0 is released and fully closed. v2.0.0 interface redesign planning is
-approved in `docs/design/V2_INTERFACE_DESIGN.md` and `PHASE_20_PLAN.md`. Slice
-20A is complete and frozen following visual approval of prototype commit
-`b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slices 20B–20G are complete and
-frozen after production shell, import/navigation, report-content, search/action,
-comparison/Raw Local View, accessibility, browser, performance, PWA, and
-regression validation. Slice 20C is recorded by
-the focused implementation commit `feat(v2.0): implement import state and workspace
-navigation`; Slice 20D is recorded by `feat(v2.0): implement report content
-system`; Slice 20E is recorded by `feat(v2.0): redesign search and report actions`.
-Slice 20F is recorded by `feat(v2.0): redesign comparison and raw local view`.
-Slice 20G is recorded by `fix(v2.0): harden responsive accessibility`. Slice
-20H is next but not started.
+v2.0.0 is released and fully closed. The approved prototype remains frozen at
+`b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slices 20A–20H and Phase 20 are
+complete and frozen after production implementation, regression validation,
+browser and performance QA, PWA cache reconciliation, documentation, annotated
+tagging, and GitHub Release publication. No v2.1 implementation is active.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.

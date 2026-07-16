@@ -1,5 +1,43 @@
 # Changelog
 
+## v2.0.0 — Apple-Inspired Inspector Workspace
+
+Status: Released on 2026-07-16. The annotated `v2.0.0` tag and published,
+non-draft, non-prerelease GitHub Release point to the release commit.
+
+### Added
+
+- A responsive Inspector Workspace with a calm import state, persistent desktop section rail, accessible mobile section dialog, and opaque continuous report canvas.
+- Neutral light and dark themes using system typography, one blue interaction accent, and solid fallbacks for reduced transparency, increased contrast, forced colors, and unsupported backdrop blur.
+- Semantic report field relationships, accessible tables and scroll regions, and textual equivalents for existing graphical summaries.
+- Compact single-report search, exact-match, Copy Visible, text export, and structured sanitized JSON action surfaces.
+- Dedicated production treatments for sanitized Multi-Report Comparison and opt-in Raw Local View.
+
+### Changed
+
+- Existing report content now uses a deliberate technical-document hierarchy with responsive density and contained wide tables.
+- Visible search keeps its existing case-insensitive substring contract while presenting clear result counts, non-wrapping exact-match position, and deterministic Previous, Next, and Clear Search states.
+- Comparison and Raw Local View preserve their existing eligibility and privacy rules while making mode, actions, and exit paths clearer.
+- The service-worker cache identity now represents the complete v2.0 production shell; its explicit allowlist, install, update, cleanup, and fetch behavior remain unchanged.
+
+### Accessibility
+
+- Logical landmarks and headings, visible persistent labels, 44px control foundations, visible focus, native dialog/disclosure behavior, semantic tables, concise live status, and predictable focus restoration.
+- Responsive reflow and preference fallbacks for reduced motion, reduced transparency, increased contrast, forced colors, and system light/dark appearance.
+- The project targets WCAG 2.2 AA where applicable; this release does not claim formal accessibility certification.
+
+### Privacy
+
+- Processing remains local-only with no backend, uploads, analytics, cloud storage, or report persistence.
+- Sanitized output remains the default; hidden helper values, local aliases, raw-only content, and capped-out content remain excluded from visible search, copy, and exports.
+- Comparison remains sanitized-only for two or three compatible reports. Raw Local View remains opt-in and disables structured exports and comparison.
+
+### Testing
+
+- Verified all 11 bundled examples, primary report workflows, visible search and exact-match boundaries, copy and exports, comparison, Raw Local View, hostile-content safety, responsive containment, keyboard/focus behavior, and service-worker registration/readiness.
+- The complete Node/assert suite and established Node and browser performance budgets passed.
+- Runtime offline reload, native screen readers, Safari, Firefox, Mobile Safari, and physical devices were unavailable and are not claimed.
+
 ## v1.9.0 — Visible Search Contract Integrity
 
 Status: Released on 2026-07-15. The annotated `v1.9.0` tag object

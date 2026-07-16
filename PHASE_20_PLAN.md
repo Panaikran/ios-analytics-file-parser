@@ -2,11 +2,11 @@
 
 Version: `v2.0.0`
 
-Status: `In progress`
+Status: `Complete and closed`
 
-Implementation status: `Slices 20A–20G complete and frozen; Slice 20H next but not started`
+Implementation status: `Slices 20A–20H complete and frozen`
 
-Release status: `Not scheduled; implementation in progress; no release-readiness claim`
+Release status: `Released on 2026-07-16`
 
 ## Title
 
@@ -85,8 +85,8 @@ frozen.
 
 ## Slices
 
-Slices 20A–20G are complete and frozen. Slice 20H is next but not started;
-no later implementation slice is active.
+Slices 20A–20H are complete and frozen. Phase 20 is closed; no later
+implementation slice is active.
 
 ### Slice 20A — Isolated Prototype and Design Approval
 
@@ -280,17 +280,16 @@ Completion record: `fix(v2.0): harden responsive accessibility`
 
 ### Slice 20H — Browser, Performance, PWA, and Release Documentation
 
-Status: `Next — not started`
+Status: `Complete and frozen`
 
-- **Objective:** verify the integrated redesign and reconcile documentation
-  without claiming release before approval.
+- **Objective:** verify the integrated redesign, reconcile documentation, and
+  publish only after every release gate passes.
 - **Expected files:** tests/harness, `service-worker.js` only for required cache
   consistency, README/ROADMAP/PLANS/phase summary/changelog only after verified
   implementation status.
 - **Dependencies:** 20A–20G complete with evidence.
-- **Boundaries:** no speculative optimization, feature expansion, tag, or
-  publication.
-- **Non-goals:** release creation before manual approval.
+- **Boundaries:** no speculative optimization or feature expansion.
+- **Non-goals:** publication before every release gate passed.
 - **Success:** complete tests, syntax, browser workflows, large-report budgets,
   offline/update path, accessibility, responsive, privacy, diff hygiene, and
   documentation consistency pass.
@@ -299,8 +298,8 @@ Status: `Next — not started`
   available engines/devices.
 - **Accessibility:** final keyboard, tree, screen-reader-when-available, zoom,
   and preference-mode evidence is recorded honestly.
-- **Rollback:** final docs/cache-readiness commit is independent of feature
-  commits; no tag or Release exists to unwind before approval.
+- **Rollback:** the final docs/cache-readiness commit remains independent of
+  feature commits; tag and Release publication follow the synchronized commit.
 
 ## Migration Strategy
 
@@ -374,10 +373,11 @@ before production implementation.
 
 Slice 20A is complete and frozen with visual approval recorded for prototype
 commit `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. There are no unresolved major
-design decisions. Slices 20B–20G are complete and frozen after validated
+design decisions. Slices 20B–20H are complete and frozen after validated
 production translation of the shell, calm import state, responsive workspace
 navigation, continuous opaque report-content system, and report search/action
 controls, including the comparison and Raw Local View workspace treatment and
-cross-surface responsive/accessibility hardening. Slice 20G is recorded by
-`fix(v2.0): harden responsive accessibility`. Slice 20H is next but not
-started, and no later implementation slice is active.
+cross-surface responsive/accessibility hardening and final browser,
+performance, PWA, documentation, and release validation. Slice 20G is recorded
+by `fix(v2.0): harden responsive accessibility`; Slice 20H and Phase 20 are
+closed by `release: v2.0.0`. No later implementation slice is active.

@@ -1,11 +1,12 @@
 # v2.0 Interface Design Specification
 
-Status: `Planned`
+Status: `Implemented, released, and frozen`
 
 Milestone: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
-Implementation status: not started. This document approves design direction and
-implementation boundaries only.
+Implementation status: completed in Phase 20 and released as `v2.0.0` on
+2026-07-16. This document remains the frozen design and implementation-boundary
+authority for the released workspace.
 
 ## 1. Decision Summary
 

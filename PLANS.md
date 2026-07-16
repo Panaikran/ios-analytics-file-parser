@@ -571,13 +571,13 @@ large-report budgets. Safari, Firefox, Mobile Safari, physical devices, native
 screen readers, heap snapshots, Playwright through WSL, and runtime offline
 reload remain unavailable environmental lanes and are not claimed.
 
-## Active Milestone: v2.0.0
+## Completed Milestone: v2.0.0
 
 Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
-Status: `In progress`
+Status: `Released on 2026-07-16`
 
-Implementation status: `Slices 20A–20G complete and frozen; Slice 20H next but not started`
+Implementation status: `Slices 20A–20H complete and frozen; Phase 20 closed`
 
 ### Scope Decision
 
@@ -607,8 +607,8 @@ All v1.9 parser, classification, `SectionModel[]`, sanitization, Raw Local View,
 comparison, visible-only search, exact-match, copy, text/JSON export, schema,
 capped-content, local-alias, service-worker/PWA, keyboard, responsive, and
 performance behavior remains frozen. Slice 20B changed only the approved
-presentation foundation and shell. No dependency, tag, or GitHub Release was
-added.
+presentation foundation and shell. No dependency was added during Phase 20;
+tagging and GitHub Release publication occurred only after Slice 20H passed.
 
 ### Slices
 
@@ -621,17 +621,19 @@ added.
 | 20E | Complete and frozen | Search, section/exact navigation, copy/export, and contextual report actions |
 | 20F | Complete and frozen | Comparison and Raw Local View workspace treatment |
 | 20G | Complete and frozen | Responsive and accessibility hardening across all required preference modes |
-| 20H | Next — not started | Browser, performance, PWA update-path, documentation, and release-readiness validation |
+| 20H | Complete and frozen | Browser, performance, PWA update-path, documentation, and release validation |
 
 The Slice 20A prototype at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48` received visual approval for its
 structure, visual system, interaction/accessibility behavior, and performance
-review. Slice 20A is complete and frozen. Slices 20B–20G are complete and frozen
-after full regression, accessibility, responsive, browser, performance, and PWA
-validation. Slice 20C is recorded by the focused implementation commit
+review. Slice 20A is complete and frozen. Slices 20B–20H are complete and frozen
+after full regression, accessibility, responsive, browser, performance, PWA,
+documentation, and release validation. Slice 20C is recorded by the focused
+implementation commit
 `feat(v2.0): implement import state and workspace navigation`; Slice 20D is
 recorded by `feat(v2.0): implement report content system`; Slice 20E is recorded
 by `feat(v2.0): redesign search and report actions`; Slice 20F is recorded by
 `feat(v2.0): redesign comparison and raw local view`; Slice 20G is recorded by
-`fix(v2.0): harden responsive accessibility`. Slice 20H is next but not started.
+`fix(v2.0): harden responsive accessibility`. Slice 20H and Phase 20 are closed
+by `release: v2.0.0`. No later implementation milestone is active.
 
