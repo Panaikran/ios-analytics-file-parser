@@ -63,6 +63,8 @@ const exactMatchNextButton = document.querySelector('#exact-match-next');
 const exactMatchPosition = document.querySelector('#exact-match-position');
 const exactMatchStatus = document.querySelector('#exact-match-status');
 const searchCount = document.querySelector('#search-count');
+const reportActionsPanel = document.querySelector('#report-actions');
+const reportActionsTrigger = document.querySelector('#report-actions-trigger');
 const exportPanel = document.querySelector('#export-panel');
 const downloadVisibleExportButton = document.querySelector('#download-visible-export');
 const downloadVisibleJsonButton = document.querySelector('#download-visible-json');
@@ -78,6 +80,7 @@ const mobileSectionNav = document.querySelector('#mobile-section-nav');
 const emptyResults = document.querySelector('#empty-results');
 const sectionsElement = document.querySelector('#sections');
 const offlineStatus = document.querySelector('#offline-status');
+const compactReportActionsMedia = globalThis.matchMedia('(max-width: 47.999rem)');
 
 const OFFLINE_READY_MESSAGE = 'Offline app shell ready. Examples can open offline. Reports are still not saved.';
 const OFFLINE_SETUP_FAILED_MESSAGE = 'Offline setup unavailable. Online parsing still works.';
@@ -145,7 +148,7 @@ function renderApp() {
   if (hasParsedSections) importOptions.open = false;
   workspaceShell.hidden = !hasParsedSections && appState.statusTone !== 'error';
   workspaceHeader.hidden = !hasParsedSections;
-  renderStatus(statusElement, statusMessageForSearch(searchMetadata), comparisonMode ? 'info' : appState.statusTone);
+  renderStatus(statusElement, comparisonMode ? comparisonMessage : appState.statusMessage, comparisonMode ? 'info' : appState.statusTone);
   const blockingImportError = !hasParsedSections && appState.statusTone === 'error';
   statusElement.setAttribute('role', blockingImportError ? 'alert' : 'status');
   statusElement.setAttribute('aria-live', blockingImportError ? 'assertive' : 'polite');
@@ -210,9 +213,11 @@ function getEligibleExportSections(activeSections, visibleSections) {
 }
 
 function renderExportControls(hasParsedSections, exportText, exportJson, hasEligibleSections) {
-  exportPanel.hidden = !hasParsedSections;
+  reportActionsPanel.hidden = !hasParsedSections;
+  reportActionsPanel.dataset.compatibility = String(comparisonMode || !appState.sanitize);
   downloadVisibleExportButton.disabled = !hasEligibleSections || !exportText;
   downloadVisibleJsonButton.disabled = !hasEligibleSections || !exportJson;
+  syncReportActionsLayout();
 
   if (!hasParsedSections) return;
   if (!comparisonMode && !appState.sanitize) {
@@ -229,6 +234,46 @@ function renderExportControls(hasParsedSections, exportText, exportJson, hasElig
       ? 'Downloads only the currently visible sanitized comparison output.'
       : 'Downloads only the currently visible sanitized output.'
     : 'No visible sanitized output to download.';
+}
+
+function syncReportActionsLayout() {
+  const compact = compactReportActionsMedia.matches && reportActionsPanel.dataset.compatibility !== 'true';
+  reportActionsTrigger.hidden = !compact;
+
+  if (!compact) {
+    reportActionsPanel.dataset.open = 'false';
+    reportActionsTrigger.setAttribute('aria-expanded', 'false');
+    exportPanel.hidden = false;
+    return;
+  }
+
+  const open = reportActionsPanel.dataset.open === 'true';
+  exportPanel.hidden = !open;
+  reportActionsTrigger.setAttribute('aria-expanded', String(open));
+}
+
+function openReportActions() {
+  reportActionsPanel.dataset.open = 'true';
+  exportPanel.hidden = false;
+  reportActionsTrigger.setAttribute('aria-expanded', 'true');
+  exportPanel.querySelector('button:not(:disabled)')?.focus();
+}
+
+function closeReportActions({ returnFocus = false } = {}) {
+  reportActionsPanel.dataset.open = 'false';
+  reportActionsTrigger.setAttribute('aria-expanded', 'false');
+  if (compactReportActionsMedia.matches && reportActionsPanel.dataset.compatibility !== 'true') {
+    exportPanel.hidden = true;
+  }
+  if (returnFocus && !reportActionsTrigger.hidden) reportActionsTrigger.focus();
+}
+
+function toggleReportActions() {
+  if (reportActionsPanel.dataset.open === 'true') {
+    closeReportActions({ returnFocus: true });
+    return;
+  }
+  openReportActions();
 }
 
 function renderPrivacyControls(hasParsedSections) {
@@ -414,6 +459,7 @@ function exitComparisonMode() {
 
 function showParsedReport(text, sourceLabel) {
   pendingWorkspaceFocus = false;
+  closeReportActions();
   exitComparisonMode();
   clearSearchState();
   comparisonMessage = comparisonSetupMessage(validateComparison(comparisonEntries), comparisonEntries.length);
@@ -457,6 +503,7 @@ function showParsedReport(text, sourceLabel) {
 
 function clearReport() {
   pendingWorkspaceFocus = false;
+  closeReportActions();
   appState = createInitialAppState();
   comparisonEntries = [];
   comparisonMessage = 'No reports added.';
@@ -760,13 +807,8 @@ function navigateExactMatch(direction) {
   document.getElementById(direction > 0 ? 'exact-match-previous' : 'exact-match-next')?.focus();
 }
 
-function statusMessageForSearch(searchMetadata) {
-  if (!searchMetadata.searchActive) return comparisonMode ? comparisonMessage : appState.statusMessage;
-  return searchStatusText(searchMetadata);
-}
-
 function searchStatusText(searchMetadata) {
-  if (searchMetadata.matchCount === 0) return 'No matches in parsed output.';
+  if (searchMetadata.matchCount === 0) return 'No visible matches.';
 
   if (searchMetadata.cappedCoreAnalytics) {
     return `${searchCountText(searchMetadata.matchCount)} in rendered parsed output. Some source records are not rendered. Search and copy operate on rendered capped rows only.`;
@@ -981,6 +1023,23 @@ exactMatchPreviousButton.addEventListener('click', () => navigateExactMatch(-1))
 exactMatchNextButton.addEventListener('click', () => navigateExactMatch(1));
 downloadVisibleExportButton.addEventListener('click', downloadVisibleExport);
 downloadVisibleJsonButton.addEventListener('click', downloadVisibleJson);
+reportActionsTrigger.addEventListener('click', toggleReportActions);
+compactReportActionsMedia.addEventListener('change', () => {
+  const focusedAction = exportPanel.contains(document.activeElement);
+  syncReportActionsLayout();
+  if (focusedAction && exportPanel.hidden && !reportActionsTrigger.hidden) reportActionsTrigger.focus();
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (reportActionsPanel.dataset.open !== 'true' || reportActionsPanel.contains(event.target)) return;
+  closeReportActions();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape' || reportActionsPanel.dataset.open !== 'true') return;
+  event.preventDefault();
+  closeReportActions({ returnFocus: true });
+});
 
 inputPanel.addEventListener('dragover', (event) => {
   if (!event.dataTransfer?.types?.includes('Files')) return;

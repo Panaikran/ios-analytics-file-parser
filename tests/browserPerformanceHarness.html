@@ -445,6 +445,9 @@
           renderedMarkCount: document.querySelectorAll('#sections mark.exact-match').length,
           textExportDisabled: document.querySelector('#download-visible-export').disabled,
           jsonExportDisabled: document.querySelector('#download-visible-json').disabled,
+          reportActionsHidden: document.querySelector('#report-actions').hidden,
+          reportActionsExpanded: document.querySelector('#report-actions-trigger').getAttribute('aria-expanded'),
+          reportActionsContentHidden: document.querySelector('#export-panel').hidden,
           desktopNavigationHidden: document.querySelector('#section-nav').hidden,
           sectionsTriggerHidden: document.querySelector('#sections-trigger').hidden,
           sectionDialogOpen: document.querySelector('#section-dialog').open,
@@ -459,6 +462,28 @@
         document.querySelector('#parse-paste').click();
         await nextFrame();
         const workspaceFocusMoved = document.activeElement === document.querySelector('#workspace-heading');
+        const reportActionsTrigger = document.querySelector('#report-actions-trigger');
+        const reportActions = { availableAtViewport: !reportActionsTrigger.hidden };
+        if (!reportActionsTrigger.hidden) {
+          reportActionsTrigger.focus();
+          reportActionsTrigger.click();
+          await nextFrame();
+          reportActions.open = reportActionsTrigger.getAttribute('aria-expanded') === 'true'
+            && !document.querySelector('#export-panel').hidden;
+          reportActions.entryFocus = document.activeElement?.closest('#export-panel') === document.querySelector('#export-panel');
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          await nextFrame();
+          reportActions.escapeClosed = reportActionsTrigger.getAttribute('aria-expanded') === 'false'
+            && document.querySelector('#export-panel').hidden;
+          reportActions.focusReturned = document.activeElement === reportActionsTrigger;
+
+          reportActionsTrigger.click();
+          document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+          await nextFrame();
+          reportActions.outsideClosed = reportActionsTrigger.getAttribute('aria-expanded') === 'false'
+            && document.querySelector('#export-panel').hidden;
+        }
         const sectionsTrigger = document.querySelector('#sections-trigger');
         const sectionDialog = document.querySelector('#section-dialog');
         const mobileNavigation = { availableAtViewport: !sectionsTrigger.hidden };
@@ -542,6 +567,7 @@
 
         return {
           workspaceFocusMoved,
+          reportActions,
           mobileNavigation,
           visibleSearch,
           nextFocusRetained,

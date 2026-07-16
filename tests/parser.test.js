@@ -147,17 +147,21 @@ assert.match(indexHtmlText, /Install for quick access\. Installation saves the a
 assert.match(indexHtmlText, /On iPhone or iPad, tap Share, then Add to Home Screen\./, 'install guidance includes iPhone and iPad Add to Home Screen steps');
 assert.match(indexHtmlText, /<div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden><\/div>/, 'offline status supports accessible text and actions');
 assert.match(indexHtmlText, /id="privacy-toggle"[^>]*aria-describedby="privacy-mode-label"/, 'privacy toggle is associated with the current privacy mode label');
-assert.match(indexHtmlText, /id="result-search"[^>]*aria-describedby="search-count"/, 'search input is associated with calm search status text');
+assert.match(indexHtmlText, /<span>Search visible report content<\/span>[^]*id="result-search"[^>]*spellcheck="false"[^>]*aria-describedby="search-count"/, 'search keeps a persistent visible label, technical-input settings, and linked status');
+assert.match(indexHtmlText, /id="search-count"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/, 'query settlement uses one concise atomic search status');
+assert.match(indexHtmlText, /id="empty-results"[^>]*hidden>No visible matches\. Clear search to restore the report\./, 'no-result recovery stays adjacent to the search controls');
 assert.match(indexHtmlText, /<div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>/, 'search navigation starts hidden in a labeled group');
-assert.match(indexHtmlText, /id="search-navigation-label"[^>]*>Search result navigation</, 'search navigation group has a clear accessible label');
+assert.match(indexHtmlText, /id="search-navigation-label"[^>]*>Matching sections</, 'section movement has a concise accessible label');
 assert.match(indexHtmlText, /id="search-previous"[^>]*aria-label="Previous matching section"[^>]*disabled[^>]*>Previous</, 'Previous uses a native disabled button with an accessible name');
 assert.match(indexHtmlText, /id="search-position"[^>]*>Search navigation inactive\.</, 'search navigation exposes an inactive position status');
 assert.match(indexHtmlText, /id="search-next"[^>]*aria-label="Next matching section"[^>]*disabled[^>]*>Next</, 'Next uses a native disabled button with an accessible name');
 assert.match(indexHtmlText, /id="exact-match-navigation"[^>]*role="group"[^>]*aria-labelledby="exact-match-navigation-label"[^>]*hidden/, 'exact-match navigation starts hidden in a labeled group');
-assert.match(indexHtmlText, /id="exact-match-navigation-label"[^>]*>Exact-match navigation</, 'exact-match navigation has a distinct accessible label');
-assert.match(indexHtmlText, /id="exact-match-previous"[^>]*aria-label="Previous exact match"[^>]*disabled[^>]*>Previous exact match</, 'Previous exact match is a native disabled button with a distinct accessible name');
-assert.match(indexHtmlText, /id="exact-match-next"[^>]*aria-label="Next exact match"[^>]*disabled[^>]*>Next exact match</, 'Next exact match is a native disabled button with a distinct accessible name');
+assert.match(indexHtmlText, /id="exact-match-navigation-label"[^>]*>Exact matches</, 'exact-match navigation has a distinct accessible label');
+assert.match(indexHtmlText, /id="exact-match-previous"[^>]*aria-label="Previous exact match"[^>]*disabled[^>]*>Previous</, 'Previous exact match is a native disabled button with a distinct accessible name');
+assert.match(indexHtmlText, /id="exact-match-next"[^>]*aria-label="Next exact match"[^>]*disabled[^>]*>Next</, 'Next exact match is a native disabled button with a distinct accessible name');
 assert.match(indexHtmlText, /id="exact-match-status"[^>]*role="status"[^>]*aria-live="polite"/, 'exact-match movement has a scoped live status');
+assert.match(indexHtmlText, /<section id="report-actions" class="report-actions" aria-labelledby="report-actions-label" hidden>/, 'single-report actions use a compact labeled group');
+assert.match(indexHtmlText, /id="report-actions-trigger"[^>]*aria-controls="export-panel"[^>]*aria-expanded="false"[^>]*hidden>Actions</, 'mobile actions disclosure starts closed and named');
 assert.match(indexHtmlText, /<section id="comparison-panel" class="comparison-panel" aria-labelledby="comparison-title" hidden>/, 'comparison workflow uses a compact labeled region');
 assert.match(indexHtmlText, /id="add-to-comparison"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Add to comparison starts disabled and references status feedback');
 assert.match(indexHtmlText, /id="compare-reports"[^>]*aria-describedby="comparison-status"[^>]*disabled/, 'Compare starts disabled and references status feedback');
@@ -199,7 +203,7 @@ assert.match(styleText, /@media \(prefers-contrast: more\)/, 'shell includes an 
 assert.match(styleText, /@media \(forced-colors: active\)/, 'shell includes forced-colors behavior');
 assert.match(styleText, /@supports \(\s*\(backdrop-filter: blur\(1px\)\) or\s*\(-webkit-backdrop-filter: blur\(1px\)\)\s*\)/, 'restrained material enhancement is feature-detected');
 const materialEnhancement = styleText.slice(styleText.indexOf('@supports ('), styleText.indexOf('@media (min-width: 24.375rem)'));
-assert.match(materialEnhancement, /\.section-nav,\s*\.search-panel/, 'material enhancement is limited to navigation and search control chrome');
+assert.match(materialEnhancement, /\.section-nav,\s*\.search-panel,\s*\.export-panel/, 'material enhancement is limited to navigation, search, and action control chrome');
 assert.doesNotMatch(materialEnhancement, /\.section-card|\.frame-table|\.chart|\.comparison-panel|\.input-panel|\.status/, 'material enhancement excludes report, table, chart, comparison, form, and status content');
 assert.doesNotMatch(styleText, /linear-gradient|radial-gradient|conic-gradient/, 'production shell does not introduce decorative gradients');
 assert.deepEqual(
@@ -313,7 +317,7 @@ assert.match(mainScriptText, /downloadVisibleJsonButton\.disabled = !hasEligible
 assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.txt' : 'ios-diagnostic-export\.txt'/, 'visible export uses generic filenames only');
 assert.match(mainScriptText, /comparisonMode \? 'ios-diagnostic-comparison\.json' : 'ios-diagnostic-export\.json'/, 'structured JSON export uses generic filenames only');
 assert.match(mainScriptText, /mimeType: 'application\/json;charset=utf-8'/, 'structured JSON export uses the JSON Blob MIME type');
-assert.match(indexHtmlSource, /id="download-visible-json"[^>]*disabled[^>]*>Download sanitized JSON/, 'index exposes an accessible disabled JSON export action');
+assert.match(indexHtmlSource, /id="download-visible-json"[^>]*disabled[^>]*>Download JSON/, 'index exposes an accessible disabled JSON export action');
 assert.doesNotMatch(downloadTextSource, /(?:fetch|XMLHttpRequest|WebSocket|localStorage|sessionStorage|indexedDB|navigator\.clipboard)/, 'visible export download helper has no network, persistence, or clipboard behavior');
 assert.doesNotMatch(serializeSectionSource, /(?:document|window|scroll)/, 'visible export serialization is independent of DOM viewport and scroll state');
 assert.match(mainScriptText, /let comparisonEntries = \[\];[^]*let comparisonSections = \[\];[^]*let comparisonMode = false;/, 'comparison state remains separate from single-report app state');
@@ -400,8 +404,8 @@ assert.match(styleText, /\.search-count\s*{[^}]*max-width:\s*100%;[^}]*overflow-
 assert.match(styleText, /\.section-copy__feedback\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'copy feedback wraps without widening section cards');
 assert.match(styleText, /\.coreanalytics-overview__chip\s*{[^}]*max-width:\s*100%;[^}]*overflow-wrap:\s*anywhere;/s, 'CoreAnalytics facet chips wrap long rendered values');
 assert.match(styleText, /\.section-nav__link\s*{[^}]*min-height:\s*44px;/s, 'section nav chips have practical mobile touch targets');
-assert.match(styleText, /\.search-navigation__button\s*{[^}]*min-height:\s*44px;/s, 'search navigation buttons have practical touch targets');
-assert.match(styleText, /\.search-navigation\s*{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/s, 'search navigation wraps safely in the search panel');
+assert.match(styleText, /\.search-navigation__button\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'search navigation buttons use the shared 44px touch-target foundation');
+assert.match(styleText, /\.search-navigation__controls\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*auto minmax\(4\.5rem, 1fr\) auto;/s, 'search movement keeps its position readable between reachable controls');
 assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
 assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
 assert.match(styleText, /\.skip-link\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'skip link keeps the shared 44px touch and focus target');
@@ -411,7 +415,7 @@ assert.match(styleText, /@media \(prefers-reduced-motion:\s*reduce\)/, 'reduced-
 assert.match(styleText, /\.file-picker span,\s*\.clear-report,\s*\.parse-paste\s*{[^}]*min-height:\s*44px;[^}]*display:\s*inline-flex;/s, 'primary input actions share practical touch sizing and alignment');
 assert.match(styleText, /\.file-picker:focus-within span\s*{[^}]*outline:\s*var\(--border-focus\) solid var\(--color-focus-ring\);/s, 'visually hidden native file input exposes focus on its visible picker surface');
 assert.match(styleText, /\.section-copy__button\s*{[^}]*min-height:\s*44px;/s, 'copy buttons have practical mobile touch targets');
-assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*44px;/s, 'clear search button has a practical mobile touch target');
+assert.match(styleText, /\.clear-search\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'clear search uses the shared 44px mobile touch-target foundation');
 assert.match(styleText, /\.exact-match\s*{[^}]*text-decoration:\s*underline;/s, 'non-active matches remain identifiable beyond color');
 assert.match(styleText, /\.exact-match--active\s*{[^}]*outline:/s, 'active matches have a stronger non-color focus treatment');
 assert.match(styleText, /\.privacy-toggle\s*{[^}]*min-height:\s*44px;/s, 'privacy toggle has a practical mobile touch target');
@@ -4201,9 +4205,11 @@ assert.equal(
   1,
   'Next has one event listener'
 );
-assert.match(mainScriptText, /statusMessageForSearch\(searchMetadata\)/, 'search status text is derived from metadata');
 assert.match(mainScriptText, /searchCount\.textContent = searchStatusText\(searchMetadata\)/, 'visible and live search status use the same result-count wording');
-assert.match(mainScriptText, /if \(searchMetadata\.matchCount === 0\) return 'No matches in parsed output\.'/, 'zero-result searches cannot announce a positive result count');
+assert.match(mainScriptText, /if \(searchMetadata\.matchCount === 0\) return 'No visible matches\.'/, 'zero-result searches cannot announce a positive result count');
+assert.match(mainScriptText, /reportActionsPanel\.dataset\.compatibility = String\(comparisonMode \|\| !appState\.sanitize\)/, 'comparison and Raw Local View retain compatibility action presentation');
+assert.match(mainScriptText, /event\.key !== 'Escape'[^]*closeReportActions\(\{ returnFocus: true \}\)/, 'mobile report actions close with Escape and return focus');
+assert.match(mainScriptText, /compactReportActionsMedia\.addEventListener\('change'/, 'report actions reconcile focus when the viewport crosses the disclosure breakpoint');
 const exactNavigationHandlerSource = mainScriptText.match(/function navigateExactMatch\(direction\) \{[^]*?\n\}/)?.[0] ?? '';
 assert.match(exactNavigationHandlerSource, /nextIndex < 0 \|\| nextIndex > exactMatchTargets\.length - 1/, 'exact-match navigation remains non-wrapping at both boundaries');
 assert.match(mainScriptText, /Search and copy operate on rendered capped rows only\./, 'CoreAnalytics capped search wording is available in status text');

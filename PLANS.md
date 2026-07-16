@@ -577,7 +577,7 @@ Release title: `v2.0.0 — Apple-Inspired Inspector Workspace`
 
 Status: `In progress`
 
-Implementation status: `Slices 20A–20D complete and frozen; Slice 20E next but not started`
+Implementation status: `Slices 20A–20E complete and frozen; Slice 20F next but not started`
 
 ### Scope Decision
 
@@ -618,18 +618,19 @@ added.
 | 20B | Complete and frozen | Semantic tokens, light/dark themes, material fallbacks, and workspace shell |
 | 20C | Complete and frozen | Compact import state, desktop section rail, accessible section dialog, and safe workspace-entry/reset focus |
 | 20D | Complete and frozen | Continuous opaque report content, semantic field relationships, accessible tables/charts, and CoreAnalytics presentation |
-| 20E | Next — not started | Search, section/exact navigation, copy/export, and contextual report actions |
-| 20F | Planned | Comparison and Raw Local View workspace treatment |
+| 20E | Complete and frozen | Search, section/exact navigation, copy/export, and contextual report actions |
+| 20F | Next — not started | Comparison and Raw Local View workspace treatment |
 | 20G | Planned | Responsive and accessibility hardening across all required preference modes |
 | 20H | Planned | Browser, performance, PWA update-path, documentation, and release-readiness validation |
 
 The Slice 20A prototype at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48` received visual approval for its
 structure, visual system, interaction/accessibility behavior, and performance
-review. Slice 20A is complete and frozen. Slices 20B–20D are complete and frozen
+review. Slice 20A is complete and frozen. Slices 20B–20E are complete and frozen
 after full regression, accessibility, responsive, browser, performance, and PWA
 validation. Slice 20C is recorded by the focused implementation commit
 `feat(v2.0): implement import state and workspace navigation`; Slice 20D is
-recorded by `feat(v2.0): implement report content system`. Slice 20E is next but
-not started.
+recorded by `feat(v2.0): implement report content system`; Slice 20E is recorded
+by `feat(v2.0): redesign search and report actions`. Slice 20F is next but not
+started.
 

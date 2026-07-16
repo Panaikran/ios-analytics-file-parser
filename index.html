@@ -130,40 +130,50 @@
               </div>
               <p id="comparison-status" class="comparison-status" role="status" aria-live="polite">No reports added.</p>
             </section>
-            <div id="search-panel" class="search-panel" hidden>
-              <label class="search-field" for="result-search">
-                <span>Search parsed output</span>
-                <input id="result-search" type="search" autocomplete="off" placeholder="Search sections, fields, tables, raw text" aria-describedby="search-count">
-              </label>
-              <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
-              <div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>
-                <span id="search-navigation-label" class="search-navigation__label">Search result navigation</span>
-                <div class="search-navigation__controls">
-                  <button id="search-previous" class="search-navigation__button" type="button" aria-label="Previous matching section" aria-disabled="true" disabled>Previous</button>
-                  <span id="search-position" class="search-navigation__position">Search navigation inactive.</span>
-                  <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
+            <section id="search-panel" class="search-panel" aria-label="Search visible report content" hidden>
+              <div class="search-panel__primary">
+                <label class="search-field" for="result-search">
+                  <span>Search visible report content</span>
+                  <input id="result-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search visible fields and tables" aria-describedby="search-count">
+                </label>
+                <button id="clear-search" class="clear-search" type="button" hidden>Clear search</button>
+              </div>
+              <p id="search-count" class="search-count" role="status" aria-live="polite" aria-atomic="true">Search inactive.</p>
+              <p id="empty-results" class="empty-results" hidden>No visible matches. Clear search to restore the report.</p>
+              <div class="search-movement">
+                <div id="search-navigation" class="search-navigation" role="group" aria-labelledby="search-navigation-label" hidden>
+                  <span id="search-navigation-label" class="search-navigation__label">Matching sections</span>
+                  <div class="search-navigation__controls">
+                    <button id="search-previous" class="search-navigation__button" type="button" aria-label="Previous matching section" aria-disabled="true" disabled>Previous</button>
+                    <span id="search-position" class="search-navigation__position">Search navigation inactive.</span>
+                    <button id="search-next" class="search-navigation__button" type="button" aria-label="Next matching section" aria-disabled="true" disabled>Next</button>
+                  </div>
+                </div>
+                <div id="exact-match-navigation" class="search-navigation exact-match-navigation" role="group" aria-labelledby="exact-match-navigation-label" hidden>
+                  <span id="exact-match-navigation-label" class="search-navigation__label">Exact matches</span>
+                  <div class="search-navigation__controls">
+                    <button id="exact-match-previous" class="search-navigation__button" type="button" aria-label="Previous exact match" aria-disabled="true" disabled>Previous</button>
+                    <span id="exact-match-position" class="search-navigation__position">Exact-match navigation inactive.</span>
+                    <button id="exact-match-next" class="search-navigation__button" type="button" aria-label="Next exact match" aria-disabled="true" disabled>Next</button>
+                  </div>
+                  <p id="exact-match-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
                 </div>
               </div>
-              <div id="exact-match-navigation" class="search-navigation exact-match-navigation" role="group" aria-labelledby="exact-match-navigation-label" hidden>
-                <span id="exact-match-navigation-label" class="search-navigation__label">Exact-match navigation</span>
-                <div class="search-navigation__controls">
-                  <button id="exact-match-previous" class="search-navigation__button" type="button" aria-label="Previous exact match" aria-disabled="true" disabled>Previous exact match</button>
-                  <span id="exact-match-position" class="search-navigation__position">Exact-match navigation inactive.</span>
-                  <button id="exact-match-next" class="search-navigation__button" type="button" aria-label="Next exact match" aria-disabled="true" disabled>Next exact match</button>
+            </section>
+            <section id="report-actions" class="report-actions" aria-labelledby="report-actions-label" hidden>
+              <div class="report-actions__heading">
+                <h3 id="report-actions-label">Report actions</h3>
+                <button id="report-actions-trigger" class="report-actions__trigger" type="button" aria-controls="export-panel" aria-expanded="false" hidden>Actions</button>
+              </div>
+              <div id="export-panel" class="export-panel">
+                <div class="export-actions">
+                  <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download text</button>
+                  <button id="download-visible-json" class="export-button" type="button" aria-describedby="export-status" disabled>Download JSON</button>
                 </div>
-                <p id="exact-match-status" class="search-count exact-match-status" role="status" aria-live="polite"></p>
+                <p id="export-status" class="export-status">Downloads only the currently visible sanitized output.</p>
               </div>
-              <p id="search-count" class="search-count" aria-live="polite">Search inactive.</p>
-            </div>
-            <div id="export-panel" class="export-panel" hidden>
-              <div class="export-actions">
-                <button id="download-visible-export" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized visible output</button>
-                <button id="download-visible-json" class="export-button" type="button" aria-describedby="export-status" disabled>Download sanitized JSON</button>
-              </div>
-              <p id="export-status" class="export-status">Downloads only the currently visible sanitized output.</p>
-            </div>
+            </section>
           </section>
-          <p id="empty-results" class="empty-results" hidden>No matches in parsed output.</p>
           <div id="sections" class="sections"></div>
         </section>
       </div>
