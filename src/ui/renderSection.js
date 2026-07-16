@@ -15,6 +15,7 @@ export function renderSection(
     allSections = [],
     matchRegions = [],
     activeExactMatchId = '',
+    reportPresentation = false,
   } = {}
 ) {
   const sectionMatchRegions = getSectionMatchRegions(section, matchRegions);
@@ -26,9 +27,23 @@ export function renderSection(
   const header = document.createElement('div');
   header.className = 'section-card__header';
 
-  const title = document.createElement('h2');
+  const headingGroup = document.createElement('div');
+  headingGroup.className = 'section-card__heading-group';
+
+  const title = document.createElement(reportPresentation ? 'h3' : 'h2');
+  title.id = `${section.id}-title`;
+  title.dataset.sectionHeading = 'true';
   title.append(renderMatchText(section.title, findRegion(sectionMatchRegions, 'section-title'), activeExactMatchId));
-  header.append(title);
+  headingGroup.append(title);
+
+  if (reportPresentation && (section.priority === 'warning' || section.priority === 'critical')) {
+    const priority = document.createElement('span');
+    priority.className = `section-priority section-priority--${section.priority}`;
+    priority.textContent = `${section.priority === 'critical' ? 'Critical' : 'Warning'} section`;
+    headingGroup.append(priority);
+  }
+
+  header.append(headingGroup);
 
   if (onCopySection) {
     const copyMetadata = getCopyMetadata(section, { denseTableState, allSections });
@@ -69,6 +84,7 @@ export function renderSection(
         matchRegions: sectionMatchRegions,
         sourceSection,
         activeExactMatchId,
+        sectionHeadingId: title.id,
       })
     );
   }
@@ -157,19 +173,26 @@ function renderSectionTable(section, options) {
     matchRegions: options.matchRegions,
     sourceSection: options.sourceSection,
     activeExactMatchId: options.activeExactMatchId,
+    labelledBy: options.sectionHeadingId,
+    tableKey: `${section.id}-table`,
   });
 }
 
-function renderThreadGroups(section, view, { onToggleThreadGroup, matchRegions, sourceSection, activeExactMatchId }) {
+function renderThreadGroups(
+  section,
+  view,
+  { onToggleThreadGroup, matchRegions, sourceSection, activeExactMatchId }
+) {
   const wrapper = document.createElement('div');
   wrapper.className = 'thread-groups';
 
-  for (const group of view.groups) {
+  for (const [groupIndex, group] of view.groups.entries()) {
     const groupElement = document.createElement('section');
     groupElement.className = 'thread-group';
 
     const button = document.createElement('button');
     button.className = 'thread-group__toggle';
+    button.id = `${section.id}-thread-${groupIndex + 1}-toggle`;
     button.type = 'button';
     button.setAttribute('aria-expanded', String(group.expanded));
     button.setAttribute('aria-label', `Toggle ${group.thread} thread group, ${group.frameCount} frames, currently ${group.expanded ? 'expanded' : 'collapsed'}`);
@@ -184,6 +207,8 @@ function renderThreadGroups(section, view, { onToggleThreadGroup, matchRegions, 
         matchRegions,
         sourceSection,
         activeExactMatchId,
+        labelledBy: button.id,
+        tableKey: `${section.id}-thread-${groupIndex + 1}-table`,
       }));
     }
     wrapper.append(groupElement);
@@ -192,7 +217,11 @@ function renderThreadGroups(section, view, { onToggleThreadGroup, matchRegions, 
   return wrapper;
 }
 
-function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRows, matchRegions, sourceSection, activeExactMatchId }) {
+function renderLimitedProcessTable(
+  section,
+  view,
+  { onShowMoreRows, onShowAllRows, matchRegions, sourceSection, activeExactMatchId, sectionHeadingId }
+) {
   const wrapper = document.createElement('div');
   wrapper.className = 'limited-table';
 
@@ -201,6 +230,8 @@ function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRow
     matchRegions,
     sourceSection,
     activeExactMatchId,
+    labelledBy: sectionHeadingId,
+    tableKey: `${section.id}-table`,
   }));
 
   if (view.canShowMore) {
@@ -216,12 +247,17 @@ function renderLimitedProcessTable(section, view, { onShowMoreRows, onShowAllRow
   return wrapper;
 }
 
-function renderCollapsibleKextTable(section, view, { onToggleDenseTable, matchRegions, sourceSection, activeExactMatchId }) {
+function renderCollapsibleKextTable(
+  section,
+  view,
+  { onToggleDenseTable, matchRegions, sourceSection, activeExactMatchId, sectionHeadingId }
+) {
   const wrapper = document.createElement('div');
   wrapper.className = 'collapsible-table';
 
   const button = document.createElement('button');
   button.className = 'table-toggle';
+  button.id = `${section.id}-table-toggle`;
   button.type = 'button';
   button.setAttribute('aria-expanded', String(view.expanded));
   button.setAttribute('aria-label', `Toggle loaded kexts table, ${view.totalRows} rows, currently ${view.expanded ? 'expanded' : 'collapsed'}`);
@@ -234,6 +270,8 @@ function renderCollapsibleKextTable(section, view, { onToggleDenseTable, matchRe
       matchRegions,
       sourceSection,
       activeExactMatchId,
+      labelledBy: [sectionHeadingId, button.id].filter(Boolean).join(' '),
+      tableKey: `${section.id}-table`,
     }));
   }
 
@@ -298,14 +336,22 @@ function renderFields(fields, { matchRegions = [], activeExactMatchId = '' } = {
   dl.className = 'field-list';
 
   for (const [fieldIndex, field] of fields.entries()) {
+    const row = document.createElement('div');
+    row.className = 'field-row';
     const dt = document.createElement('dt');
     dt.append(renderMatchText(field.label, findRegion(matchRegions, 'field-label', { fieldIndex }), activeExactMatchId));
     const dd = document.createElement('dd');
+    if (isTechnicalValue(field.value)) dd.classList.add('technical-value');
     dd.append(renderMatchText(field.value, findRegion(matchRegions, 'field-value', { fieldIndex }), activeExactMatchId));
-    dl.append(dt, dd);
+    row.append(dt, dd);
+    dl.append(row);
   }
 
   return dl;
+}
+
+function isTechnicalValue(value) {
+  return /(?:0x[\da-f]+|\b(?:arm64e?|x86_64|EXC_[A-Z_]+|KERN_[A-Z_]+|SIG[A-Z]+)\b|\.dylib\b)/iu.test(String(value ?? ''));
 }
 
 function renderTable(rows, columns = null, {
@@ -313,6 +359,8 @@ function renderTable(rows, columns = null, {
   matchRegions = [],
   sourceSection = null,
   activeExactMatchId = '',
+  labelledBy = '',
+  tableKey = 'report-table',
 } = {}) {
   const resolvedColumns =
     columns ??
@@ -324,6 +372,7 @@ function renderTable(rows, columns = null, {
     ];
   const table = document.createElement('table');
   table.className = compact ? 'frame-table frame-table--compact' : 'frame-table';
+  if (labelledBy) table.setAttribute('aria-labelledby', labelledBy);
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -344,13 +393,14 @@ function renderTable(rows, columns = null, {
     const tr = document.createElement('tr');
     const rowIndex = Array.isArray(sourceSection?.table) ? sourceSection.table.indexOf(row) : -1;
     for (const [columnIndex, column] of resolvedColumns.entries()) {
-      const td = document.createElement('td');
-      td.append(renderMatchText(
+      const cell = columnIndex === 0 ? document.createElement('th') : document.createElement('td');
+      if (columnIndex === 0) cell.scope = 'row';
+      cell.append(renderMatchText(
         row[column.key],
         findRegion(matchRegions, 'table-cell', { rowIndex, columnIndex, columnKey: column.key }),
         activeExactMatchId
       ));
-      tr.append(td);
+      tr.append(cell);
     }
     tbody.append(tr);
   }
@@ -359,30 +409,62 @@ function renderTable(rows, columns = null, {
 
   const wrapper = document.createElement('div');
   wrapper.className = 'table-scroll';
-  wrapper.append(table);
+  wrapper.setAttribute('role', 'region');
+  wrapper.tabIndex = 0;
+  if (labelledBy) wrapper.setAttribute('aria-labelledby', labelledBy);
+
+  const hint = document.createElement('p');
+  hint.className = 'table-scroll__hint';
+  hint.id = `${tableKey}-scroll-hint`;
+  hint.textContent = 'Scroll horizontally to view all columns.';
+  wrapper.setAttribute('aria-describedby', hint.id);
+  table.setAttribute('aria-describedby', hint.id);
+
+  wrapper.append(hint, table);
   return wrapper;
 }
 
 function renderChart(chart, { matchRegions = [], activeExactMatchId = '' } = {}) {
-  const wrapper = document.createElement('div');
+  const wrapper = document.createElement('figure');
   wrapper.className = 'chart';
   wrapper.dataset.chartType = chart.type;
 
   const canvas = document.createElement('canvas');
   canvas.width = 720;
-  canvas.height = 180;
+  canvas.height = Math.max(180, 36 + (chart.items?.length ?? 0) * 30);
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', String(chart.title ?? 'Memory chart'));
-  wrapper.append(canvas);
+  canvas.setAttribute('aria-label', `${String(chart.title ?? 'Memory chart')}. Values are listed below.`);
 
-  const caption = document.createElement('p');
+  const caption = document.createElement('figcaption');
   caption.className = 'chart-caption';
   caption.append(renderMatchText(
     chart.title ?? 'Memory chart',
     findRegion(matchRegions, 'chart-label', { chartIndex: 0, chartPart: 'title' }),
     activeExactMatchId
   ));
-  wrapper.append(caption);
+
+  const data = document.createElement('dl');
+  data.className = 'chart-data';
+  for (const [itemIndex, item] of (chart.items ?? []).entries()) {
+    const row = document.createElement('div');
+    row.className = 'chart-data__row';
+    const label = document.createElement('dt');
+    label.append(renderMatchText(
+      item.label,
+      findRegion(matchRegions, 'chart-label', { chartIndex: 0, itemIndex, chartPart: 'item-label' }),
+      activeExactMatchId
+    ));
+    const value = document.createElement('dd');
+    value.append(renderMatchText(
+      item.value,
+      findRegion(matchRegions, 'chart-value', { chartIndex: 0, itemIndex, chartPart: 'item-value' }),
+      activeExactMatchId
+    ));
+    row.append(label, value);
+    data.append(row);
+  }
+
+  wrapper.append(caption, canvas, data);
 
   const schedule = globalThis.requestAnimationFrame ?? ((callback) => setTimeout(callback, 0));
   schedule(() => drawMemoryBars(canvas, chart.items ?? [], { matchRegions, activeExactMatchId }));
@@ -393,41 +475,55 @@ function drawMemoryBars(canvas, items, { matchRegions = [], activeExactMatchId =
   const context = canvas.getContext('2d');
   if (!context || !items.length) return;
 
+  const styles = getComputedStyle(canvas);
+  const palette = {
+    accent: styles.getPropertyValue('--color-accent').trim() || '#0066cc',
+    primary: styles.getPropertyValue('--color-text-primary').trim() || '#1d1d1f',
+    secondary: styles.getPropertyValue('--color-text-secondary').trim() || '#515154',
+    highlight: styles.getPropertyValue('--color-search-highlight').trim() || '#fff0a8',
+    highlightActive: styles.getPropertyValue('--color-search-highlight-active').trim() || '#ffd56a',
+  };
   context.clearRect(0, 0, canvas.width, canvas.height);
   const maxValue = Math.max(...items.map((item) => item.value), 1);
   const barHeight = 18;
   const gap = 12;
   const labelWidth = 120;
+  const valueInset = 12;
 
   context.font = '13px ui-monospace, SF Mono, Menlo, monospace';
   items.forEach((item, index) => {
     const y = 24 + index * (barHeight + gap);
-    const width = Math.round(((canvas.width - labelWidth - 28) * item.value) / maxValue);
-    context.fillStyle = '#8e8e93';
+    const valueText = String(item.value ?? '');
+    const valueWidth = Math.ceil(context.measureText(valueText).width);
+    const availableBarWidth = Math.max(1, canvas.width - labelWidth - valueWidth - valueInset * 2);
+    const width = Math.round((availableBarWidth * item.value) / maxValue);
+    context.fillStyle = palette.secondary;
     drawChartText(
       context,
       item.label,
       12,
       y + 14,
       findRegion(matchRegions, 'chart-label', { chartIndex: 0, itemIndex: index, chartPart: 'item-label' }),
-      '#8e8e93',
-      activeExactMatchId
+      palette.secondary,
+      activeExactMatchId,
+      palette
     );
-    context.fillStyle = item.color ?? '#30d158';
+    context.fillStyle = palette.accent;
     context.fillRect(labelWidth, y, width, barHeight);
     drawChartText(
       context,
-      item.value,
-      labelWidth + width + 8,
+      valueText,
+      Math.min(labelWidth + width + 8, canvas.width - valueWidth - valueInset),
       y + 14,
       findRegion(matchRegions, 'chart-value', { chartIndex: 0, itemIndex: index, chartPart: 'item-value' }),
-      '#f2f2f7',
-      activeExactMatchId
+      palette.primary,
+      activeExactMatchId,
+      palette
     );
   });
 }
 
-function drawChartText(context, value, x, baseline, region, color, activeExactMatchId) {
+function drawChartText(context, value, x, baseline, region, color, activeExactMatchId, palette) {
   const text = String(value ?? '');
   const occurrences = region?.occurrences ?? [];
   let cursor = 0;
@@ -443,10 +539,10 @@ function drawChartText(context, value, x, baseline, region, color, activeExactMa
       const matchWidth = context.measureText(text.slice(occurrence.start, occurrence.end)).width;
       const targetId = getExactMatchTargetId(region, occurrenceIndex);
       const active = targetId === activeExactMatchId;
-      context.fillStyle = active ? 'rgba(255, 159, 10, 0.5)' : 'rgba(255, 214, 10, 0.28)';
+      context.fillStyle = active ? palette.highlightActive : palette.highlight;
       context.fillRect(x + prefixWidth - 2, baseline - 15, matchWidth + 4, 18);
       if (active) {
-        context.strokeStyle = '#ff9f0a';
+        context.strokeStyle = palette.accent;
         context.lineWidth = 2;
         context.strokeRect(x + prefixWidth - 3, baseline - 16, matchWidth + 6, 20);
       }

@@ -113,6 +113,7 @@ const appStateSource = await readFile(new URL('../src/appState.js', import.meta.
 const renderSectionText = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
 const styleText = await readFile(new URL('../styles/main.css', import.meta.url), 'utf8');
 const tokenStyleText = await readFile(new URL('../styles/tokens.css', import.meta.url), 'utf8');
+const reportContentStyleText = await readFile(new URL('../styles/report-content.css', import.meta.url), 'utf8');
 const manifest = JSON.parse(manifestText);
 const precacheBody = serviceWorkerText.match(/const PRECACHE_URLS = \[(?<body>[^]*?)\];/)?.groups?.body ?? '';
 const precacheUrls = [...precacheBody.matchAll(/'([^']+)'/g)].map((match) => match[1]);
@@ -123,6 +124,7 @@ assert.match(indexHtmlText, /<link rel="apple-touch-icon" href=".\/icons\/apple-
 assert.match(indexHtmlText, /<a class="skip-link" href="#main-content">Skip to main content<\/a>/, 'page includes a keyboard skip link to main content');
 assert.match(indexHtmlText, /<main id="main-content" class="app-shell">/, 'main content exposes a stable skip-link target');
 assert.match(indexHtmlText, /<meta name="color-scheme" content="light dark">/, 'page advertises production light and dark color schemes');
+assert.match(indexHtmlText, /<link rel="stylesheet" href="\.\/styles\/main\.css">\s*<link rel="stylesheet" href="\.\/styles\/report-content\.css">/, 'report content styles load after the frozen shell foundation');
 assert.match(indexHtmlText, /name="theme-color" content="#f5f5f7" media="\(prefers-color-scheme: light\)"/, 'light browser chrome follows the approved canvas token');
 assert.match(indexHtmlText, /name="theme-color" content="#000000" media="\(prefers-color-scheme: dark\)"/, 'dark browser chrome follows the approved canvas token');
 assert.match(indexHtmlText, /<header id="import-intro" class="intro">[^]*<p class="app-identity">iOS Analytics File Parser<\/p>[^]*<h1>Inspect iOS diagnostic reports with clarity\.<\/h1>/, 'calm import state keeps application identity and one logical h1 in a semantic header');
@@ -249,9 +251,10 @@ assert.doesNotMatch(serviceWorkerText, /cache\.add\(/, 'service worker does not 
 assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does not cache test fixtures');
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
-assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, src modules, examples,/, 'service worker cache reminder lists both production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-slice20c-import-navigation-2026-07-15/, 'service worker cache version reflects the Slice 20C import and navigation update');
+assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
+assert.match(serviceWorkerText, /v2\.0\.0-slice20d-report-content-2026-07-16/, 'service worker cache version reflects the Slice 20D report content update');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
+assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
 assert.match(serviceWorkerText, /\.\/src\/search\/exactMatch\.js/, 'service worker precaches the exact-match helper');
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
@@ -4209,18 +4212,37 @@ assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering 
 assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
 assert.match(renderAppSource, /facetOptions:\s*options\.coreAnalyticsFacetOptions/, 'CoreAnalytics overview receives contract facet options from the app state path');
 assert.match(renderAppSource, /selectedFacetQuery:\s*options\.selectedCoreAnalyticsFacetQuery/, 'CoreAnalytics overview derives selected appearance from the current search query');
+assert.match(renderAppSource, /options\.presentation === 'report'/, 'report presentation is an explicit render option rather than inferred from report data');
+assert.match(renderAppSource, /element\.classList\.toggle\('report-document'/, 'single-report rendering activates the continuous document surface');
+assert.match(renderAppSource, /document\.createElement\('header'\)[^]*report-document__header[^]*report-document-title/s, 'single-report rendering includes a restrained semantic report header');
+assert.match(renderAppSource, /title\.textContent = identity\.title/, 'report identity is assigned through safe text content');
+assert.match(mainScriptText, /presentation:\s*hasParsedSections && !comparisonMode && appState\.sanitize \? 'report' : 'compatibility'/, 'only populated sanitized single reports receive the Slice 20D presentation');
+assert.match(mainScriptText, /title:\s*'Parsed report'[^]*type:\s*appState\.detectedType/s, 'report header uses generic identity and the existing parser type without exposing source labels');
 assert.match(renderSectionText, /getCopyMetadata/, 'render path computes copy metadata for feedback');
 assert.match(renderSectionText, /copyFeedbackText\(copyMetadata\)/, 'copy success feedback is derived from copy metadata');
 assert.match(renderSectionText, /Copied visible section content\./, 'copy feedback reports full visible section copy');
 assert.match(renderSectionText, /Copied visible rows only\./, 'copy feedback reports visible-row-only copy');
 assert.match(renderSectionText, /Copy failed\. Select and copy manually\./, 'copy failure feedback remains unchanged');
 assert.match(renderSectionText, /Search and copy operate on rendered capped rows only\./, 'copy feedback includes capped CoreAnalytics wording');
+assert.match(renderSectionText, /title\.id = `\$\{section\.id\}-title`/, 'each report section exposes a stable heading id derived from its stable section id');
+assert.match(renderSectionText, /title\.dataset\.sectionHeading = 'true'/, 'section headings expose a stable focus hook without depending on heading level');
+assert.match(renderSectionText, /row\.className = 'field-row'[^]*row\.append\(dt, dd\)/s, 'definition-list values are grouped into semantic property rows');
+assert.match(renderSectionText, /dd\.classList\.add\('technical-value'\)/, 'technical field values receive the approved monospace presentation hook');
+assert.match(renderSectionText, /wrapper\.setAttribute\('role', 'region'\)[^]*wrapper\.tabIndex = 0[^]*aria-labelledby[^]*aria-describedby/s, 'wide tables use a named keyboard-scrollable region with persistent instructions');
+assert.match(renderSectionText, /columnIndex === 0 \? document\.createElement\('th'\) : document\.createElement\('td'\)/, 'table first columns render as semantic row headers');
+assert.match(renderSectionText, /cell\.scope = 'row'/, 'table row headers expose row scope');
+assert.match(renderSectionText, /document\.createElement\('dl'\)[^]*data\.className = 'chart-data'/s, 'charts include a visible definition-list equivalent for the same values');
+assert.match(renderSectionText, /getComputedStyle\(canvas\)/, 'canvas colors resolve from the active production theme');
+assert.match(renderSectionText, /context\.measureText\(valueText\)[^]*canvas\.width - valueWidth - valueInset/s, 'chart value labels reserve measured canvas space instead of clipping at the edge');
+assert.doesNotMatch(renderSectionText, /item\.color \?\?/, 'chart presentation does not trust parser-provided decorative colors');
 assert.match(renderCoreAnalyticsOverviewSource, /Tables show rendered capped rows only\. Full raw JSON bodies are not rendered\./, 'CoreAnalytics overview explains rendered capped rows');
 assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rendered rows only\./, 'CoreAnalytics overview explains search and copy row boundaries');
 assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
 assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\(interactive \? 'button' : 'span'\)/, 'CoreAnalytics facet options render as native buttons when the contract is active');
 assert.match(renderCoreAnalyticsOverviewSource, /aria-pressed/, 'CoreAnalytics facet buttons expose selected appearance semantics');
 assert.match(renderCoreAnalyticsOverviewSource, /item\.query === selectedFacetQuery/, 'selected facet appearance follows the exact active query');
+assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\('dl'\)[^]*coreanalytics-overview__table-counts/s, 'CoreAnalytics row counts use a compact semantic definition summary rather than cards');
+assert.doesNotMatch(renderCoreAnalyticsOverviewSource, /document\.createElement\('section'\)[^]*coreanalytics-overview__table-count/s, 'CoreAnalytics row counts no longer render dashboard-style statistic tiles');
 assert.doesNotMatch(
   renderCoreAnalyticsOverviewSource,
   /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
@@ -4234,6 +4256,16 @@ assert.doesNotMatch(
 assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
 assert.match(styleText, /\.coreanalytics-overview__chip\s*\{[^}]*min-height:\s*44px;/s, 'CoreAnalytics facet controls keep practical touch targets');
 assert.match(styleText, /\.coreanalytics-overview__chip:focus-visible/, 'CoreAnalytics facet controls expose visible focus styling');
+assert.match(reportContentStyleText, /^\/\* Hallmark .* Inspector Workspace .* report content/s, 'report content stylesheet records the approved Hallmark design authority');
+assert.match(reportContentStyleText, /\.sections\.report-document\s*\{[^}]*background:\s*var\(--color-content\)/s, 'single reports use one opaque content canvas');
+assert.match(reportContentStyleText, /\.report-document > \.section-card\s*\{[^}]*border:\s*0[^}]*border-radius:\s*0/s, 'single-report sections are continuous document sections rather than cards');
+assert.match(reportContentStyleText, /\.field-row\s*\{[^}]*grid-template-columns:/s, 'report definition rows establish a readable label-value grid');
+assert.match(reportContentStyleText, /\.table-scroll__hint/, 'wide tables include a visible horizontal-scroll cue');
+assert.match(reportContentStyleText, /@media \(max-width:\s*47\.999rem\)[^]*\.report-document \.field-row,[^]*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/s, 'definition rows stack intentionally at narrow widths');
+assert.match(reportContentStyleText, /@media \(forced-colors:\s*active\)[^]*\.chart canvas\s*\{[^}]*display:\s*none/s, 'forced colors preserves chart values through the text equivalent instead of unreadable canvas pixels');
+assert.doesNotMatch(reportContentStyleText, /backdrop-filter|linear-gradient|radial-gradient|conic-gradient/, 'report content remains opaque without glass or decorative gradients');
+assert.match(workspaceNavigationSource, /querySelector\('\[data-section-heading\]'\)/, 'workspace navigation focuses section headings without freezing the heading level');
+assert.match(browserHarnessSource, /reportDocumentSemantics/, 'browser harness reports continuous-document, definition-list, table, and chart semantics');
 const plainCopySection = {
   id: 'plain-copy',
   title: 'Plain Copy',

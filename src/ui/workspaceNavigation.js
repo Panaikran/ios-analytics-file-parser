@@ -29,7 +29,7 @@ export function createWorkspaceNavigation({
     const target = document.getElementById(sectionId);
     if (!target) return;
 
-    const heading = target.querySelector('h2');
+    const heading = target.querySelector('[data-section-heading]');
     if (heading) {
       heading.tabIndex = -1;
       heading.focus({ preventScroll: true });

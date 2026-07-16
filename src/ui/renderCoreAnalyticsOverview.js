@@ -16,7 +16,13 @@ const FACET_LABELS = Object.freeze({
 
 export function renderCoreAnalyticsOverview(
   view,
-  { searchActive = false, facetOptions = null, onSelectFacet = null, selectedFacetQuery = '' } = {}
+  {
+    searchActive = false,
+    facetOptions = null,
+    onSelectFacet = null,
+    selectedFacetQuery = '',
+    headingLevel = 2,
+  } = {}
 ) {
   if (!view?.isCoreAnalytics) return null;
 
@@ -24,7 +30,7 @@ export function renderCoreAnalyticsOverview(
   article.className = 'coreanalytics-overview';
   article.setAttribute('aria-labelledby', 'coreanalytics-overview-title');
 
-  const title = document.createElement('h2');
+  const title = document.createElement(`h${headingLevel}`);
   title.id = 'coreanalytics-overview-title';
   title.textContent = 'CoreAnalytics Overview';
   article.append(title);
@@ -36,7 +42,12 @@ export function renderCoreAnalyticsOverview(
     article.append(searchNote);
 
     if (!Array.isArray(facetOptions)) return article;
-    article.append(renderFacetGroups(view, { facetOptions, onSelectFacet, selectedFacetQuery }));
+    article.append(renderFacetGroups(view, {
+      facetOptions,
+      onSelectFacet,
+      selectedFacetQuery,
+      headingLevel: headingLevel + 1,
+    }));
     return article;
   }
 
@@ -51,11 +62,16 @@ export function renderCoreAnalyticsOverview(
   }
 
   article.append(renderTableCounts(view));
-  article.append(renderFacetGroups(view, { facetOptions, onSelectFacet, selectedFacetQuery }));
+  article.append(renderFacetGroups(view, {
+    facetOptions,
+    onSelectFacet,
+    selectedFacetQuery,
+    headingLevel: headingLevel + 1,
+  }));
 
   const notes = createNotes(view);
   if (notes.length) {
-    article.append(renderNotes(notes));
+    article.append(renderNotes(notes, { headingLevel: headingLevel + 1 }));
   }
 
   return article;
@@ -99,10 +115,11 @@ function renderMetricGrid(metrics) {
 }
 
 function renderTableCounts(view) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'coreanalytics-overview__tables';
+  const fragment = document.createDocumentFragment();
+  const list = document.createElement('dl');
+  list.className = 'coreanalytics-overview__table-counts';
 
-  wrapper.append(
+  list.append(
     renderTableCount('Event Groups', view.tables?.eventTypes),
     renderTableCount('Sample Records', view.tables?.sampleRecords)
   );
@@ -115,30 +132,32 @@ function renderTableCounts(view) {
   note.textContent = hasCap
     ? 'Capped table. Search and copy operate on rendered rows only.'
     : 'All rendered CoreAnalytics rows are shown for this section.';
-  wrapper.append(note);
+  fragment.append(list, note);
 
-  return wrapper;
+  return fragment;
 }
 
 function renderTableCount(label, table) {
-  const card = document.createElement('section');
-  card.className = 'coreanalytics-overview__table-count';
-  card.setAttribute('aria-label', label);
+  const item = document.createElement('div');
+  item.className = 'coreanalytics-overview__table-count';
 
-  const heading = document.createElement('h3');
+  const heading = document.createElement('dt');
   heading.textContent = label;
 
-  const count = document.createElement('p');
+  const count = document.createElement('dd');
   const counts = table?.counts;
   count.textContent = counts?.known
     ? `${counts.shown} of ${counts.total} shown`
     : `${table?.rows?.length ?? 0} shown`;
 
-  card.append(heading, count);
-  return card;
+  item.append(heading, count);
+  return item;
 }
 
-function renderFacetGroups(view, { facetOptions = null, onSelectFacet = null, selectedFacetQuery = '' } = {}) {
+function renderFacetGroups(
+  view,
+  { facetOptions = null, onSelectFacet = null, selectedFacetQuery = '', headingLevel = 3 } = {}
+) {
   const wrapper = document.createElement('section');
   wrapper.className = 'coreanalytics-overview__facets';
   wrapper.setAttribute('aria-label', 'Rendered row facets');
@@ -158,7 +177,7 @@ function renderFacetGroups(view, { facetOptions = null, onSelectFacet = null, se
     const group = document.createElement('div');
     group.className = 'coreanalytics-overview__facet-group';
 
-    const heading = document.createElement('h3');
+    const heading = document.createElement(`h${headingLevel}`);
     heading.textContent = label;
 
     const chips = document.createElement('div');
@@ -194,12 +213,12 @@ function createNotes(view) {
     .filter(Boolean);
 }
 
-function renderNotes(notes) {
+function renderNotes(notes, { headingLevel = 3 } = {}) {
   const section = document.createElement('section');
   section.className = 'coreanalytics-overview__notes';
   section.setAttribute('aria-label', 'CoreAnalytics parser notes');
 
-  const heading = document.createElement('h3');
+  const heading = document.createElement(`h${headingLevel}`);
   heading.textContent = 'Parser Notes';
 
   const list = document.createElement('ul');

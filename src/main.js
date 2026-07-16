@@ -173,6 +173,13 @@ function renderApp() {
     searchActive: searchMetadata.searchActive,
     matchRegions: searchResult.matchRegions,
     activeExactMatchId: exactMatchTargets[activeExactMatchIndex]?.id ?? '',
+    presentation: hasParsedSections && !comparisonMode && appState.sanitize ? 'report' : 'compatibility',
+    reportIdentity: {
+      title: 'Parsed report',
+      type: appState.detectedType || 'Supported report',
+      mode: 'Sanitized view',
+      description: 'Sensitive identifiers are omitted or redacted where supported. Interpretations remain limited to parsed fields.',
+    },
   });
   workspaceNavigation.update(visibleSections);
   if (restoreCoreAnalyticsFacetFocus) {

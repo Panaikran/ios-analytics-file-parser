@@ -81,6 +81,7 @@
         searchActive = false,
         matchRegions = [],
         activeExactMatchId = '',
+        presentation = 'report',
       } = {}) {
         const sectionRoot = document.querySelector('#sections');
         const navRoot = document.querySelector('#section-nav');
@@ -92,6 +93,13 @@
           searchActive,
           matchRegions,
           activeExactMatchId,
+          presentation,
+          reportIdentity: {
+            title: 'Parsed report',
+            type: 'Browser harness report',
+            mode: 'Sanitized view',
+            description: 'Synthetic browser harness content.',
+          },
           onCopySection: () => Promise.resolve({ ok: true }),
         });
       }
@@ -148,6 +156,24 @@
           bodyScrollWidth: document.body.scrollWidth,
           sectionScrollWidth: document.querySelector('#sections').scrollWidth,
           pageOverflow: document.documentElement.scrollWidth > window.innerWidth,
+          tableScrollRegionCount: document.querySelectorAll('#sections .table-scroll[role="region"][tabindex="0"]').length,
+        };
+      }
+
+      function reportDocumentSemantics() {
+        const reportDocument = document.querySelector('#sections.report-document');
+        const tables = [...document.querySelectorAll('#sections table')];
+        return {
+          continuousDocument: Boolean(reportDocument),
+          reportHeader: reportDocument?.querySelector(':scope > .report-document__header h2')?.textContent ?? '',
+          sectionHeadingLevels: [...document.querySelectorAll('#sections > article [data-section-heading]')]
+            .map((heading) => heading.tagName),
+          definitionRowCount: document.querySelectorAll('#sections .field-list > .field-row').length,
+          tableCount: tables.length,
+          labelledTableCount: tables.filter((table) => table.hasAttribute('aria-labelledby')).length,
+          rowHeaderCount: document.querySelectorAll('#sections tbody th[scope="row"]').length,
+          namedScrollRegionCount: document.querySelectorAll('#sections .table-scroll[role="region"][aria-labelledby][aria-describedby]').length,
+          chartEquivalentCount: document.querySelectorAll('#sections .chart-data').length,
         };
       }
 
@@ -161,6 +187,10 @@
         stylesheet.rel = 'stylesheet';
         stylesheet.href = '../styles/main.css';
         document.head.append(stylesheet);
+        const reportContentStylesheet = document.createElement('link');
+        reportContentStylesheet.rel = 'stylesheet';
+        reportContentStylesheet.href = '../styles/report-content.css';
+        document.head.append(reportContentStylesheet);
       }
 
       async function benchmarkReport(text, query, parserType) {
@@ -206,6 +236,7 @@
             searchActive: true,
             matchRegions: filtered.matchRegions,
             activeExactMatchId: targets[0]?.id ?? '',
+            presentation: 'compatibility',
           });
         });
         const clearComparison = await measureAsync(() => {
@@ -254,6 +285,7 @@
             searchActive: true,
             matchRegions: comparisonFiltered.matchRegions,
             activeExactMatchId: comparisonTargets[0]?.id ?? '',
+            presentation: 'compatibility',
           });
           await nextFrame();
           clearRenderedState();
@@ -324,8 +356,9 @@
           targetIdsUnique: new Set(targetIds).size === targetIds.length,
           chartValueTargetCount: chartValueTargets.filter((target) => target.kind === 'chart-value').length,
           chartValueCanvasCount: document.querySelectorAll('#sections canvas').length,
+          chartDataRowCount: document.querySelectorAll('#sections .chart-data__row').length,
           hostileImageCount: document.querySelectorAll('#sections img').length,
-          hostileTextPreserved: document.querySelector('#sections h2')?.textContent.includes('<img src=x onerror=alert(1)>') === true,
+          hostileTextPreserved: document.querySelector('#sections [data-section-heading]')?.textContent.includes('<img src=x onerror=alert(1)>') === true,
         };
       }
 
@@ -418,6 +451,8 @@
           duplicateIdCount: [...document.querySelectorAll('[id]')]
             .filter((element, index, elements) => elements.findIndex((candidate) => candidate.id === element.id) !== index)
             .length,
+          reportPresentation: document.querySelector('#sections')?.classList.contains('report-document') === true,
+          reportHeader: document.querySelector('#report-document-title')?.textContent ?? '',
         });
 
         pasteInput.value = coreText;
@@ -561,6 +596,7 @@
           applicationWorkflow: appWorkflow,
           exactMatchRendering,
           visibleSearchContract,
+          reportDocumentSemantics: reportDocumentSemantics(),
           accessibility: accessibilityReport(),
           containment: containmentReport(),
           pwa: {
