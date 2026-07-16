@@ -52,6 +52,7 @@ const clearComparisonButton = document.querySelector('#clear-comparison');
 const comparisonStatus = document.querySelector('#comparison-status');
 const searchPanel = document.querySelector('#search-panel');
 const searchInput = document.querySelector('#result-search');
+const searchLabelText = searchInput.closest('label')?.querySelector('span');
 const clearSearchButton = document.querySelector('#clear-search');
 const searchNavigationElement = document.querySelector('#search-navigation');
 const searchNavigationPreviousButton = document.querySelector('#search-previous');
@@ -135,6 +136,7 @@ function renderApp() {
   const searchMetadata = getSearchMetadata(searchResult, activeSections, { coreAnalyticsView });
   const visibleSections = searchResult.sections;
   const hasParsedSections = activeSections.length > 0;
+  const presentation = comparisonMode ? 'comparison' : appState.sanitize ? 'report' : 'raw';
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
   const eligibleExportSections = getEligibleExportSections(activeSections, visibleSections);
   reconcileSearchNavigationState(searchResult.navigationTargets, searchResult.active && (appState.sanitize || comparisonMode));
@@ -176,13 +178,13 @@ function renderApp() {
     searchActive: searchMetadata.searchActive,
     matchRegions: searchResult.matchRegions,
     activeExactMatchId: exactMatchTargets[activeExactMatchIndex]?.id ?? '',
-    presentation: hasParsedSections && !comparisonMode && appState.sanitize ? 'report' : 'compatibility',
-    reportIdentity: {
-      title: 'Parsed report',
-      type: appState.detectedType || 'Supported report',
-      mode: 'Sanitized view',
-      description: 'Sensitive identifiers are omitted or redacted where supported. Interpretations remain limited to parsed fields.',
-    },
+    presentation: hasParsedSections ? presentation : 'compatibility',
+    reportIdentity: getReportIdentity(presentation),
+    onExitMode: comparisonMode
+      ? leaveComparison
+      : !appState.sanitize
+        ? returnToSanitizedView
+        : null,
   });
   workspaceNavigation.update(visibleSections);
   if (restoreCoreAnalyticsFacetFocus) {
@@ -201,6 +203,36 @@ function renderApp() {
   }
 }
 
+function getReportIdentity(presentation) {
+  if (presentation === 'comparison') {
+    const validation = validateComparison(comparisonEntries);
+    return {
+      title: 'Multi-Report Comparison',
+      type: `${validation.parserType || 'Supported report'} · ${comparisonEntries.length} reports`,
+      mode: 'Comparison · sanitized only',
+      description: 'Only generated sanitized comparison values are searchable, copyable, and exportable. Setup-only labels and source text are excluded.',
+      reportCount: comparisonEntries.length,
+      parserType: validation.parserType || 'Supported report',
+    };
+  }
+
+  if (presentation === 'raw') {
+    return {
+      title: 'Raw Local View — not uploaded',
+      type: appState.detectedType || 'Supported report',
+      mode: 'Raw Local View',
+      description: 'This local browser view may include identifiers. Structured downloads and comparison remain unavailable until you return to Sanitized View.',
+    };
+  }
+
+  return {
+    title: 'Parsed report',
+    type: appState.detectedType || 'Supported report',
+    mode: 'Sanitized view',
+    description: 'Sensitive identifiers are omitted or redacted where supported. Interpretations remain limited to parsed fields.',
+  };
+}
+
 function getEligibleExportSections(activeSections, visibleSections) {
   if (!comparisonMode && (!appState.sanitize || (comparisonEntries.length > 0 && !validateComparison(comparisonEntries).valid))) return [];
 
@@ -214,7 +246,7 @@ function getEligibleExportSections(activeSections, visibleSections) {
 
 function renderExportControls(hasParsedSections, exportText, exportJson, hasEligibleSections) {
   reportActionsPanel.hidden = !hasParsedSections;
-  reportActionsPanel.dataset.compatibility = String(comparisonMode || !appState.sanitize);
+  reportActionsPanel.dataset.compatibility = String(!appState.sanitize);
   downloadVisibleExportButton.disabled = !hasEligibleSections || !exportText;
   downloadVisibleJsonButton.disabled = !hasEligibleSections || !exportJson;
   syncReportActionsLayout();
@@ -287,9 +319,9 @@ function renderPrivacyControls(hasParsedSections) {
 }
 
 function renderComparisonControls(hasCurrentReport) {
-  comparisonPanel.hidden = !hasCurrentReport && comparisonEntries.length === 0;
+  comparisonPanel.hidden = comparisonMode || !appState.sanitize || (!hasCurrentReport && comparisonEntries.length === 0);
   comparisonStatus.textContent = comparisonMessage;
-  addToComparisonButton.disabled = comparisonMode || !hasCurrentReport || comparisonEntries.length >= 3;
+  addToComparisonButton.disabled = comparisonMode || !appState.sanitize || !hasCurrentReport || comparisonEntries.length >= 3;
 
   const validation = validateComparison(comparisonEntries);
   compareReportsButton.disabled = !validation.valid;
@@ -450,6 +482,18 @@ function compareReports() {
   clearSearchState();
   resetDenseTableState();
   renderApp();
+  queueMicrotask(() => document.querySelector('#report-document-title')?.focus({ preventScroll: true }));
+}
+
+function leaveComparison() {
+  if (!comparisonMode) return;
+
+  exitComparisonMode();
+  clearSearchState();
+  resetDenseTableState();
+  comparisonMessage = comparisonSetupMessage(validateComparison(comparisonEntries), comparisonEntries.length);
+  renderApp();
+  queueMicrotask(() => searchInput.focus({ preventScroll: true }));
 }
 
 function exitComparisonMode() {
@@ -546,6 +590,12 @@ function togglePrivacyMode() {
   reparseCurrentSourceWithPrivacyMode(!appState.sanitize);
 }
 
+function returnToSanitizedView() {
+  if (comparisonMode || appState.sanitize) return;
+  reparseCurrentSourceWithPrivacyMode(true);
+  queueMicrotask(() => privacyToggle.focus({ preventScroll: true }));
+}
+
 function resetDenseTableState() {
   denseTableState = createInitialDenseTableState();
 }
@@ -575,6 +625,18 @@ function clearSearchState() {
 }
 
 function renderSearchControls(searchMetadata, hasParsedSections) {
+  const label = comparisonMode
+    ? 'Search visible comparison content'
+    : appState.sanitize
+      ? 'Search visible report content'
+      : 'Search Raw Local View';
+  if (searchLabelText) searchLabelText.textContent = label;
+  searchPanel.setAttribute('aria-label', label);
+  searchInput.placeholder = comparisonMode
+    ? 'Search sanitized comparison values'
+    : appState.sanitize
+      ? 'Search visible fields and tables'
+      : 'Search local raw content';
   searchPanel.hidden = !hasParsedSections;
   clearSearchButton.hidden = !searchMetadata.searchActive;
 

@@ -15,7 +15,10 @@ export function renderSection(
     allSections = [],
     matchRegions = [],
     activeExactMatchId = '',
+    documentPresentation = false,
     reportPresentation = false,
+    comparisonPresentation = false,
+    rawPresentation = false,
   } = {}
 ) {
   const sectionMatchRegions = getSectionMatchRegions(section, matchRegions);
@@ -30,7 +33,7 @@ export function renderSection(
   const headingGroup = document.createElement('div');
   headingGroup.className = 'section-card__heading-group';
 
-  const title = document.createElement(reportPresentation ? 'h3' : 'h2');
+  const title = document.createElement(documentPresentation ? 'h3' : 'h2');
   title.id = `${section.id}-title`;
   title.dataset.sectionHeading = 'true';
   title.append(renderMatchText(section.title, findRegion(sectionMatchRegions, 'section-title'), activeExactMatchId));
@@ -85,6 +88,7 @@ export function renderSection(
         sourceSection,
         activeExactMatchId,
         sectionHeadingId: title.id,
+        comparisonPresentation,
       })
     );
   }
@@ -94,8 +98,15 @@ export function renderSection(
   }
 
   if (section.raw) {
-    const raw = document.createElement('div');
-    raw.className = 'raw-note raw-note--wrap';
+    const raw = document.createElement(rawPresentation ? 'pre' : 'div');
+    raw.className = rawPresentation
+      ? 'raw-note raw-note--wrap raw-local-view__content'
+      : 'raw-note raw-note--wrap';
+    if (rawPresentation) {
+      raw.tabIndex = 0;
+      raw.setAttribute('role', 'region');
+      raw.setAttribute('aria-labelledby', title.id);
+    }
     raw.append(renderMatchText(section.raw, findRegion(sectionMatchRegions, 'text'), activeExactMatchId));
     article.append(raw);
   }
@@ -175,6 +186,10 @@ function renderSectionTable(section, options) {
     activeExactMatchId: options.activeExactMatchId,
     labelledBy: options.sectionHeadingId,
     tableKey: `${section.id}-table`,
+    comparisonPresentation: options.comparisonPresentation,
+    rowHeaderKey: options.comparisonPresentation && section.tableColumns?.some((column) => column.key === 'field')
+      ? 'field'
+      : null,
   });
 }
 
@@ -361,6 +376,8 @@ function renderTable(rows, columns = null, {
   activeExactMatchId = '',
   labelledBy = '',
   tableKey = 'report-table',
+  comparisonPresentation = false,
+  rowHeaderKey = null,
 } = {}) {
   const resolvedColumns =
     columns ??
@@ -371,7 +388,11 @@ function renderTable(rows, columns = null, {
       { key: 'symbol', label: 'Symbol' },
     ];
   const table = document.createElement('table');
-  table.className = compact ? 'frame-table frame-table--compact' : 'frame-table';
+  table.className = [
+    'frame-table',
+    compact ? 'frame-table--compact' : '',
+    comparisonPresentation ? 'frame-table--comparison' : '',
+  ].filter(Boolean).join(' ');
   if (labelledBy) table.setAttribute('aria-labelledby', labelledBy);
 
   const thead = document.createElement('thead');
@@ -393,8 +414,9 @@ function renderTable(rows, columns = null, {
     const tr = document.createElement('tr');
     const rowIndex = Array.isArray(sourceSection?.table) ? sourceSection.table.indexOf(row) : -1;
     for (const [columnIndex, column] of resolvedColumns.entries()) {
-      const cell = columnIndex === 0 ? document.createElement('th') : document.createElement('td');
-      if (columnIndex === 0) cell.scope = 'row';
+      const rowHeader = rowHeaderKey ? column.key === rowHeaderKey : columnIndex === 0;
+      const cell = rowHeader ? document.createElement('th') : document.createElement('td');
+      if (rowHeader) cell.scope = 'row';
       cell.append(renderMatchText(
         row[column.key],
         findRegion(matchRegions, 'table-cell', { rowIndex, columnIndex, columnKey: column.key }),

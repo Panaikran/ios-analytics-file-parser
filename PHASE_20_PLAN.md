@@ -4,7 +4,7 @@ Version: `v2.0.0`
 
 Status: `In progress`
 
-Implementation status: `Slices 20A–20E complete and frozen; Slice 20F next but not started`
+Implementation status: `Slices 20A–20F complete and frozen; Slice 20G next but not started`
 
 Release status: `Not scheduled; implementation in progress; no release-readiness claim`
 
@@ -85,7 +85,7 @@ frozen.
 
 ## Slices
 
-Slices 20A–20E are complete and frozen. Slice 20F is next but not started;
+Slices 20A–20F are complete and frozen. Slice 20G is next but not started;
 no later implementation slice is active.
 
 ### Slice 20A — Isolated Prototype and Design Approval
@@ -234,7 +234,9 @@ Completion record: `feat(v2.0): redesign search and report actions`
 
 ### Slice 20F — Comparison and Raw Local View
 
-Status: `Next — not started`
+Status: `Complete and frozen`
+
+Completion record: `feat(v2.0): redesign comparison and raw local view`
 
 - **Objective:** apply the workspace hierarchy to comparison setup/output and
   Raw Local View with unmistakable mode and privacy boundaries.
@@ -255,7 +257,7 @@ Status: `Next — not started`
 
 ### Slice 20G — Responsive and Accessibility Hardening
 
-Status: `Planned`
+Status: `Next — not started`
 
 - **Objective:** close cross-surface issues after integration without expanding
   features.
@@ -370,8 +372,9 @@ before production implementation.
 
 Slice 20A is complete and frozen with visual approval recorded for prototype
 commit `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. There are no unresolved major
-design decisions. Slices 20B–20E are complete and frozen after validated
+design decisions. Slices 20B–20F are complete and frozen after validated
 production translation of the shell, calm import state, responsive workspace
 navigation, continuous opaque report-content system, and report search/action
-controls. Slice 20F is next but
+controls, including the comparison and Raw Local View workspace treatment.
+Slice 20G is next but
 not started, and no later implementation slice is active.

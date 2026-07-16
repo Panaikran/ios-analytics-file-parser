@@ -82,6 +82,8 @@
         matchRegions = [],
         activeExactMatchId = '',
         presentation = 'report',
+        reportIdentity = null,
+        onExitMode = null,
       } = {}) {
         const sectionRoot = document.querySelector('#sections');
         const navRoot = document.querySelector('#section-nav');
@@ -94,12 +96,13 @@
           matchRegions,
           activeExactMatchId,
           presentation,
-          reportIdentity: {
+          reportIdentity: reportIdentity ?? {
             title: 'Parsed report',
             type: 'Browser harness report',
             mode: 'Sanitized view',
             description: 'Synthetic browser harness content.',
           },
+          onExitMode,
           onCopySection: () => Promise.resolve({ ok: true }),
         });
       }
@@ -236,7 +239,15 @@
             searchActive: true,
             matchRegions: filtered.matchRegions,
             activeExactMatchId: targets[0]?.id ?? '',
-            presentation: 'compatibility',
+            presentation: 'comparison',
+            reportIdentity: {
+              title: 'Multi-Report Comparison',
+              type: `${parserType} · 3 reports`,
+              mode: 'Comparison · sanitized only',
+              description: 'Synthetic browser harness comparison.',
+              reportCount: 3,
+              parserType,
+            },
           });
         });
         const clearComparison = await measureAsync(() => {
@@ -285,7 +296,15 @@
             searchActive: true,
             matchRegions: comparisonFiltered.matchRegions,
             activeExactMatchId: comparisonTargets[0]?.id ?? '',
-            presentation: 'compatibility',
+            presentation: 'comparison',
+            reportIdentity: {
+              title: 'Multi-Report Comparison',
+              type: 'coreanalytics · 2 reports',
+              mode: 'Comparison · sanitized only',
+              description: 'Synthetic repeated comparison.',
+              reportCount: 2,
+              parserType: 'coreanalytics',
+            },
           });
           await nextFrame();
           clearRenderedState();
@@ -360,6 +379,102 @@
           hostileImageCount: document.querySelectorAll('#sections img').length,
           hostileTextPreserved: document.querySelector('#sections [data-section-heading]')?.textContent.includes('<img src=x onerror=alert(1)>') === true,
         };
+      }
+
+      async function modePresentationSafetyWorkflow() {
+        const hostileRaw = '<script>window.rawEscape=true<\/script>\n<img src="/raw-escape.png" onerror="window.rawEscape=true">\n<a href="https://example.invalid">literal link</a>';
+        const rawSections = [{
+          id: 'raw-hostile-content',
+          title: 'Raw hostile content',
+          priority: 'info',
+          fields: [],
+          raw: hostileRaw,
+        }];
+        renderParsedSections(rawSections, {
+          presentation: 'raw',
+          reportIdentity: {
+            title: 'Raw Local View — not uploaded',
+            type: 'Synthetic report',
+            mode: 'Raw Local View',
+            description: 'Synthetic literal-content safety check.',
+          },
+        });
+        await nextFrame();
+
+        const rawRegion = document.querySelector('#sections .raw-local-view__content');
+        const rawAttributeSurface = [...document.querySelectorAll('#sections *')]
+          .filter((element) => element !== rawRegion)
+          .flatMap((element) => [...element.attributes].map((attribute) => attribute.value))
+          .join(' ');
+        const raw = {
+          modeTitle: document.querySelector('#report-document-title')?.textContent ?? '',
+          literalTextPreserved: rawRegion?.textContent === hostileRaw,
+          keyboardScrollRegion: rawRegion?.matches('pre[role="region"][tabindex="0"][aria-labelledby]') === true,
+          scriptElementCount: document.querySelectorAll('#sections script').length,
+          imageElementCount: document.querySelectorAll('#sections img').length,
+          linkElementCount: document.querySelectorAll('#sections a').length,
+          hostileTextInAttributes: rawAttributeSurface.includes(hostileRaw),
+          executionSentinel: globalThis.rawEscape === true,
+        };
+
+        const localAlias = 'setup-only-alias-sentinel';
+        const firstEntry = {
+          classification: { parserType: 'ips', supported: true },
+          localLabel: localAlias,
+          sections: [{
+            id: 'summary',
+            title: 'Summary',
+            fields: [
+              { label: 'OS Version', value: 'iOS 18.4' },
+              { label: 'Reason', value: '<img src=/comparison-escape.png>' },
+              { label: 'Device', value: 'iPhone' },
+            ],
+          }],
+        };
+        const secondEntry = {
+          classification: { parserType: 'ips', supported: true },
+          localLabel: localAlias,
+          sections: [{
+            id: 'summary',
+            title: 'Summary',
+            fields: [
+              { label: 'OS Version', value: 'iOS 18.5' },
+              { label: 'Device', value: 'iPhone' },
+            ],
+          }],
+        };
+        const comparisonSections = createComparisonSections([firstEntry, secondEntry]);
+        renderParsedSections(comparisonSections, {
+          presentation: 'comparison',
+          reportIdentity: {
+            title: 'Multi-Report Comparison',
+            type: 'ips · 2 reports',
+            mode: 'Comparison · sanitized only',
+            description: 'Only generated sanitized comparison values are included.',
+            reportCount: 2,
+            parserType: 'ips',
+          },
+        });
+        await nextFrame();
+
+        const comparisonSurface = document.querySelector('#sections');
+        const comparisonAttributes = [...comparisonSurface.querySelectorAll('*')]
+          .flatMap((element) => [...element.attributes].map((attribute) => attribute.value))
+          .join(' ');
+        const comparison = {
+          continuousDocument: comparisonSurface.classList.contains('report-document--comparison'),
+          genericIdentityCount: comparisonSurface.querySelectorAll('.comparison-identity').length,
+          localAliasInText: comparisonSurface.textContent.includes(localAlias),
+          localAliasInAttributes: comparisonAttributes.includes(localAlias),
+          rowHeaderTexts: [...comparisonSurface.querySelectorAll('#comparison-differences tbody th[scope="row"]')]
+            .map((cell) => cell.textContent),
+          missingValueVisible: comparisonSurface.textContent.includes('Not present'),
+          hostileImageCount: comparisonSurface.querySelectorAll('img').length,
+          hostileValueLiteral: comparisonSurface.textContent.includes('<img src=/comparison-escape.png>'),
+          namedTableRegions: comparisonSurface.querySelectorAll('.table-scroll[role="region"][tabindex="0"][aria-labelledby]').length,
+        };
+
+        return { raw, comparison };
       }
 
       function visibleSearchContractWorkflow() {
@@ -455,7 +570,16 @@
             .filter((element, index, elements) => elements.findIndex((candidate) => candidate.id === element.id) !== index)
             .length,
           reportPresentation: document.querySelector('#sections')?.classList.contains('report-document') === true,
+          comparisonPresentation: document.querySelector('#sections')?.classList.contains('report-document--comparison') === true,
+          rawPresentation: document.querySelector('#sections')?.classList.contains('report-document--raw') === true,
           reportHeader: document.querySelector('#report-document-title')?.textContent ?? '',
+          modeAction: document.querySelector('#sections .report-document__mode-action')?.textContent ?? '',
+          comparisonIdentityCount: document.querySelectorAll('#sections .comparison-identity').length,
+          comparisonSetupHidden: document.querySelector('#comparison-panel').hidden,
+          searchLabel: document.querySelector('#result-search')?.labels?.[0]?.textContent.trim() ?? '',
+          rawScrollRegionCount: document.querySelectorAll('#sections .raw-local-view__content[role="region"][tabindex="0"]').length,
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          pageOverflow: document.documentElement.scrollWidth > window.innerWidth,
         });
 
         pasteInput.value = coreText;
@@ -532,9 +656,13 @@
         document.querySelector('#privacy-toggle').click();
         await nextFrame();
         const rawLocalView = state();
-        document.querySelector('#privacy-toggle').click();
+        const rawReturn = document.querySelector('#sections .report-document__mode-action');
+        rawReturn.focus();
+        rawReturn.click();
         await nextFrame();
         const sanitizedReturn = state();
+        const rawReturnFocus = document.activeElement === document.querySelector('#privacy-toggle');
+        const rawContentRemoved = !document.querySelector('#sections').classList.contains('report-document--raw');
 
         document.querySelector('#parse-paste').click();
         await nextFrame();
@@ -550,11 +678,19 @@
         await nextFrame();
         document.querySelector('#compare-reports').click();
         await nextFrame();
+        const comparisonModeState = state();
+        const comparisonEntryFocus = document.activeElement === document.querySelector('#report-document-title');
         await setSearch(localAlias);
         const comparisonAliasSearch = state();
         const aliasInResults = document.querySelector('#sections').textContent.includes(localAlias);
         await setSearch('Report 1');
         const comparisonVisibleSearch = state();
+        const comparisonExit = document.querySelector('#sections .report-document__mode-action');
+        comparisonExit.focus();
+        comparisonExit.click();
+        await nextFrame();
+        const comparisonExited = state();
+        const comparisonExitFocus = document.activeElement === searchInput;
         document.querySelector('#clear-comparison').click();
         await nextFrame();
         const comparisonCleared = state();
@@ -575,10 +711,16 @@
           clearFocusReturned,
           rawLocalView,
           sanitizedReturn,
+          rawReturnFocus,
+          rawContentRemoved,
           reportTransition,
+          comparisonModeState,
+          comparisonEntryFocus,
           comparisonAliasSearch,
           aliasInResults,
           comparisonVisibleSearch,
+          comparisonExited,
+          comparisonExitFocus,
           comparisonCleared,
           reportCleared,
           clearReturnedToImport,
@@ -596,6 +738,7 @@
         const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
         const repeated = await repeatedWorkflow(coreText, 'SyntheticMetricGroup-000');
         const exactMatchRendering = await exactMatchRenderingWorkflow();
+        const modePresentationSafety = await modePresentationSafetyWorkflow();
         const visibleSearchContract = visibleSearchContractWorkflow();
         let serviceWorkerReady = false;
         if ('serviceWorker' in navigator) {
@@ -621,6 +764,7 @@
           repeatedWorkflow: repeated,
           applicationWorkflow: appWorkflow,
           exactMatchRendering,
+          modePresentationSafety,
           visibleSearchContract,
           reportDocumentSemantics: reportDocumentSemantics(),
           accessibility: accessibilityReport(),
