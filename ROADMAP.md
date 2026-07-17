@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. No later implementation milestone is active.
+Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. `v2.1.0` planning is active in Slice 21A; production implementation has not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -895,3 +895,31 @@ tagging, and GitHub Release publication. No v2.1 implementation is active.
 - Preserve the completed v1.8.0 exact-match, privacy, export, accessibility, responsive, offline, and performance contracts.
 - Preserve existing parser behavior and PWA privacy boundaries.
 - Create tags, releases, package metadata changes, or publishing actions only after explicit approval.
+
+## Planned Roadmap: v2.1.0
+
+Status: Slice 21A research and planning complete. No v2.1 production
+implementation has started.
+
+Theme: Battery and Charging Insights.
+
+The approved Phase 21 direction is a conservative optional Battery and
+Charging section for supported CoreAnalytics evidence. The complete field
+audit, corpus verdict, precedence policy, privacy boundary, normalized model,
+and future implementation slices are recorded in
+[`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| 21A | Complete | Battery field research, record-family audit, corpus audit, architecture proposal, and implementation plan |
+| 21B | Planned, not started | CoreAnalytics extraction, normalization, duplicate handling, and parser-only tests |
+| 21C | Planned, not started | Optional sanitized Battery and Charging section in the frozen Inspector Workspace |
+| 21D | Planned, not started | Visible search, sanitized text/JSON export, and bounded comparison contract |
+| 21E | Planned, not started | Sanitized corpus expansion and cross-variant hardening |
+| 21F | Planned, not started | Browser QA, documentation reconciliation, and release readiness |
+
+Phase 21 does not authorize changes to the v2.0 parser, search, export,
+comparison, Raw Local View, privacy, or PWA contracts outside the listed future
+slices. Thermal interpretation, charging faults, health grades, service
+recommendations, and broader device diagnostics remain deferred to v2.2.0 or
+later.

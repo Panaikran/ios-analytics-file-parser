@@ -191,6 +191,19 @@ Before committing:
 Do not create tags, GitHub releases, package version changes, or publishing
 actions unless the user explicitly asks for that release action.
 
+## Approved Planning Direction: v2.1.0
+
+The active planning slice is `21A - Battery Field Research and Corpus Audit`.
+It is research and documentation only; v2.1 production implementation has not
+started. The evidence record and future slice plan are in
+[`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
+
+The plan must preserve the released v2.0.0 Inspector Workspace, parser-family
+boundaries, `SectionModel[]`, sanitized visible search/copy/export behavior,
+sanitized-only comparison, Raw Local View restrictions, and local-first privacy.
+Slice 21B requires explicit implementation work after the Slice 21A evidence
+gate; it is not part of the current task.
+
 ## Approved Milestone Plan: v1.8.0
 
 Release title: `v1.8.0 — Precision Search & Deep Inspection`
@@ -635,5 +648,5 @@ recorded by `feat(v2.0): implement report content system`; Slice 20E is recorded
 by `feat(v2.0): redesign search and report actions`; Slice 20F is recorded by
 `feat(v2.0): redesign comparison and raw local view`; Slice 20G is recorded by
 `fix(v2.0): harden responsive accessibility`. Slice 20H and Phase 20 are closed
-by `release: v2.0.0`. No later implementation milestone is active.
+by `release: v2.0.0`. At that release point, no later production implementation milestone was active.
 
