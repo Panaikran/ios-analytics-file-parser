@@ -1,5 +1,6 @@
 import { createSection } from '../models/sectionModel.js';
 import { createSanitizer } from '../privacy/sanitize.js';
+import { attachNormalizedBattery, extractNormalizedBattery } from './battery.js';
 
 const DISPLAY_ROW_LIMIT = 100;
 const SENSITIVE_KEYS = new Set(['incident_id', 'deviceId', 'uuid', 'configUuid', 'sessionId']);
@@ -8,13 +9,15 @@ export function parseCoreAnalytics(text, options = {}) {
   const sanitizeText = createSanitizer(options);
   const parsed = parseLines(text);
   const metadata = parsed.records[0]?.value ?? {};
-  const config = findConfigurationRecord(parsed.records.map((record) => record.value));
+  const recordValues = parsed.records.map((record) => record.value);
+  const config = findConfigurationRecord(recordValues);
+  const normalizedBattery = extractNormalizedBattery(recordValues);
   const eventRecords = parsed.records
     .map((record) => ({ ...record.value, rowNumber: record.rowNumber }))
     .filter(isEventRecord);
   const groupedEvents = groupEventRecords(eventRecords);
 
-  return [
+  return attachNormalizedBattery([
     createSection({
       id: 'coreanalytics-summary',
       title: 'CoreAnalytics Summary',
@@ -119,7 +122,7 @@ export function parseCoreAnalytics(text, options = {}) {
         sanitizeText
       ),
     }),
-  ];
+  ], normalizedBattery);
 }
 
 function parseLines(text) {

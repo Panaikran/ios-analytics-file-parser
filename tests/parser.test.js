@@ -23,6 +23,7 @@ import {
 import { detectFileType } from '../src/parsers/detect.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
 import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
+import { extractNormalizedBattery, getNormalizedBattery } from '../src/parsers/battery.js';
 import { parseCpuResource } from '../src/parsers/parseCpuResource.js';
 import { parseDiskWritesResource } from '../src/parsers/parseDiskWritesResource.js';
 import { parseResourceStackshot } from '../src/parsers/parseResourceStackshot.js';
@@ -5989,5 +5990,162 @@ assert.deepEqual(
   'app state can update status and clear rendered sections without changing source text'
 );
 assert.deepEqual(createInitialAppState(), initialState, 'new initial state wipes current report state');
+
+function batteryRecord(name, message, metadata = {}) {
+  return {
+    name,
+    message,
+    aggregationPeriod: metadata.aggregationPeriod ?? 'Daily',
+    numDaysAggregated: metadata.numDaysAggregated ?? 1,
+    sampling: metadata.sampling ?? 100,
+  };
+}
+
+function batteryInput(records) {
+  const marker = { name: 'launchCount', message: 'synthetic', aggregationPeriod: 'daily', numDaysAggregated: 1, sampling: '100' };
+  return [JSON.stringify({ bug_type: '211' }), JSON.stringify(marker), ...records.map((record) => JSON.stringify(record))].join('\n');
+}
+
+const BATTERY_FINAL = 'BatteryConfigValueHistogramFinal_V2';
+const BATTERY_SECONDARY = 'BatteryConfigValueHistogram_WithAllSafetyKeys_V2';
+const BATTERY_BHUI = 'BHUI_NCC_iOSwatchOS';
+const batterySnapshot = {
+  last_value_CycleCount: 12,
+  last_value_MaximumFCC: 3000,
+  last_value_NominalChargeCapacity: 2900,
+  last_value_AppleRawMaxCapacity: 2950,
+  last_value_MaximumCapacityPercent: 97,
+  last_value_MaximumQmax: 3100,
+  last_value_QmaxCell0: 3100,
+};
+
+const preferredBattery = extractNormalizedBattery([batteryRecord(BATTERY_FINAL, batterySnapshot)]);
+assert.deepEqual(Object.keys(preferredBattery), [
+  'maximumCapacityPercent',
+  'cycleCount',
+  'maximumFcc',
+  'nominalChargeCapacity',
+  'rawMaximumCapacity',
+  'maximumQmax',
+  'qmaxCells',
+], 'battery normalization keeps the approved stable field order');
+assert.equal(preferredBattery.cycleCount.value, 12, 'preferred battery snapshot extracts cycle count');
+assert.equal(preferredBattery.rawMaximumCapacity.value, 2950, 'AppleRawMaxCapacity maps only to rawMaximumCapacity');
+assert.equal(preferredBattery.maximumCapacityPercent.value, 97, 'snapshot extracts direct maximum capacity percent');
+assert.equal(preferredBattery.qmaxCells[0].cell, 0, 'battery normalization preserves Qmax cell index');
+assert.equal(preferredBattery.qmaxCells[0].value, 3100, 'battery normalization extracts Qmax cell 0');
+assert.equal(preferredBattery.cycleCount.sourceFamily, BATTERY_FINAL, 'battery metrics retain only approved source family metadata');
+assert.doesNotMatch(JSON.stringify(preferredBattery), /deviceId|uuid|incident_id|configUuid|raw record|file path/i, 'normalized battery output contains no prohibited source data');
+assert.doesNotMatch(JSON.stringify(preferredBattery), /RealCapacity|Apple Battery Health|service required/i, 'normalized battery output contains no unsupported health interpretation');
+assert.equal(preferredBattery.health, undefined, 'normalized battery output contains no derived health metric');
+
+const secondaryBattery = extractNormalizedBattery([batteryRecord(BATTERY_SECONDARY, batterySnapshot)]);
+assert.equal(secondaryBattery.cycleCount.sourceFamily, BATTERY_SECONDARY, 'secondary snapshot works without the final family');
+
+const bhuiBattery = extractNormalizedBattery([batteryRecord(BATTERY_BHUI, { maximumCapacityPercent: 88 })]);
+assert.deepEqual(Object.keys(bhuiBattery), ['maximumCapacityPercent'], 'BHUI contributes only its approved direct percentage');
+assert.equal(bhuiBattery.maximumCapacityPercent.value, 88, 'BHUI extracts its direct percentage');
+
+const identicalBattery = extractNormalizedBattery([
+  batteryRecord(BATTERY_SECONDARY, batterySnapshot),
+  batteryRecord(BATTERY_FINAL, batterySnapshot),
+]);
+assert.equal(identicalBattery.cycleCount.value, 12, 'identical snapshot values are emitted once');
+assert.equal(identicalBattery.cycleCount.sourceFamily, BATTERY_FINAL, 'identical snapshots prefer the final family');
+assert.equal(identicalBattery.conflicts, undefined, 'identical snapshots do not create conflicts');
+
+const partialBattery = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_CycleCount: 12 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_MaximumFCC: 3000 }),
+]);
+assert.equal(partialBattery.cycleCount.value, 12, 'partial duplicates retain preferred values');
+assert.equal(partialBattery.maximumFcc.value, 3000, 'partial duplicates fill missing non-conflicting fields');
+
+const resolvedConflict = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_CycleCount: 12 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_CycleCount: 11 }),
+]);
+assert.equal(resolvedConflict.cycleCount.value, 12, 'a compatible single final snapshot resolves a snapshot conflict');
+assert.equal(resolvedConflict.cycleCount.confidence, 'low', 'resolved conflicts lower metric confidence');
+assert.deepEqual(resolvedConflict.conflicts, [{ field: 'cycleCount', resolution: 'preferred-final', sourceFamilies: [BATTERY_FINAL, BATTERY_SECONDARY] }], 'resolved conflicts retain privacy-safe metadata');
+
+const conflictingCapacity = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_MaximumFCC: 3000 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_MaximumFCC: 2900 }),
+]);
+assert.equal(conflictingCapacity.maximumFcc.value, 3000, 'compatible snapshot capacity conflicts use final-source precedence');
+
+const conflictingPercentage = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_MaximumCapacityPercent: 97 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_MaximumCapacityPercent: 96 }),
+]);
+assert.equal(conflictingPercentage.maximumCapacityPercent.value, 97, 'compatible snapshot percentage conflicts use direct final-source precedence');
+
+const mixedConflict = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_CycleCount: 12, last_value_MaximumFCC: 3000 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_CycleCount: 11, last_value_MaximumFCC: 3000 }),
+]);
+assert.equal(mixedConflict.cycleCount.value, 12, 'a conflicted field can retain its deterministic final value');
+assert.equal(mixedConflict.maximumFcc.value, 3000, 'a non-conflicting field remains available beside a conflict');
+
+const unresolvedConflict = extractNormalizedBattery([
+  batteryRecord(BATTERY_SECONDARY, { last_value_CycleCount: 11 }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_CycleCount: 12 }),
+]);
+assert.equal(unresolvedConflict.cycleCount, undefined, 'same-family conflicts suppress the affected field');
+assert.deepEqual(unresolvedConflict.conflicts, [{ field: 'cycleCount', resolution: 'suppressed', sourceFamilies: [BATTERY_SECONDARY] }], 'suppressed conflicts retain source families only');
+
+const incompatibleConflict = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_CycleCount: 12 }, { aggregationPeriod: 'Daily' }),
+  batteryRecord(BATTERY_SECONDARY, { last_value_CycleCount: 11 }, { aggregationPeriod: 'Weekly' }),
+]);
+assert.equal(incompatibleConflict.cycleCount, undefined, 'incompatible snapshot metadata suppresses conflicts');
+
+const invalidBattery = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, {
+    last_value_CycleCount: -1,
+    last_value_MaximumFCC: '3000',
+    last_value_NominalChargeCapacity: true,
+    last_value_AppleRawMaxCapacity: [],
+    last_value_MaximumCapacityPercent: 101,
+    last_value_MaximumQmax: Infinity,
+    last_value_QmaxCell0: null,
+  }),
+]);
+assert.equal(invalidBattery, null, 'invalid battery scalars produce no normalized model');
+assert.equal(extractNormalizedBattery([batteryRecord(BATTERY_FINAL, { last_value_MaximumQmax: NaN })]), null, 'NaN is rejected');
+assert.equal(extractNormalizedBattery([batteryRecord(BATTERY_FINAL, { last_value_CycleCount: 0 })]).cycleCount.value, 0, 'zero cycle count remains valid');
+assert.equal(extractNormalizedBattery([batteryRecord(BATTERY_FINAL, { last_value_MaximumCapacityPercent: -1 })]), null, 'out-of-range percentages are rejected without clamping');
+assert.equal(extractNormalizedBattery([batteryRecord(BATTERY_FINAL, { RealCapacity: 2500 })]), null, 'RealCapacity is not accepted as an alias');
+assert.equal(extractNormalizedBattery([batteryRecord('AdapterDetails', { bucketed_Watts: 39, isWireless: false })]), null, 'charging records remain outside Slice 21B');
+
+const duplicateQmax = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_QmaxCell0: 3100 }),
+  batteryRecord(BATTERY_FINAL, { last_value_QmaxCell0: 3100 }),
+]);
+assert.deepEqual(duplicateQmax.qmaxCells.map((cell) => cell.cell), [0], 'duplicate Qmax cells are deduplicated');
+
+const conflictingQmax = extractNormalizedBattery([
+  batteryRecord(BATTERY_FINAL, { last_value_QmaxCell0: 3100 }),
+  batteryRecord(BATTERY_FINAL, { last_value_QmaxCell0: 3200 }),
+]);
+assert.equal(conflictingQmax.qmaxCells, undefined, 'conflicting Qmax cells are suppressed');
+
+const batterySections = parseInput(batteryInput([batteryRecord(BATTERY_FINAL, batterySnapshot)]));
+assert.deepEqual(
+  batterySections.map((section) => section.id),
+  ['coreanalytics-summary', 'coreanalytics-configuration', 'coreanalytics-record-overview', 'coreanalytics-event-types', 'coreanalytics-sample-records', 'coreanalytics-parser-notes'],
+  'Slice 21B adds no visible battery section'
+);
+assert.equal(getNormalizedBattery(batterySections).cycleCount.value, 12, 'CoreAnalytics carries the normalized battery model internally');
+assert.doesNotMatch(JSON.stringify(batterySections), /cycleCount|rawMaximumCapacity|Battery and Charging|12|3000/, 'internal battery data is absent from serialized visible sections');
+assert.equal(filterSectionsByQuery(batterySections, 'Cycle Count').totalMatches, 0, 'battery values are not searchable before Slice 21C');
+assert.doesNotMatch(serializeSectionsForExport(batterySections), /Cycle Count|Maximum FCC|Battery and Charging/, 'battery values are not copied or text-exported before Slice 21C');
+assert.doesNotMatch(serializeSectionsForJsonExport(batterySections), /cycleCount|rawMaximumCapacity|Battery and Charging/, 'battery values are not JSON-exported before Slice 21C');
+const batteryComparison = createComparisonSections([
+  { classification: { parserType: 'coreanalytics', supported: true }, sections: batterySections },
+  { classification: { parserType: 'coreanalytics', supported: true }, sections: batterySections },
+]);
+assert.doesNotMatch(JSON.stringify(batteryComparison), /cycleCount|rawMaximumCapacity|Battery and Charging/, 'battery values are not comparison-visible before Slice 21C');
 
 console.log('Phase 2 parser tests passed');

@@ -193,16 +193,18 @@ actions unless the user explicitly asks for that release action.
 
 ## Approved Planning Direction: v2.1.0
 
-The active planning slice is `21A - Battery Field Research and Corpus Audit`.
-It is research and documentation only; v2.1 production implementation has not
-started. The evidence record and future slice plan are in
+The active implementation slice is `21B - Battery Record Detection and
+Normalization`, now complete and frozen. Slice 21A remains complete and
+frozen; v2.1.0 remains unreleased. The evidence record, implementation design,
+and future slice plan are in
 [`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
 
 The plan must preserve the released v2.0.0 Inspector Workspace, parser-family
 boundaries, `SectionModel[]`, sanitized visible search/copy/export behavior,
 sanitized-only comparison, Raw Local View restrictions, and local-first privacy.
-Slice 21B requires explicit implementation work after the Slice 21A evidence
-gate; it is not part of the current task.
+Slice 21C is next but not started. Battery UI, search, export, comparison,
+charging behavior, and broader diagnostics remain outside the completed 21B
+slice.
 
 ## Approved Milestone Plan: v1.8.0
 

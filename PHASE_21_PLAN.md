@@ -2,15 +2,15 @@
 
 Version: `v2.1.0`
 
-Status: `Slice 21A complete and frozen after the documentation commit; implementation has not started`
+Status: `Slice 21B complete and frozen; v2.1.0 remains unreleased`
 
-Current slice: `21A - Battery Field Research and Corpus Audit`
+Current slice: `21B - Battery Record Detection and Normalization`
 
 Baseline: released and frozen `v2.0.0` at `39aa68a98260d379d4fff71cd0758b6177fc2c64`
 
-This document is the Slice 21A research record and the complete future Phase
-21 implementation plan. It does not add battery parsing, UI, search, export,
-comparison, or runtime behavior.
+This document preserves the Slice 21A research record and the Phase 21
+implementation plan. Slice 21B adds parser-only battery normalization; it does
+not add battery UI, search, export, comparison, or charging behavior.
 
 ## 1. Decision Summary
 
@@ -461,7 +461,7 @@ Future behavior must reuse existing contracts:
 
 ## 16. Complete Phase 21 Plan
 
-All slices after 21A are future work. Slice 21B is not started.
+Slices after 21B are future work. Slice 21C is next but has not started.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
 
@@ -486,24 +486,30 @@ Validation:
 
 ### Slice 21B - Battery Record Detection and Normalization
 
-Status: `Future; not started`
+Status: `Complete and frozen`
 
 Scope:
 
-- Add one focused pure extractor for the approved event families and exact
+- Added one focused pure extractor for the approved event families and exact
   fields.
-- Add deterministic duplicate/precedence handling from Section 9.
-- Produce the optional normalized model from Section 10.
-- Keep `parseInput() -> SectionModel[]` and all existing CoreAnalytics sections
+- Added deterministic duplicate/precedence handling from Section 9.
+- Added the optional normalized model from Section 10 as non-enumerable
+  internal parser metadata.
+- Kept `parseInput() -> SectionModel[]` and all existing CoreAnalytics sections
   compatible.
 
-Expected files: one parser-local battery helper, the existing CoreAnalytics
-parser, and focused tests. No UI, export, comparison, or service-worker change.
+Files changed: one parser-local battery helper, the existing CoreAnalytics
+parser, focused tests, and this minimal planning reconciliation. No UI, export,
+comparison, or service-worker change.
 
-Required validation: positive sample through a local-only harness, synthetic
-identical/partial/conflicting records, null and malformed records, numeric
-validation, absence behavior, exact field-name rejection, and existing full
-parser tests. The private sample must not become a fixture.
+Validation completed: private positive sample through a local-only harness,
+synthetic identical/partial/conflicting records, invalid scalar values,
+numeric validation, absence behavior, exact field-name rejection, visible
+output/search/export isolation, syntax checks, existing full parser tests, and
+the established performance benchmark. The private sample did not become a
+fixture.
+
+Implementation commit message: `feat(v2.1): normalize battery analytics records`.
 
 ### Slice 21C - Battery Sanitization and Report Model Integration
 
@@ -587,6 +593,7 @@ Deferred to v2.2.0 or later:
   battery histograms, undocumented charge algorithms, and unsupported event
   families.
 
-Slice 21A is complete and frozen as research and planning only after this
-documentation commit. Slice 21B is next but has not started; all runtime work
-remains future work.
+Slice 21A remains complete and frozen as research and planning. Slice 21B is
+complete and frozen after its implementation commit. Slice 21C is next but has
+not started; UI, search, export, comparison, charging, and broader diagnostics
+remain future work.
