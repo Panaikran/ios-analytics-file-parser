@@ -1,9 +1,10 @@
 # v2.1 Battery Field Audit
 
-Status: `Slice 21A research complete; proposed implementation only`
+Status: `Slice 21A research complete; Phase 21 implementation and QA complete`
 
-Milestone: `v2.1.0` is unreleased. No battery parsing or runtime behavior has
-been implemented.
+Milestone: `v2.1.0` is ready for release but unreleased. Battery parsing,
+sanitization, and the optional direct-metric report presentation are complete
+and frozen; charging extraction remains deferred.
 
 ## 1. Executive verdict
 
@@ -326,6 +327,9 @@ identifier-free scrubbed reports remain useful before release, especially for
 multiple iOS releases and device families, a below-100 percentage, replaced or
 missing battery cases, wireless context, and real cross-record conflicts.
 
-Slice 21E changes no recognized family, field alias, charging contract, derived
+Slice 21E changed no recognized family, field alias, charging contract, derived
 metric, health interpretation, serializer, search model, comparison model, Raw
-Local View behavior, or PWA policy. Slice 21F is next and has not started.
+Local View behavior, or PWA policy. Slice 21F completed the final QA and
+documentation reconciliation without changing those contracts. Phase 21 is
+complete and frozen; the corpus verdict remains provisional and the separate
+v2.1.0 release operation has not been executed.

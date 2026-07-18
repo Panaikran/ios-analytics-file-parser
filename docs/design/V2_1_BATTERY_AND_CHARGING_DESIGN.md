@@ -1,9 +1,10 @@
 # v2.1 Battery and Charging Design
 
-Status: `Proposed future architecture; not implemented`
+Status: `Battery presentation implemented and frozen; charging architecture remains deferred`
 
-Milestone: `v2.1.0` is unreleased. This design follows the Slice 21A field
-audit and does not change production behavior.
+Milestone: `v2.1.0` is ready for release but unreleased. This design follows
+the Slice 21A field audit and records the implemented battery boundary plus
+the deferred charging architecture.
 
 ## 1. Scope
 
@@ -12,10 +13,22 @@ existing Inspector Workspace report document. It would expose a small,
 allowlisted set of direct battery observations and conservative charging
 context when recognized evidence is present.
 
-The initial user-facing scope would be limited to cycle count, direct maximum
+The initial user-facing scope was limited to cycle count, direct maximum
 capacity percentage, selected capacity and Qmax observations, recorded adapter
 power categories, and an agreed wired/wireless state. Every value would remain
-optional.
+optional. The completed v2.1.0 implementation includes only the direct battery
+observations; adapter, wired/wireless, and power-mode extraction remain
+deferred.
+
+### Implemented v2.1 boundary
+
+Slices 21B through 21D now provide exact approved-family extraction, a
+privacy-safe non-enumerable battery model, and an optional `Battery and
+Charging` section through the existing report-document path. The section uses
+only direct approved metrics and is absent when no safe values remain. Slices
+21E and 21F hardened and validated this boundary without adding charging,
+diagnostic, search-model, serializer, comparison, Raw Local View, or release
+behavior.
 
 ## 2. Non-goals
 
@@ -285,8 +298,11 @@ visited by CoreAnalytics parsing, with fixed-size allowlists and no additional
 network, persistence, or cloud work. It should not materially change existing
 parse complexity or duplicate the full input in memory.
 
-Performance claims would be verified with the repository’s existing test and
-workload checks after implementation. Slice 21A adds no runtime behavior.
+The repository’s existing test and workload checks passed after implementation.
+The established Node benchmark reported all existing and stress budget
+statuses within budget. Browser performance metrics were not measured because
+no browser executable or Playwright dependency was installed; the synthetic
+harness remains the available regression lane.
 
 ## 21. Privacy review
 
@@ -307,5 +323,7 @@ algorithms, and broad device diagnostics would remain deferred to v2.2.0 or
 later. `PowerModesDailyEngagement` would remain supporting context until its
 semantics and units are established.
 
-Slice 21B would be the next implementation slice, but it has not started.
-Slice 21A is complete and frozen as documentation-only research and planning.
+Slices 21A through 21F are complete and frozen. The v2.1.0 release operation,
+including tag and publication steps, remains separate and has not been
+executed. Charging extraction and broader diagnostics remain deferred to
+v2.2.0 or later.

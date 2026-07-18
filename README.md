@@ -26,9 +26,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v2.0.0` (2026-07-16) |
-| Active phase | `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 closed |
-| Current focus | No implementation milestone is active |
-| Next milestone | Future work remains planning-only; v2.1.0 implementation has not started |
+| Active phase | `v2.1.0 — Battery and Charging Insights` complete and frozen; ready for release but unreleased |
+| Current focus | v2.1.0 final QA and release readiness complete; release operation remains separate |
+| Next milestone | v2.1.0 is ready for release but unreleased; later work remains planning-only |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -56,6 +56,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | v1.8.0 | Released 2026-07-14: Precision Search & Deep Inspection |
 | v1.9.0 | Released 2026-07-15: Visible Search Contract Integrity |
 | v2.0.0 | Released 2026-07-16: Apple-Inspired Inspector Workspace |
+| v2.1.0 | Ready for release, unreleased: privacy-safe direct battery report presentation |
 | App type | Static browser app |
 | Build step | None |
 | Backend | None |
@@ -64,6 +65,29 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
 `v2.0.0 — Apple-Inspired Inspector Workspace` is the latest stable release. It reorganizes the existing local parser into a responsive, accessible inspection workspace with light and dark themes, continuous report content, deliberate navigation and controls, Multi-Report Comparison, and Raw Local View while preserving the released parser, search, export, privacy, and offline contracts.
+
+## v2.1.0 Readiness (Unreleased)
+
+The completed Phase 21 work is ready for a separate v2.1.0 release operation;
+the version is not tagged or published. Supported CoreAnalytics reports may
+show an optional `Battery and Charging` section containing only these direct,
+sanitized observations when the approved fields are present:
+
+- Maximum Capacity (the direct `MaximumCapacityPercent` value)
+- Cycle Count
+- Maximum FCC
+- Nominal Charge Capacity
+- Raw Maximum Capacity
+- Maximum Qmax and observed Qmax cell values
+
+The section uses strict fallback and omits unsupported, malformed, missing, or
+unresolved values. The feature does not extract charging data, calculate a
+health ratio, diagnose battery condition, recommend service, or map any field
+to `RealCapacity` or `Real Capacity`. A 71-case synthetic corpus and the
+existing browser harness cover the sanitized parser-to-section boundary.
+Browser automation was unavailable in this environment because no browser
+executable or Playwright dependency was installed; that limitation is
+recorded rather than hidden.
 
 ## Why This Exists
 
@@ -153,6 +177,7 @@ Resource diagnostic support is also narrow. It covers CPU Resource `bug_type: 20
 | Precision Search & Deep Inspection | Implemented in `v1.8.0`: exact-match metadata, safe highlighting, and non-wrapping Previous/Next exact-match navigation within visible sanitized content |
 | Visible Search Contract Integrity | Released in `v1.9.0`: table-row search follows declared visible columns only |
 | Inspector Workspace | Released in `v2.0.0`: responsive shell, calm import state, section navigation, continuous report content, and restrained control surfaces |
+| Battery and Charging report section | Ready in unreleased `v2.1.0`: optional direct battery metrics only; charging extraction remains deferred |
 | Light and dark themes | Supported through `prefers-color-scheme`, with reduced-transparency, increased-contrast, forced-colors, and reduced-motion fallbacks |
 | Copy visible section content | Supported |
 | Sanitized Visible Export | Supported: visible single-report and comparison `.txt` downloads |
@@ -806,7 +831,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v2.0.0 — Apple-Inspired Inspector Workspace` is released and Phase 20 is fully closed on 2026-07-16. The implemented design is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md), [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md), and [`PHASE_20_SUMMARY.md`](PHASE_20_SUMMARY.md). No later implementation milestone is active. MetricKit, speculative performance optimization, additional parser families, battery and charging analysis, and broader diagnostics remain separate future planning candidates.
+`v2.0.0 — Apple-Inspired Inspector Workspace` is released and Phase 20 is fully closed on 2026-07-16. Phase 21 is complete and frozen for the unreleased v2.1.0 readiness point; the separate release operation has not been executed. The implemented design is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md), [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md), [`PHASE_20_SUMMARY.md`](PHASE_20_SUMMARY.md), and [`PHASE_21_SUMMARY.md`](PHASE_21_SUMMARY.md). Charging extraction, MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates.
 
 ## Screenshots / Demo
 

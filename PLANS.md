@@ -193,10 +193,11 @@ actions unless the user explicitly asks for that release action.
 
 ## Approved Planning Direction: v2.1.0
 
-Slices 21A through 21E are complete and frozen; v2.1.0 remains unreleased.
-Slice `21E - Sanitized Corpus Hardening and Regression Coverage` is complete
-and frozen. Slice 21F is next but not started. The evidence record,
-implementation design, and future slice plan are in
+Slices 21A through 21F are complete and frozen; Phase 21 is complete and
+v2.1.0 remains unreleased but ready for a separate release operation. Slice
+`21F - Final QA, Documentation, and Release Readiness` is complete and frozen.
+The evidence record, implementation design, release-readiness summary, and
+future deferred scope are in
 [`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
 
 The plan must preserve the released v2.0.0 Inspector Workspace, parser-family
@@ -206,7 +207,10 @@ Slice 21D added only the optional sanitized battery presentation through the
 existing report-document path. Slice 21E added synthetic corpus coverage and
 accessor-safety hardening without broadening the frozen battery contract.
 Charging extraction, comparison expansion, and broader diagnostics remain
-future work.
+future work. Browser automation was unavailable because no browser executable
+or Playwright dependency was installed; the existing synthetic harness passed
+and this environmental limitation is recorded. No v2.1.0 tag or release was
+created by Phase 21.
 
 ## Approved Milestone Plan: v1.8.0
 

@@ -2,17 +2,19 @@
 
 Version: `v2.1.0`
 
-Status: `Slice 21E complete and frozen; v2.1.0 remains unreleased`
+Status: `Phase 21 complete and frozen; v2.1.0 ready for release but unreleased`
 
-Current slice: `21F - Browser QA, Documentation, and Release Readiness (next; not started)`
+Current slice: `21F - Browser QA, Documentation, and Release Readiness (complete and frozen)`
 
 Baseline: released and frozen `v2.0.0` at `39aa68a98260d379d4fff71cd0758b6177fc2c64`
 
 This document preserves the Slice 21A research record and the Phase 21
 implementation plan. Slices 21B and 21C add parser-local battery normalization
 and a privacy-safe internal report model. Slice 21D adds only the optional
-sanitized battery presentation; charging, comparison expansion, and release
-work remain future scope.
+sanitized battery presentation. Slice 21E hardens the corpus and validation;
+Slice 21F completes final QA and release-readiness documentation. Charging,
+comparison expansion, and the separate release operation remain outside the
+completed implementation slices.
 
 ## 1. Decision Summary
 
@@ -467,8 +469,8 @@ search index, serializer, comparison model, or Raw Local View path:
 
 ## 16. Complete Phase 21 Plan
 
-Slices 21A through 21E are complete and frozen. Slice 21F is next and has not
-started.
+Slices 21A through 21F are complete and frozen. Phase 21 is complete; v2.1.0
+is ready for a separate release operation but remains unreleased.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
 
@@ -615,7 +617,7 @@ Validation:
 
 ### Slice 21F - Browser QA, Documentation, and Release Readiness
 
-Status: `Future; not started`
+Status: `Complete and frozen`
 
 Scope:
 
@@ -626,8 +628,37 @@ Scope:
   implementation evidence.
 - Prepare release readiness without tagging or publishing automatically.
 
-Release gate: no v2.1 release claim until corpus, privacy, automated tests,
-browser workflows, documentation, and diff hygiene pass.
+Delivered:
+
+- Completed the final parser, sanitization, presentation, search, copy, text
+  export, JSON export, comparison, Raw Local View, charging-exclusion, privacy,
+  accessibility, corpus, performance, and PWA contract audit.
+- Revalidated the 71-case synthetic corpus: 23 record cases and 48
+  normalized-model cases. The existing synthetic browser harness includes full,
+  partial, absent, search, Raw Local View, comparison, clear/reset, duplicate
+  ID, hidden-focus, and overflow checks for the battery workflow.
+- Verified the private positive sample locally against the approved direct
+  anchors without retaining or documenting raw records or identifiers.
+- Reconciled README, CHANGELOG, ROADMAP, PLANS, this plan, the field audit,
+  design status, and `PHASE_21_SUMMARY.md` for a complete but unreleased
+  v2.1.0 readiness state.
+
+Validation:
+
+- The full Node/assert suite, required syntax checks, service-worker syntax,
+  diff hygiene, and established Node performance benchmark passed. All emitted
+  existing and stress budget statuses were within budget.
+- No production release blocker was found, so no runtime, test, fixture, style,
+  service-worker, dependency, or search/export/comparison/Raw Local View repair
+  was required.
+- Browser automation remains unavailable because no browser executable or
+  Playwright dependency is installed. The existing synthetic harness passed
+  through its repository assertions; native browser, screenshot, physical
+  device, and native screen-reader coverage are not claimed.
+
+Release gate: corpus, privacy, automated tests, synthetic browser workflows,
+documentation, and diff hygiene pass. No v2.1.0 tag or release is created by
+this slice; the separate release operation remains next.
 
 ## 17. Frozen and Deferred Scope
 
@@ -644,10 +675,7 @@ Deferred to v2.2.0 or later:
   battery histograms, undocumented charge algorithms, and unsupported event
   families.
 
-Slice 21A remains complete and frozen as research and planning. Slice 21B is
-complete and frozen after its implementation commit. Slice 21C is complete and
-frozen after its sanitization and report-model commit. Slice 21D is complete
-and frozen after its presentation commit. Slice 21E is complete and frozen
-after its corpus-hardening commit. Slice 21F is next but has not started;
-charging extraction, comparison expansion, and broader diagnostics remain
-future work.
+Slices 21A through 21F are complete and frozen. v2.1.0 is ready for release
+but remains unreleased and untagged. Charging extraction, comparison
+expansion, and broader diagnostics remain future work; no later milestone has
+started.

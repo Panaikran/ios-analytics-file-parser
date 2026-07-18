@@ -1,5 +1,32 @@
 # Changelog
 
+## v2.1.0 — Battery and Charging Insights (ready for release; unreleased)
+
+Status: Phase 21 is complete and frozen. This entry records release readiness
+only; no `v2.1.0` tag or release has been created.
+
+### Added
+
+- Approved direct battery normalization for supported CoreAnalytics snapshot families.
+- A privacy-safe sanitized battery model with an optional non-enumerable report attachment.
+- An optional `Battery and Charging` report section containing direct battery metrics only.
+- A 71-case hand-authored sanitized corpus matrix covering record and normalized-model variation.
+
+### Hardened
+
+- Deterministic final-snapshot precedence, duplicate deduplication, complementary fallback, and conflict suppression.
+- Strict scalar, range, unit, origin, own-property, Qmax-index, and accessor-backed property checks.
+- PWA precache coverage for the battery parser and battery section projection remains verified under the existing cache identity.
+
+### Scope and validation
+
+- Maximum Capacity uses the direct `MaximumCapacityPercent` value when present; Raw Maximum Capacity remains the approved terminology.
+- Battery values remain direct observations only. No derived health ratio, diagnosis, service recommendation, or `RealCapacity` mapping is included.
+- Charging extraction and presentation remain deferred; adapter, wireless, power-mode, thermal, duration, and wattage fields are not supported.
+- The complete Node/assert suite, syntax checks, 71-case corpus, privacy/export/search/comparison/Raw boundaries, and established performance budgets passed.
+- The existing synthetic browser harness covers the battery workflow. Real browser automation was unavailable because no browser executable or Playwright dependency was installed.
+- The private positive sample was used locally for anchor verification only and remains ignored and untracked.
+
 ## v2.0.0 — Apple-Inspired Inspector Workspace
 
 Status: Released on 2026-07-16. The annotated `v2.0.0` tag and published,
