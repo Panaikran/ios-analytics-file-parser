@@ -41,16 +41,20 @@ export function extractNormalizedBattery(records) {
   const familyRecords = new Map([...SOURCE_PRIORITY.keys()].map((family) => [family, []]));
 
   records.forEach((record) => {
-    const family = record?.name;
-    const payload = record?.message;
+    const familyProperty = readOwnDataProperty(record, 'name');
+    const payloadProperty = readOwnDataProperty(record, 'message');
+    const family = familyProperty.kind === 'data' ? familyProperty.value : undefined;
+    const payload = payloadProperty.kind === 'data' ? payloadProperty.value : undefined;
     if (!SOURCE_PRIORITY.has(family) || !isRecord(payload)) return;
 
     const recordInfo = { family, metadata: getMetadata(record) };
     familyRecords.get(family).push(recordInfo);
 
     for (const definition of FIELD_DEFINITIONS) {
-      if (!definition.families.has(family) || !hasOwn(payload, definition.field)) continue;
-      const value = payload[definition.field];
+      if (!definition.families.has(family)) continue;
+      const property = readOwnDataProperty(payload, definition.field);
+      if (property.kind !== 'data') continue;
+      const value = property.value;
       if (!definition.validate(value)) continue;
       observations.push({
         normalized: definition.normalized,
@@ -117,13 +121,15 @@ export function sanitizeBatteryForReport(normalizedBattery) {
   ];
 
   for (const [field, unit, validate] of definitions) {
-    if (!hasOwn(normalizedBattery, field)) continue;
-    const metric = sanitizeMetric(normalizedBattery[field], unit, validate);
+    const property = readOwnDataProperty(normalizedBattery, field);
+    if (property.kind !== 'data') continue;
+    const metric = sanitizeMetric(property.value, unit, validate);
     if (metric) sanitized[field] = metric;
   }
 
-  if (hasOwn(normalizedBattery, 'qmaxCells')) {
-    const qmaxCells = sanitizeQmaxCells(normalizedBattery.qmaxCells);
+  const qmaxProperty = readOwnDataProperty(normalizedBattery, 'qmaxCells');
+  if (qmaxProperty.kind === 'data') {
+    const qmaxCells = sanitizeQmaxCells(qmaxProperty.value);
     if (qmaxCells?.length) sanitized.qmaxCells = qmaxCells;
   }
 
@@ -195,10 +201,13 @@ function createMetric(candidate, confidence = candidate.confidence) {
 }
 
 function sanitizeMetric(metric, unit, validate) {
-  if (!isRecord(metric) || !hasOwn(metric, 'value') || !hasOwn(metric, 'unit')) return null;
-  if (metric.unit !== unit || !validate(metric.value) || !hasDirectOrigin(metric)) return null;
+  if (!isRecord(metric)) return null;
+  const value = readOwnDataProperty(metric, 'value');
+  const metricUnit = readOwnDataProperty(metric, 'unit');
+  if (value.kind !== 'data' || metricUnit.kind !== 'data') return null;
+  if (metricUnit.value !== unit || !validate(value.value) || !hasDirectOrigin(metric)) return null;
   return {
-    value: metric.value,
+    value: value.value,
     unit,
     origin: 'direct',
   };
@@ -211,18 +220,20 @@ function sanitizeQmaxCells(cells) {
   const conflictingCells = new Set();
 
   for (const metric of cells) {
-    if (!isRecord(metric) || !hasOwn(metric, 'cell') || !isCellIndex(metric.cell)) continue;
-    if (conflictingCells.has(metric.cell)) continue;
+    if (!isRecord(metric)) continue;
+    const cell = readOwnDataProperty(metric, 'cell');
+    if (cell.kind !== 'data' || !isCellIndex(cell.value)) continue;
+    if (conflictingCells.has(cell.value)) continue;
 
     const sanitized = sanitizeMetric(metric, 'mAh', isPositiveNumber);
     if (!sanitized) continue;
-    const cell = { cell: metric.cell, ...sanitized };
-    const existing = validCells.get(metric.cell);
+    const cellMetric = { cell: cell.value, ...sanitized };
+    const existing = validCells.get(cell.value);
     if (!existing) {
-      validCells.set(metric.cell, cell);
-    } else if (existing.value !== cell.value || existing.unit !== cell.unit || existing.origin !== cell.origin) {
-      validCells.delete(metric.cell);
-      conflictingCells.add(metric.cell);
+      validCells.set(cell.value, cellMetric);
+    } else if (existing.value !== cellMetric.value || existing.unit !== cellMetric.unit || existing.origin !== cellMetric.origin) {
+      validCells.delete(cell.value);
+      conflictingCells.add(cell.value);
     }
   }
 
@@ -230,8 +241,10 @@ function sanitizeQmaxCells(cells) {
 }
 
 function hasDirectOrigin(metric) {
-  return (!hasOwn(metric, 'source') || metric.source === 'direct') &&
-    (!hasOwn(metric, 'origin') || metric.origin === 'direct');
+  const source = readOwnDataProperty(metric, 'source');
+  const origin = readOwnDataProperty(metric, 'origin');
+  return (source.kind === 'missing' || (source.kind === 'data' && source.value === 'direct')) &&
+    (origin.kind === 'missing' || (origin.kind === 'data' && origin.value === 'direct'));
 }
 
 function isCellIndex(value) {
@@ -239,9 +252,12 @@ function isCellIndex(value) {
 }
 
 function getMetadata(record) {
-  return Object.fromEntries(
-    METADATA_KEYS.filter((key) => hasOwn(record, key)).map((key) => [key, record[key]])
-  );
+  const metadata = [];
+  for (const key of METADATA_KEYS) {
+    const property = readOwnDataProperty(record, key);
+    if (property.kind === 'data') metadata.push([key, property.value]);
+  }
+  return Object.fromEntries(metadata);
 }
 
 function metadataMatches(left, right) {
@@ -270,4 +286,15 @@ function isRecord(value) {
 
 function hasOwn(value, key) {
   return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function readOwnDataProperty(value, key) {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor) return { kind: 'missing' };
+    if (!Object.prototype.hasOwnProperty.call(descriptor, 'value')) return { kind: 'accessor' };
+    return { kind: 'data', value: descriptor.value };
+  } catch {
+    return { kind: 'error' };
+  }
 }

@@ -270,6 +270,62 @@ allowlisted direct fields described here. It must suppress unsupported or
 unresolved values, retain deterministic source handling, and avoid adding the
 private sample to fixtures.
 
-This is not a go-ahead for UI, search, export, comparison, or runtime behavior
-in Slice 21A. Slice 21A is complete and frozen after the documentation commit;
-Slice 21B is next but has not started.
+At the time of Slice 21A, this was not a go-ahead for UI, search, export,
+comparison, or runtime behavior. Slices 21A through 21D are now complete and
+frozen; the following reassessment records the evidence added by Slice 21E.
+
+## 17. Slice 21E Corpus Reassessment
+
+Status: **Complete and frozen.**
+
+The committed matrix at `tests/fixtures/batteryCorpus.js` contains 71
+hand-authored, privacy-safe synthetic cases: 23 record-shape cases and 48
+normalized-model boundary cases. It is a regression corpus, not a measurement
+of real-world field frequency and not a replacement for additional scrubbed
+reports. No private record was copied into it.
+
+The matrix verifies full, alternate, BHUI-only, watchOS-like partial, charging-
+shaped exclusion, each recognized family independently, absent and partial
+models, exact-name rejection, RealCapacity-like rejection, all approved scalar
+types and ranges, units, origins, Qmax ordering and conflicts, duplicate order,
+source/conflict metadata stripping, HTML-like metadata, inherited properties,
+accessors, prototype keys, and large finite values.
+
+### Field decisions after hardening
+
+| Field or concept | Decision | Accepted boundary | Unit and confidence | Duplicate, conflict, and fallback policy |
+| --- | --- | --- | --- | --- |
+| `last_value_CycleCount` | Retain | Own finite non-negative integer; zero valid | `cycles`; high confidence | Deduplicate identical values; use the frozen final-source precedence only when its metadata is compatible; otherwise suppress the conflicted field |
+| `last_value_MaximumFCC` | Retain | Own finite positive number; no string coercion | `mAh` inferred from context; medium confidence | No sum or average; complementary fill only when values do not conflict |
+| `last_value_NominalChargeCapacity` | Retain | Own finite positive number; no string coercion | `mAh` inferred from context; medium confidence | Same snapshot policy as Maximum FCC; no derived percentage |
+| `last_value_AppleRawMaxCapacity` | Retain narrowly | Own finite positive number; label remains **Raw Maximum Capacity** | `mAh` inferred from context; medium confidence | Never mapped to `RealCapacity` or a health judgment |
+| `last_value_MaximumCapacityPercent` | Retain | Own finite numeric value from 0 through 100 | `percent`; high confidence for snapshot evidence | Direct value is authoritative; no ratio fallback; conflicting unresolved values are suppressed |
+| `maximumCapacityPercent` in `BHUI_NCC_iOSwatchOS` | Retain narrowly | Only the exact own finite 0–100 field | `percent`; medium confidence | Supplies only this direct percentage; it does not fill snapshot capacities or cycle fields |
+| `last_value_MaximumQmax` | Retain narrowly | Own finite positive number; exact field only | `mAh` inferred; medium confidence; meaning remains undocumented or not independently verified | No inferred cell count or relationship; suppress unresolved duplicates |
+| `last_value_QmaxCell0` | Retain narrowly | Own finite positive number at explicit cell 0 | `mAh` inferred; medium confidence | Identical duplicate once; conflicting duplicate withheld |
+| Other Qmax cell aliases such as `last_value_QmaxCell1` | Reject | Not part of the frozen recognized-field contract | Unsupported | Do not broaden support from naming similarity |
+| `AdapterDetails`, `bucketed_Watts`, `isWireless`, and power-mode fields | Reject for 21E battery output | Charging-shaped synthetic cases remain unaccepted | Charging units and semantics remain outside this slice | Defer charging extraction and presentation; do not infer a charger or power measurement |
+
+The sanitizer and renderer now reject accessor-backed values without executing
+their getters. Own data properties remain the only accepted metric boundary;
+inherited properties, unsupported origins and units, non-finite values, arrays,
+objects used as scalars, and unknown keys are omitted. Safe metrics remain when
+an unrelated metric is malformed.
+
+### Reassessed confidence and corpus verdict
+
+The synthetic matrix confirms deterministic behavior for the existing contract,
+but it does not add another real iOS version, device family, low-health device,
+replaced-battery report, wireless report, or conflicting private report. The
+corpus verdict therefore remains:
+
+**Sufficient for provisional implementation with strict fallback.**
+
+The implementation is not evidence for universal support. Additional
+identifier-free scrubbed reports remain useful before release, especially for
+multiple iOS releases and device families, a below-100 percentage, replaced or
+missing battery cases, wireless context, and real cross-record conflicts.
+
+Slice 21E changes no recognized family, field alias, charging contract, derived
+metric, health interpretation, serializer, search model, comparison model, Raw
+Local View behavior, or PWA policy. Slice 21F is next and has not started.

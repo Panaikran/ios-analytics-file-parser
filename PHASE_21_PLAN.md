@@ -2,9 +2,9 @@
 
 Version: `v2.1.0`
 
-Status: `Slice 21D complete and frozen; v2.1.0 remains unreleased`
+Status: `Slice 21E complete and frozen; v2.1.0 remains unreleased`
 
-Current slice: `21E - Sanitized Corpus Expansion and Cross-Variant Hardening (next; not started)`
+Current slice: `21F - Browser QA, Documentation, and Release Readiness (next; not started)`
 
 Baseline: released and frozen `v2.0.0` at `39aa68a98260d379d4fff71cd0758b6177fc2c64`
 
@@ -467,7 +467,7 @@ search index, serializer, comparison model, or Raw Local View path:
 
 ## 16. Complete Phase 21 Plan
 
-Slices 21A through 21D are complete and frozen. Slice 21E is next and has not
+Slices 21A through 21E are complete and frozen. Slice 21F is next and has not
 started.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
@@ -572,7 +572,7 @@ Implementation commit message: `feat(v2.1): render battery report section`.
 
 ### Slice 21E - Sanitized Corpus Expansion and Cross-Variant Hardening
 
-Status: `Future; not started`
+Status: `Complete and frozen`
 
 Scope:
 
@@ -582,9 +582,36 @@ Scope:
   replaced-battery, null, malformed, partial, duplicate, conflict, and scalar
   variation behavior.
 - Reassess confidence and precedence from measured corpus results.
+- Add no new event families, field aliases, charging fields, derived metrics, or
+  user-facing features.
 
-No identifying data is required. If the expanded corpus contradicts the
-current policy, suppress or narrow the affected field rather than guessing.
+Delivered:
+
+- Added 71 hand-authored synthetic cases in
+  `tests/fixtures/batteryCorpus.js`: 23 record-shape cases and 48
+  normalized-model boundary cases.
+- Added focused coverage for scalar, range, unit, origin, Qmax, duplicate,
+  conflict, fallback, source-family, RealCapacity-like, metadata, prototype,
+  accessor, and renderer-boundary variation.
+- Repaired only the proven accessor-safety gaps in the battery extractor,
+  sanitizer, and battery section projection. Accessor-backed fields are
+  rejected without executing getters; accepted output and precedence remain
+  unchanged.
+- Confirmed the private positive sample locally against the approved seven
+  values without retaining private data or identifiers.
+
+Validation:
+
+- Full parser tests, syntax checks, service-worker syntax checks, and the
+  established Node performance benchmark pass.
+- Existing service-worker allowlist and cache identity remain unchanged; the
+  battery parser and renderer remain precached, and no fixture is precached.
+- Browser automation is unavailable locally because no browser executable or
+  Playwright dependency is installed. The existing synthetic browser harness
+  remains available for Slice 21F.
+- The corpus verdict remains **Sufficient for provisional implementation with
+  strict fallback**; one private positive report still does not establish
+  universal support.
 
 ### Slice 21F - Browser QA, Documentation, and Release Readiness
 
@@ -620,6 +647,7 @@ Deferred to v2.2.0 or later:
 Slice 21A remains complete and frozen as research and planning. Slice 21B is
 complete and frozen after its implementation commit. Slice 21C is complete and
 frozen after its sanitization and report-model commit. Slice 21D is complete
-and frozen after its presentation commit. Slice 21E is next but has not
-started; charging extraction, comparison expansion, and broader diagnostics
-remain future work.
+and frozen after its presentation commit. Slice 21E is complete and frozen
+after its corpus-hardening commit. Slice 21F is next but has not started;
+charging extraction, comparison expansion, and broader diagnostics remain
+future work.

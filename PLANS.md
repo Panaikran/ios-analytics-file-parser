@@ -193,18 +193,20 @@ actions unless the user explicitly asks for that release action.
 
 ## Approved Planning Direction: v2.1.0
 
-Slice `21D - Battery and Charging Report Presentation` is complete and frozen.
-Slices 21A through 21C remain complete and frozen; v2.1.0 remains unreleased.
-Slice 21E is next but not started. The evidence record,
+Slices 21A through 21E are complete and frozen; v2.1.0 remains unreleased.
+Slice `21E - Sanitized Corpus Hardening and Regression Coverage` is complete
+and frozen. Slice 21F is next but not started. The evidence record,
 implementation design, and future slice plan are in
 [`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
 
 The plan must preserve the released v2.0.0 Inspector Workspace, parser-family
 boundaries, `SectionModel[]`, sanitized visible search/copy/export behavior,
 sanitized-only comparison, Raw Local View restrictions, and local-first privacy.
-Slice 21D adds only the optional sanitized battery presentation through the
-existing report-document path. Charging extraction, comparison expansion, and
-broader diagnostics remain future work.
+Slice 21D added only the optional sanitized battery presentation through the
+existing report-document path. Slice 21E added synthetic corpus coverage and
+accessor-safety hardening without broadening the frozen battery contract.
+Charging extraction, comparison expansion, and broader diagnostics remain
+future work.
 
 ## Approved Milestone Plan: v1.8.0
 

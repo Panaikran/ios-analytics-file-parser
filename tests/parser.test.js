@@ -78,6 +78,7 @@ import {
   LARGE_CORE_ANALYTICS_GROUP_COUNT,
   LARGE_STACKSHOT_PROCESS_COUNT,
 } from './fixtures/largeReportWorkloads.js';
+import { BATTERY_CORPUS_CASES, BATTERY_MODEL_CASES, BATTERY_RECORD_CASES } from './fixtures/batteryCorpus.js';
 
 const ipsText = await readFile(new URL('./fixtures/example.ips', import.meta.url), 'utf8');
 const fullIpsText = await readFile(new URL('./fixtures/example-full.ips', import.meta.url), 'utf8');
@@ -6353,6 +6354,102 @@ assert.equal(
   getSanitizedBattery(parseInput(batteryInput([batteryRecord(BATTERY_FINAL, { last_value_CycleCount: -1 })]))),
   null,
   'report attachment is absent when no safe battery metrics remain'
+);
+
+assert.ok(BATTERY_CORPUS_CASES.length >= 48, 'battery corpus matrix covers the required variation categories');
+for (const corpusCase of BATTERY_CORPUS_CASES) {
+  assert.equal(typeof corpusCase.id, 'string', `${corpusCase.id || 'battery case'} has an id`);
+  assert.equal(typeof corpusCase.rationale, 'string', `${corpusCase.id} records a rationale`);
+  assert.ok('expectedNormalized' in corpusCase, `${corpusCase.id} records expected normalized output`);
+  assert.ok('expectedSanitized' in corpusCase, `${corpusCase.id} records expected sanitized output`);
+  assert.ok('expectedVisibleRows' in corpusCase, `${corpusCase.id} records expected visible rows`);
+  assert.ok('expectedOmissions' in corpusCase, `${corpusCase.id} records expected omissions`);
+  assert.equal(typeof corpusCase.expectedResolution, 'string', `${corpusCase.id} records conflict/fallback behavior`);
+  assert.equal(typeof corpusCase.expectedSection, 'boolean', `${corpusCase.id} records section presence`);
+  assert.equal(typeof corpusCase.privacyNote, 'string', `${corpusCase.id} records a privacy note`);
+}
+
+for (const corpusCase of BATTERY_RECORD_CASES) {
+  const normalized = extractNormalizedBattery(corpusCase.input);
+  const sanitized = sanitizeBatteryForReport(normalized);
+  assert.deepEqual(normalized, corpusCase.expectedNormalized, `${corpusCase.id} normalized output matches its authored expectation`);
+  assert.deepEqual(sanitized, corpusCase.expectedSanitized, `${corpusCase.id} sanitized output matches its authored expectation`);
+  const section = createBatterySection(sanitized);
+  assert.deepEqual(section?.fields ?? [], corpusCase.expectedVisibleRows, `${corpusCase.id} visible rows match its authored expectation`);
+  assert.equal(Boolean(section), corpusCase.expectedSection, `${corpusCase.id} section presence matches its authored expectation`);
+}
+
+for (const corpusCase of BATTERY_MODEL_CASES) {
+  let sanitized;
+  assert.doesNotThrow(() => {
+    sanitized = sanitizeBatteryForReport(corpusCase.input);
+  }, `${corpusCase.id} fails closed without throwing`);
+  assert.equal(corpusCase.expectedNormalized, corpusCase.input, `${corpusCase.id} documents the normalized boundary input`);
+  assert.deepEqual(sanitized, corpusCase.expectedSanitized, `${corpusCase.id} sanitized output matches its authored expectation`);
+  const section = createBatterySection(sanitized);
+  assert.deepEqual(section?.fields ?? [], corpusCase.expectedVisibleRows, `${corpusCase.id} visible rows match its authored expectation`);
+  assert.equal(Boolean(section), corpusCase.expectedSection, `${corpusCase.id} section presence matches its authored expectation`);
+}
+
+const precedenceCase = BATTERY_RECORD_CASES.find(({ id }) => id === 'final-snapshot-precedence');
+const reversedPrecedence = extractNormalizedBattery([...precedenceCase.input].reverse());
+assert.deepEqual(
+  reversedPrecedence,
+  precedenceCase.expectedNormalized,
+  'final-snapshot precedence is independent of duplicate input order'
+);
+
+let extractorGetterReads = 0;
+const hostileExtractorPayload = {};
+Object.defineProperty(hostileExtractorPayload, 'last_value_CycleCount', {
+  enumerable: true,
+  get() {
+    extractorGetterReads += 1;
+    throw new Error('synthetic extractor getter must not run');
+  },
+});
+assert.doesNotThrow(
+  () => extractNormalizedBattery([batteryRecord(BATTERY_FINAL, hostileExtractorPayload)]),
+  'extractor rejects accessor fields without throwing'
+);
+assert.equal(extractorGetterReads, 0, 'extractor does not execute hostile field getters');
+
+let rendererGetterReads = 0;
+const hostileRendererModel = {};
+Object.defineProperty(hostileRendererModel, 'cycleCount', {
+  enumerable: true,
+  get() {
+    rendererGetterReads += 1;
+    throw new Error('synthetic renderer getter must not run');
+  },
+});
+assert.doesNotThrow(
+  () => createBatterySection(hostileRendererModel),
+  'renderer rejects accessor fields without throwing'
+);
+assert.equal(rendererGetterReads, 0, 'renderer does not execute hostile field getters');
+
+let sanitizerSideEffectReads = 0;
+const sideEffectMetric = {};
+Object.defineProperties(sideEffectMetric, {
+  value: {
+    enumerable: true,
+    get() {
+      sanitizerSideEffectReads += 1;
+      return 3100;
+    },
+  },
+  unit: { enumerable: true, value: 'mAh' },
+  source: { enumerable: true, value: 'direct' },
+});
+assert.equal(sanitizeBatteryForReport({ maximumFcc: sideEffectMetric }), null, 'sanitizer omits accessor metrics');
+assert.equal(sanitizerSideEffectReads, 0, 'sanitizer does not execute side-effect getters');
+
+const conflictCase = BATTERY_RECORD_CASES.find(({ id }) => id === 'conflicting-duplicate-suppression');
+assert.deepEqual(
+  extractNormalizedBattery([...conflictCase.input].reverse()),
+  conflictCase.expectedNormalized,
+  'conflict suppression is independent of duplicate input order'
 );
 
 console.log('Phase 2 parser tests passed');
