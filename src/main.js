@@ -26,6 +26,7 @@ import { createExactMatchTargets } from './search/exactMatch.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
 import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
+import { createBatterySection } from './ui/renderBatterySection.js';
 import { createWorkspaceNavigation } from './ui/workspaceNavigation.js';
 
 const appShell = document.querySelector('.app-shell');
@@ -127,7 +128,7 @@ function createInitialDenseTableState() {
 
 function renderApp() {
   const restoreCoreAnalyticsFacetFocus = document.activeElement?.matches('.coreanalytics-overview__chip') === true;
-  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const activeSections = getPresentationSections();
   const searchResult = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode });
   const coreAnalyticsView = getCoreAnalyticsView(activeSections);
   const coreAnalyticsFacetOptions = !comparisonMode && appState.sanitize
@@ -201,6 +202,14 @@ function renderApp() {
       workspaceHeading.scrollIntoView({ block: 'start' });
     });
   }
+}
+
+function getPresentationSections() {
+  const sourceSections = comparisonMode ? comparisonSections : appState.sections;
+  if (comparisonMode || !appState.sanitize) return sourceSections;
+
+  const batterySection = createBatterySection(appState.sections?.battery);
+  return batterySection ? [...sourceSections, batterySection] : sourceSections;
 }
 
 function getReportIdentity(presentation) {
@@ -1010,7 +1019,7 @@ async function copySection(section) {
 }
 
 function downloadVisibleExport() {
-  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const activeSections = getPresentationSections();
   const visibleSections = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode }).sections;
   const exportText = serializeSectionsForExport(getEligibleExportSections(activeSections, visibleSections));
   if (!exportText) return;
@@ -1022,7 +1031,7 @@ function downloadVisibleExport() {
 }
 
 function downloadVisibleJson() {
-  const activeSections = comparisonMode ? comparisonSections : appState.sections;
+  const activeSections = getPresentationSections();
   const visibleSections = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode }).sections;
   const exportSections = getEligibleExportSections(activeSections, visibleSections);
   const exportJson = serializeSectionsForJsonExport(exportSections, { mode: comparisonMode ? 'comparison' : 'single' });

@@ -2,16 +2,17 @@
 
 Version: `v2.1.0`
 
-Status: `Slice 21C complete and frozen; v2.1.0 remains unreleased`
+Status: `Slice 21D complete and frozen; v2.1.0 remains unreleased`
 
-Current slice: `21D - Battery and Charging Report Presentation (next; not started)`
+Current slice: `21E - Sanitized Corpus Expansion and Cross-Variant Hardening (next; not started)`
 
 Baseline: released and frozen `v2.0.0` at `39aa68a98260d379d4fff71cd0758b6177fc2c64`
 
 This document preserves the Slice 21A research record and the Phase 21
 implementation plan. Slices 21B and 21C add parser-local battery normalization
-and a privacy-safe internal report model; they do not add battery UI, search,
-export, comparison, or charging behavior.
+and a privacy-safe internal report model. Slice 21D adds only the optional
+sanitized battery presentation; charging, comparison expansion, and release
+work remain future scope.
 
 ## 1. Decision Summary
 
@@ -412,7 +413,8 @@ sanitized-visible contracts:
 
 ## 14. UI Presentation Boundary
 
-Future section title: **Battery and Charging**.
+Slice 21D presents the optional section title **Battery and Charging** only when
+at least one approved sanitized battery metric remains.
 
 Candidate rows, in stable order:
 
@@ -423,9 +425,10 @@ Candidate rows, in stable order:
 5. Raw Maximum Capacity.
 6. Maximum Qmax.
 7. Cell Qmax.
-8. Detected Adapter Power.
-9. Charging Connection.
-10. Observed Power Modes, only when supporting evidence is accepted.
+8. Detected Adapter Power, reserved for a later charging slice.
+9. Charging Connection, reserved for a later charging slice.
+10. Observed Power Modes, only when supporting evidence is accepted in a later
+    charging slice.
 
 The section is a continuous report-document section inside the frozen
 Inspector Workspace. It is not a dashboard, tile grid, ring, gauge, health
@@ -438,7 +441,8 @@ as `Unknown` unless a later approved copy contract explicitly requires it.
 
 ## 15. Search, Export, and Comparison Boundary
 
-Future behavior must reuse existing contracts:
+Slice 21D reuses the existing contracts without adding a battery-specific
+search index, serializer, comparison model, or Raw Local View path:
 
 - Search sees only the rendered sanitized Battery and Charging section, its
   fixed labels, and visible scalar values. It does not search source event
@@ -448,8 +452,9 @@ Future behavior must reuse existing contracts:
   export. It includes only user-facing rows and no source-family or conflict
   metadata.
 - JSON export remains format `ios-analytics-visible-export`, version 1, with
-  scalar fields only. No raw record blob, path, identifier, or hidden field is
-  added.
+  scalar fields only. The presentation section enters this existing generic
+  visible-section path; no raw record blob, path, identifier, or hidden field
+  is added.
 - Raw Local View remains opt-in and keeps structured export unavailable. A
   future battery implementation must not make raw mode a second export path.
 - Sanitized comparison remains limited to two or three compatible
@@ -462,7 +467,8 @@ Future behavior must reuse existing contracts:
 
 ## 16. Complete Phase 21 Plan
 
-Slices after 21C are future work. Slice 21D is next but has not started.
+Slices 21A through 21D are complete and frozen. Slice 21E is next and has not
+started.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
 
@@ -542,21 +548,29 @@ Implementation commit message: `feat(v2.1): integrate sanitized battery model`.
 
 ### Slice 21D - Battery and Charging Report Presentation
 
-Status: `Future; next; not started`
+Status: `Complete and frozen`
 
 Scope:
 
 - Render the optional `Battery and Charging` section through the existing
   report-document field/table path using only the sanitized internal model.
-- Add only the approved direct battery rows and conservative charging context
-  that remains supported by the authoritative evidence.
+- Add only the approved direct battery rows. Charging extraction and charging
+  presentation remain outside this slice.
 - Preserve the frozen Inspector Workspace hierarchy and accessibility rules.
+- Reuse the existing visible search, copy, and export paths without changing
+  their serializers or adding comparison or Raw Local View output.
+- Repair only the verified service-worker precache gap for the battery parser
+  and the focused presentation module; preserve the existing cache lifecycle.
 
-Validation: section ordering, absent/partial output, fixed labels, semantic
-fields/tables, narrow widths, keyboard/focus behavior, reduced-motion and
-contrast fallbacks, and hostile scalar text handling.
+Validation completed: section ordering, absent/partial output, fixed labels,
+semantic fields, synthetic search/copy/export boundaries, parser-to-section
+private-sample verification, syntax checks, the full parser suite, and the
+established Node performance benchmark. Browser automation was unavailable in
+the local environment; the browser harness was extended for later execution.
 
-### Slice 21E - Search, Export, and Comparison Integration
+Implementation commit message: `feat(v2.1): render battery report section`.
+
+### Slice 21E - Sanitized Corpus Expansion and Cross-Variant Hardening
 
 Status: `Future; not started`
 
@@ -605,6 +619,7 @@ Deferred to v2.2.0 or later:
 
 Slice 21A remains complete and frozen as research and planning. Slice 21B is
 complete and frozen after its implementation commit. Slice 21C is complete and
-frozen after its sanitization and report-model commit. Slice 21D is next but
-has not started; search, export, comparison, charging, and broader diagnostics
+frozen after its sanitization and report-model commit. Slice 21D is complete
+and frozen after its presentation commit. Slice 21E is next but has not
+started; charging extraction, comparison expansion, and broader diagnostics
 remain future work.

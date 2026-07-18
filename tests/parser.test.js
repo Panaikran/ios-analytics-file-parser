@@ -62,6 +62,7 @@ import {
 } from '../src/ui/denseTables.js';
 import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
 import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
+import { createBatterySection } from '../src/ui/renderBatterySection.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
 import {
@@ -93,6 +94,7 @@ const renderAppSource = await readFile(new URL('../src/ui/renderApp.js', import.
 const renderCoreAnalyticsOverviewSource = await readFile(new URL('../src/ui/renderCoreAnalyticsOverview.js', import.meta.url), 'utf8');
 const coreAnalyticsViewSource = await readFile(new URL('../src/ui/coreAnalyticsView.js', import.meta.url), 'utf8');
 const renderSectionSource = await readFile(new URL('../src/ui/renderSection.js', import.meta.url), 'utf8');
+const renderBatterySectionSource = await readFile(new URL('../src/ui/renderBatterySection.js', import.meta.url), 'utf8');
 const parserIndexSource = await readFile(new URL('../src/parsers/index.js', import.meta.url), 'utf8');
 const diagnosticExplanationsSource = await readFile(new URL('../src/explanations/diagnosticExplanations.js', import.meta.url), 'utf8');
 const comparisonModelSource = await readFile(new URL('../src/comparison/comparisonModel.js', import.meta.url), 'utf8');
@@ -269,7 +271,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16/, 'service worker cache version reflects the complete v2.0 production shell');
+assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-21d/, 'service worker cache version reflects the Slice 21D production shell without creating a release version');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
@@ -277,8 +279,10 @@ assert.match(serviceWorkerText, /\.\/src\/search\/exactMatch\.js/, 'service work
 assert.match(serviceWorkerText, /event\.waitUntil\(self\.skipWaiting\(\)\)/, 'service worker keeps the SKIP_WAITING activation request alive');
 assert.doesNotMatch(serviceWorkerText, /(?:SyncManager|periodicSync|PushManager|pushManager|share_target|file_handlers)/, 'service worker avoids background and file-handler APIs');
 assert.match(serviceWorkerText, /\.\/src\/ui\/renderCoreAnalyticsOverview\.js/, 'service worker precaches the CoreAnalytics overview renderer');
+assert.match(serviceWorkerText, /\.\/src\/ui\/renderBatterySection\.js/, 'service worker precaches the battery section projection');
 assert.match(serviceWorkerText, /\.\/src\/ui\/coreAnalyticsView\.js/, 'service worker precaches the CoreAnalytics view helper');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/classifyDiagnostic\.js/, 'service worker precaches the diagnostic classification helper');
+assert.match(serviceWorkerText, /\.\/src\/parsers\/battery\.js/, 'service worker precaches the battery parser dependency');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseAccessoryCrash\.js/, 'service worker precaches the AccessoryCrash parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseCpuResource\.js/, 'service worker precaches the CPU Resource parser');
 assert.match(serviceWorkerText, /\.\/src\/parsers\/parseDiskWritesResource\.js/, 'service worker precaches the Disk Writes Resource parser');
@@ -353,7 +357,14 @@ assert.match(mainScriptText, /focusComparisonEntry\(/, 'comparison removal resto
 assert.match(mainScriptText, /comparisonEntries = \[\];\s+comparisonMessage = 'No reports added\.';/, 'full report clear discards comparison identity state');
 assert.match(mainScriptText, /function clearComparison\(\)[^]*comparisonEntries = \[\][^]*comparisonMessage = 'Comparison cleared\.';/, 'clear comparison discards local-label state and reports completion');
 assert.match(mainScriptText, /function clearComparison\(\)/, 'comparison workflow supports clearing comparison state');
-assert.match(mainScriptText, /const activeSections = comparisonMode \? comparisonSections : appState\.sections;/, 'renderer, search, and copy share the active SectionModel array');
+assert.match(mainScriptText, /function getPresentationSections\(\)[^]*createBatterySection\(appState\.sections\?\.battery\)[^]*return batterySection \? \[\.\.\.sourceSections, batterySection\] : sourceSections/s, 'renderer, search, and copy share the active SectionModel array with an optional sanitized battery section');
+assert.match(mainScriptText, /if \(comparisonMode \|\| !appState\.sanitize\) return sourceSections/, 'battery presentation is excluded from comparison and Raw Local View');
+assert.match(mainScriptText, /function downloadVisibleExport\(\)[^]*const activeSections = getPresentationSections\(\)/s, 'text export reuses the generic visible presentation sections');
+assert.match(mainScriptText, /function downloadVisibleJson\(\)[^]*const activeSections = getPresentationSections\(\)/s, 'JSON export reuses the generic visible presentation sections');
+assert.match(renderBatterySectionSource, /id: 'battery-and-charging'/, 'battery presentation uses the approved stable section id');
+assert.match(renderBatterySectionSource, /title: 'Battery and Charging'/, 'battery presentation uses the approved section title');
+assert.match(renderBatterySectionSource, /createSection\(\{[^]*fields/s, 'battery projection feeds the existing SectionModel renderer');
+assert.doesNotMatch(renderBatterySectionSource, /sourceFamily|rawRecord|conflicts|RealCapacity|adapterPowerCategories|PowerMode/, 'battery presentation projection cannot expose source, diagnostic, or charging metadata');
 assert.match(mainScriptText, /privacyPanel\.hidden = comparisonMode \|\| !hasParsedSections;/, 'Raw Local View controls remain unavailable in comparison mode');
 assert.match(mainScriptText, /inputPanel\.hidden = comparisonMode;/, 'comparison mode hides the source input panel and its raw report text');
 assert.match(
@@ -4318,6 +4329,9 @@ assert.match(reportContentStyleText, /@media \(forced-colors:\s*active\)[^]*\.ch
 assert.doesNotMatch(reportContentStyleText, /backdrop-filter|linear-gradient|radial-gradient|conic-gradient/, 'report content remains opaque without glass or decorative gradients');
 assert.match(workspaceNavigationSource, /querySelector\('\[data-section-heading\]'\)/, 'workspace navigation focuses section headings without freezing the heading level');
 assert.match(browserHarnessSource, /reportDocumentSemantics/, 'browser harness reports continuous-document, definition-list, table, and chart semantics');
+assert.match(browserHarnessSource, /batteryPresentationWorkflow/, 'browser harness covers the battery report presentation workflow');
+assert.match(browserHarnessSource, /BatteryConfigValueHistogramFinal_V2/, 'browser harness uses synthetic battery records only');
+assert.match(browserHarnessSource, /hiddenFocusableCount/, 'browser harness checks for hidden battery focusable content');
 const plainCopySection = {
   id: 'plain-copy',
   title: 'Plain Copy',
@@ -6264,6 +6278,77 @@ const sanitizedBatteryComparison = createComparisonSections([
   { classification: { parserType: 'coreanalytics', supported: true }, sections: sanitizedBatterySections },
 ]);
 assert.doesNotMatch(JSON.stringify(sanitizedBatteryComparison), /Battery|Cycle Count|maximumFcc|3000/, 'comparison excludes the sanitized battery model');
+const batteryPresentationModel = {
+  ...sanitizedBattery,
+  cycleCount: { ...sanitizedBattery.cycleCount, value: 24 },
+};
+const batteryReportSection = createBatterySection(batteryPresentationModel);
+assert.equal(batteryReportSection.id, 'battery-and-charging', 'battery presentation uses a stable section id');
+assert.equal(batteryReportSection.title, 'Battery and Charging', 'battery presentation uses the approved section title');
+assert.deepEqual(
+  batteryReportSection.fields,
+  [
+    { label: 'Maximum Capacity', value: '99%' },
+    { label: 'Cycle Count', value: '24 cycles' },
+    { label: 'Maximum FCC', value: '3,100 mAh' },
+    { label: 'Nominal Charge Capacity', value: '2,990 mAh' },
+    { label: 'Raw Maximum Capacity', value: '3,050 mAh' },
+    { label: 'Maximum Qmax', value: '3,200 mAh' },
+    { label: 'Cell 0 Qmax', value: '3,000 mAh' },
+    { label: 'Cell 3 Qmax', value: '3,200 mAh' },
+  ],
+  'battery presentation keeps approved labels, units, and stable field order'
+);
+assert.equal(createBatterySection(null), null, 'absent battery data produces no presentation section');
+assert.equal(createBatterySection({}), null, 'empty battery data produces no presentation section');
+assert.deepEqual(
+  createBatterySection({ cycleCount: { value: 0, unit: 'cycles', origin: 'direct' } }).fields,
+  [{ label: 'Cycle Count', value: '0 cycles' }],
+  'zero cycle count remains visible in a partial battery section'
+);
+assert.equal(
+  createBatterySection({
+    maximumFcc: { value: '3100', unit: 'mAh', origin: 'direct' },
+    maximumCapacityPercent: { value: 101, unit: 'percent', origin: 'direct' },
+    charging: { adapterPowerCategories: [39] },
+    RealCapacity: { value: 3000, unit: 'mAh', origin: 'direct' },
+    sourceFamily: 'synthetic-source',
+  }),
+  null,
+  'invalid and unsupported battery presentation values are omitted without charging or diagnostic output'
+);
+assert.deepEqual(
+  createBatterySection({
+    qmaxCells: [
+      { cell: 3, value: 3200, unit: 'mAh', origin: 'direct' },
+      { cell: 0, value: 3000, unit: 'mAh', origin: 'direct' },
+      { cell: 0, value: 3100, unit: 'mAh', origin: 'direct' },
+    ],
+  }).fields,
+  [
+    { label: 'Cell 3 Qmax', value: '3,200 mAh' },
+  ],
+  'battery presentation sorts Qmax cells and suppresses conflicting duplicate cell indexes'
+);
+assert.equal(
+  createBatterySection({ cycleCount: { value: 12, unit: 'cycles', origin: 'derived' } }),
+  null,
+  'non-direct battery origin is not presented'
+);
+const inheritedBattery = Object.create({ cycleCount: { value: 24, unit: 'cycles', origin: 'direct' } });
+assert.equal(createBatterySection(inheritedBattery), null, 'inherited battery fields are not presented');
+const inheritedMetric = Object.assign(Object.create({ unit: 'mAh', origin: 'direct' }), { value: 3100 });
+assert.equal(createBatterySection({ maximumFcc: inheritedMetric }), null, 'inherited metric metadata is not presented');
+assert.doesNotMatch(
+  JSON.stringify(batteryReportSection),
+  /sourceFamily|rawRecord|conflicts|RealCapacity|deviceId|uuid|Battery Health|service required|adapter|PowerMode/i,
+  'battery presentation section contains no source, privacy, charging, or diagnostic metadata'
+);
+const presentedBatterySections = [batteryReportSection];
+assert.equal(filterSectionsByQuery(presentedBatterySections, 'Cycle Count').totalMatches, 1, 'generic visible search indexes the rendered battery section');
+assert.match(serializeSectionForCopy(batteryReportSection), /Maximum Capacity: 99%/, 'generic Copy Visible includes only rendered battery fields');
+assert.match(serializeSectionsForExport(presentedBatterySections), /Raw Maximum Capacity: 3,050 mAh/, 'generic text export includes only rendered battery fields');
+assert.match(serializeSectionsForJsonExport(presentedBatterySections), /Battery and Charging/, 'generic JSON export accepts the sanitized SectionModel without serializer changes');
 assert.equal(
   getSanitizedBattery(parseInput(batteryInput([batteryRecord(BATTERY_FINAL, { last_value_CycleCount: -1 })]))),
   null,

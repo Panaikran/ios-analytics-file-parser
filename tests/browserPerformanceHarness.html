@@ -745,6 +745,126 @@
         };
       }
 
+      async function batteryPresentationWorkflow() {
+        const batteryText = [
+          JSON.stringify({ bug_type: '211' }),
+          JSON.stringify({ name: 'launchCount', message: 'synthetic', aggregationPeriod: 'daily', numDaysAggregated: 1, sampling: '100' }),
+          JSON.stringify({
+            name: 'BatteryConfigValueHistogramFinal_V2',
+            message: {
+              last_value_CycleCount: 7,
+              last_value_MaximumFCC: 4011,
+              last_value_NominalChargeCapacity: 3922,
+              last_value_AppleRawMaxCapacity: 3987,
+              last_value_MaximumCapacityPercent: 88,
+              last_value_MaximumQmax: 4200,
+              last_value_QmaxCell0: 4200,
+            },
+            aggregationPeriod: 'Daily',
+            numDaysAggregated: 1,
+            sampling: 100,
+          }),
+        ].join('\n');
+        const partialBatteryText = [
+          JSON.stringify({ bug_type: '211' }),
+          JSON.stringify({ name: 'launchCount', message: 'synthetic', aggregationPeriod: 'daily', numDaysAggregated: 1, sampling: '100' }),
+          JSON.stringify({
+            name: 'BatteryConfigValueHistogramFinal_V2',
+            message: { last_value_MaximumCapacityPercent: 0 },
+            aggregationPeriod: 'Daily',
+            numDaysAggregated: 1,
+            sampling: 100,
+          }),
+        ].join('\n');
+        const pasteInput = document.querySelector('#paste-input');
+        const searchInput = document.querySelector('#result-search');
+        const parse = async (text) => {
+          pasteInput.value = text;
+          document.querySelector('#parse-paste').click();
+          await nextFrame();
+        };
+        const snapshot = () => {
+          const section = document.querySelector('#sections > #battery-and-charging');
+          const duplicateIdCount = [...document.querySelectorAll('[id]')]
+            .filter((element, index, elements) => elements.findIndex((candidate) => candidate.id === element.id) !== index)
+            .length;
+          return {
+            present: Boolean(section),
+            heading: section?.querySelector('[data-section-heading]')?.textContent ?? '',
+            fields: [...(section?.querySelectorAll('.field-row') ?? [])].map((row) => ({
+              label: row.querySelector('dt')?.textContent ?? '',
+              value: row.querySelector('dd')?.textContent ?? '',
+            })),
+            navigationPresent: [...document.querySelectorAll('#section-nav a')]
+              .some((link) => link.textContent.includes('Battery and Charging')),
+            duplicateIdCount,
+            hiddenFocusableCount: [...document.querySelectorAll('#sections button, #sections a, #sections input, #sections textarea, #sections select')]
+              .filter((control) => control.closest('[hidden]'))
+              .length,
+            pageOverflow: document.documentElement.scrollWidth > window.innerWidth,
+          };
+        };
+
+        await parse(batteryText);
+        const full = snapshot();
+
+        searchInput.value = 'Maximum Capacity';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        await nextFrame();
+        const visibleSearch = snapshot();
+
+        searchInput.value = 'no such battery value';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        await nextFrame();
+        const noResult = snapshot();
+
+        document.querySelector('#clear-search').click();
+        await nextFrame();
+        const searchCleared = snapshot();
+
+        document.querySelector('#privacy-toggle').click();
+        await nextFrame();
+        const raw = snapshot();
+        document.querySelector('#sections .report-document__mode-action').click();
+        await nextFrame();
+        const sanitizedAgain = snapshot();
+
+        await parse(partialBatteryText);
+        const partial = snapshot();
+        await parse(createLargeCoreAnalyticsFixture());
+        const absent = snapshot();
+        await parse(batteryText);
+
+        document.querySelector('#add-to-comparison').click();
+        await nextFrame();
+        document.querySelector('#add-to-comparison').click();
+        await nextFrame();
+        document.querySelector('#compare-reports').click();
+        await nextFrame();
+        const comparison = snapshot();
+        document.querySelector('#clear-comparison').click();
+        await nextFrame();
+        document.querySelector('#clear-report').click();
+        await nextFrame();
+        const cleared = snapshot();
+
+        return {
+          full,
+          visibleSearch,
+          noResult,
+          searchCleared,
+          raw,
+          sanitizedAgain,
+          partial,
+          absent,
+          comparison,
+          cleared,
+          searchStatus: document.querySelector('#search-count').textContent,
+        };
+      }
+
       async function run() {
         await loadAppMarkup();
         await nextFrame();
@@ -752,6 +872,7 @@
         const stackshotText = createLargeStackshotFixture();
         const workflowText = await fetch('../examples/coreanalytics.ips.ca.synced').then((response) => response.text());
         const appWorkflow = await applicationWorkflow(workflowText);
+        const batteryPresentation = await batteryPresentationWorkflow();
         const core = await benchmarkReport(coreText, 'SyntheticMetricGroup-000', 'coreanalytics');
         const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
         const repeated = await repeatedWorkflow(coreText, 'SyntheticMetricGroup-000');
@@ -781,6 +902,7 @@
           stackshot,
           repeatedWorkflow: repeated,
           applicationWorkflow: appWorkflow,
+          batteryPresentation,
           exactMatchRendering,
           modePresentationSafety,
           visibleSearchContract,

@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. `v2.1.0` implementation is complete through frozen Slice 21C; Slice 21D is next and not started.
+Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. `v2.1.0` implementation is complete through frozen Slice 21D; Slice 21E is next and not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -884,8 +884,8 @@ v2.0.0 is released and fully closed. The approved prototype remains frozen at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slices 20A–20H and Phase 20 are
 complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
-tagging, and GitHub Release publication. Slice 21B is complete and frozen;
-Slice 21C is next but not started.
+tagging, and GitHub Release publication. Slices 21A through 21D are complete and
+frozen; Slice 21E is next but not started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -899,8 +899,8 @@ Slice 21C is next but not started.
 
 ## Planned Roadmap: v2.1.0
 
-Status: Slice 21C implementation complete and frozen. `v2.1.0` remains
-unreleased; Slice 21D is next and not started.
+Status: Slice 21D implementation complete and frozen. `v2.1.0` remains
+unreleased; Slice 21E is next and not started.
 
 Theme: Battery and Charging Insights.
 
@@ -914,8 +914,8 @@ and future implementation slices are recorded in
 | --- | --- | --- |
 | 21A | Complete | Battery field research, record-family audit, corpus audit, architecture proposal, and implementation plan |
 | 21B | Complete and frozen | CoreAnalytics extraction, normalization, duplicate handling, privacy-safe internal metadata, and parser-only tests |
-| 21C | Complete and frozen | Privacy-safe sanitized battery report model attached internally without visible, search, export, comparison, charging, or Raw Local View integration |
-| 21D | Planned, not started | Optional sanitized Battery and Charging section in the frozen Inspector Workspace |
+| 21C | Complete and frozen | Privacy-safe sanitized battery report model attached internally without visible, comparison, charging, or Raw Local View integration |
+| 21D | Complete and frozen | Optional sanitized direct battery section in the frozen Inspector Workspace; existing generic visible search/copy/export paths reused, with no charging or comparison expansion |
 | 21E | Planned, not started | Sanitized corpus expansion and cross-variant hardening |
 | 21F | Planned, not started | Browser QA, documentation reconciliation, and release readiness |
 
