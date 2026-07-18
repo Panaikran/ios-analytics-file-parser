@@ -193,18 +193,17 @@ actions unless the user explicitly asks for that release action.
 
 ## Approved Planning Direction: v2.1.0
 
-The active implementation slice is `21B - Battery Record Detection and
-Normalization`, now complete and frozen. Slice 21A remains complete and
-frozen; v2.1.0 remains unreleased. The evidence record, implementation design,
-and future slice plan are in
+Slice `21C - Battery Sanitization and Report Model Integration` is complete and
+frozen. Slice 21A and Slice 21B remain complete and frozen; v2.1.0 remains
+unreleased. Slice 21D is next but not started. The evidence record,
+implementation design, and future slice plan are in
 [`PHASE_21_PLAN.md`](PHASE_21_PLAN.md).
 
 The plan must preserve the released v2.0.0 Inspector Workspace, parser-family
 boundaries, `SectionModel[]`, sanitized visible search/copy/export behavior,
 sanitized-only comparison, Raw Local View restrictions, and local-first privacy.
-Slice 21C is next but not started. Battery UI, search, export, comparison,
-charging behavior, and broader diagnostics remain outside the completed 21B
-slice.
+Battery UI, search, export, comparison, charging behavior, and broader
+diagnostics remain outside the completed 21C slice.
 
 ## Approved Milestone Plan: v1.8.0
 

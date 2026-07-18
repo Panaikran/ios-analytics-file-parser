@@ -12,6 +12,7 @@ const SOURCE_PRIORITY = new Map([
 const SNAPSHOT_FAMILIES = new Set([BATTERY_EVENT_FAMILIES.FINAL, BATTERY_EVENT_FAMILIES.SECONDARY]);
 const METADATA_KEYS = ['aggregationPeriod', 'numDaysAggregated', 'sampling'];
 const BATTERY_MODEL_KEY = Symbol('normalizedBattery');
+const SANITIZED_BATTERY_PROPERTY = 'battery';
 
 const FIELD_DEFINITIONS = [
   { field: 'last_value_CycleCount', normalized: 'cycleCount', unit: 'cycles', confidence: 'high', families: SNAPSHOT_FAMILIES, validate: isCycleCount },
@@ -102,6 +103,51 @@ export function getNormalizedBattery(sections) {
   return Array.isArray(sections) ? sections[BATTERY_MODEL_KEY] ?? null : null;
 }
 
+export function sanitizeBatteryForReport(normalizedBattery) {
+  if (!isRecord(normalizedBattery)) return null;
+
+  const sanitized = {};
+  const definitions = [
+    ['cycleCount', 'cycles', isCycleCount],
+    ['maximumCapacityPercent', 'percent', isPercentage],
+    ['maximumFcc', 'mAh', isPositiveNumber],
+    ['nominalChargeCapacity', 'mAh', isPositiveNumber],
+    ['rawMaximumCapacity', 'mAh', isPositiveNumber],
+    ['maximumQmax', 'mAh', isPositiveNumber],
+  ];
+
+  for (const [field, unit, validate] of definitions) {
+    if (!hasOwn(normalizedBattery, field)) continue;
+    const metric = sanitizeMetric(normalizedBattery[field], unit, validate);
+    if (metric) sanitized[field] = metric;
+  }
+
+  if (hasOwn(normalizedBattery, 'qmaxCells')) {
+    const qmaxCells = sanitizeQmaxCells(normalizedBattery.qmaxCells);
+    if (qmaxCells?.length) sanitized.qmaxCells = qmaxCells;
+  }
+
+  return Object.keys(sanitized).length ? sanitized : null;
+}
+
+export function attachSanitizedBattery(sections, battery) {
+  if (!Array.isArray(sections) || !isRecord(battery) || !Object.keys(battery).length) return sections;
+  if (hasOwn(sections, SANITIZED_BATTERY_PROPERTY)) return sections;
+  Object.defineProperty(sections, SANITIZED_BATTERY_PROPERTY, {
+    configurable: false,
+    enumerable: false,
+    value: battery,
+    writable: false,
+  });
+  return sections;
+}
+
+export function getSanitizedBattery(sections) {
+  return Array.isArray(sections) && hasOwn(sections, SANITIZED_BATTERY_PROPERTY)
+    ? sections[SANITIZED_BATTERY_PROPERTY]
+    : null;
+}
+
 function resolveCandidates(field, candidates, familyRecords) {
   const distinctValues = new Set(candidates.map((candidate) => candidate.value));
   const sourceFamilies = [...new Set(candidates.map((candidate) => candidate.sourceFamily))].sort(compareFamilies);
@@ -146,6 +192,50 @@ function createMetric(candidate, confidence = candidate.confidence) {
     sourceFamily: candidate.sourceFamily,
     ...(candidate.cell === undefined ? {} : { cell: candidate.cell }),
   };
+}
+
+function sanitizeMetric(metric, unit, validate) {
+  if (!isRecord(metric) || !hasOwn(metric, 'value') || !hasOwn(metric, 'unit')) return null;
+  if (metric.unit !== unit || !validate(metric.value) || !hasDirectOrigin(metric)) return null;
+  return {
+    value: metric.value,
+    unit,
+    origin: 'direct',
+  };
+}
+
+function sanitizeQmaxCells(cells) {
+  if (!Array.isArray(cells)) return null;
+
+  const validCells = new Map();
+  const conflictingCells = new Set();
+
+  for (const metric of cells) {
+    if (!isRecord(metric) || !hasOwn(metric, 'cell') || !isCellIndex(metric.cell)) continue;
+    if (conflictingCells.has(metric.cell)) continue;
+
+    const sanitized = sanitizeMetric(metric, 'mAh', isPositiveNumber);
+    if (!sanitized) continue;
+    const cell = { cell: metric.cell, ...sanitized };
+    const existing = validCells.get(metric.cell);
+    if (!existing) {
+      validCells.set(metric.cell, cell);
+    } else if (existing.value !== cell.value || existing.unit !== cell.unit || existing.origin !== cell.origin) {
+      validCells.delete(metric.cell);
+      conflictingCells.add(metric.cell);
+    }
+  }
+
+  return [...validCells.values()].sort((left, right) => left.cell - right.cell);
+}
+
+function hasDirectOrigin(metric) {
+  return (!hasOwn(metric, 'source') || metric.source === 'direct') &&
+    (!hasOwn(metric, 'origin') || metric.origin === 'direct');
+}
+
+function isCellIndex(value) {
+  return typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value >= 0;
 }
 
 function getMetadata(record) {

@@ -2,15 +2,16 @@
 
 Version: `v2.1.0`
 
-Status: `Slice 21B complete and frozen; v2.1.0 remains unreleased`
+Status: `Slice 21C complete and frozen; v2.1.0 remains unreleased`
 
-Current slice: `21B - Battery Record Detection and Normalization`
+Current slice: `21D - Battery and Charging Report Presentation (next; not started)`
 
 Baseline: released and frozen `v2.0.0` at `39aa68a98260d379d4fff71cd0758b6177fc2c64`
 
 This document preserves the Slice 21A research record and the Phase 21
-implementation plan. Slice 21B adds parser-only battery normalization; it does
-not add battery UI, search, export, comparison, or charging behavior.
+implementation plan. Slices 21B and 21C add parser-local battery normalization
+and a privacy-safe internal report model; they do not add battery UI, search,
+export, comparison, or charging behavior.
 
 ## 1. Decision Summary
 
@@ -461,7 +462,7 @@ Future behavior must reuse existing contracts:
 
 ## 16. Complete Phase 21 Plan
 
-Slices after 21B are future work. Slice 21C is next but has not started.
+Slices after 21C are future work. Slice 21D is next but has not started.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
 
@@ -513,38 +514,47 @@ Implementation commit message: `feat(v2.1): normalize battery analytics records`
 
 ### Slice 21C - Battery Sanitization and Report Model Integration
 
-Status: `Future; not started`
+Status: `Complete and frozen`
 
 Scope:
 
-- Render the optional `Battery and Charging` SectionModel through the existing
-  report-document field/table path.
-- Add only the approved direct rows and conservative charging subsection.
-- Preserve the frozen Inspector Workspace hierarchy and accessibility rules.
+- Convert the Slice 21B normalized battery result through a focused pure
+  sanitizer with an explicit approved-field allowlist.
+- Retain only validated direct values, stable units, direct-origin metadata,
+  and ordered Qmax cell values; remove source-family, conflict, raw-record,
+  identifier, diagnostic, derived, and charging data.
+- Attach the optional sanitized model to the CoreAnalytics report array through
+  a non-enumerable, read-only, non-configurable property for future use.
+- Preserve the existing visible `SectionModel[]`, UI, search, export,
+  comparison, Raw Local View, and charging boundaries.
 
-Non-goals: dashboard tiles, gauge/ring, health score, warning judgments,
-thermal claims, raw event rendering, or a new UI component system.
+Non-goals: battery report rendering, dashboard tiles, gauge/ring, health score,
+warning judgments, thermal claims, raw event rendering, charging insights, or
+a new UI component system.
+
+Validation completed: synthetic valid, partial, absent, malformed, duplicate,
+conflict, prototype-pollution, reference-isolation, stable-ordering, report
+attachment, serializer, search, comparison, and Raw Local View boundary tests;
+private-sample anchor verification; syntax checks; the full parser suite; and
+the established performance benchmark. No private sample became a fixture.
+
+Implementation commit message: `feat(v2.1): integrate sanitized battery model`.
+
+### Slice 21D - Battery and Charging Report Presentation
+
+Status: `Future; next; not started`
+
+Scope:
+
+- Render the optional `Battery and Charging` section through the existing
+  report-document field/table path using only the sanitized internal model.
+- Add only the approved direct battery rows and conservative charging context
+  that remains supported by the authoritative evidence.
+- Preserve the frozen Inspector Workspace hierarchy and accessibility rules.
 
 Validation: section ordering, absent/partial output, fixed labels, semantic
 fields/tables, narrow widths, keyboard/focus behavior, reduced-motion and
 contrast fallbacks, and hostile scalar text handling.
-
-### Slice 21D - Battery and Charging Report Presentation
-
-Status: `Future; not started`
-
-Scope:
-
-- Prove that the new section automatically follows visible search and copy
-  behavior without source-text leakage.
-- Add fixed-field comparison allowlist entries only if the normalized section
-  is stable enough for two/three-report comparison.
-- Preserve text export, JSON schema version 1, Raw Local View restrictions,
-  local aliases, and capped CoreAnalytics scope.
-
-Validation: visible/hidden search, exact-match regions, text/JSON parity,
-sanitized/raw boundaries, absent fields, identical/changed/missing comparison
-values, and no provenance or raw-data export.
 
 ### Slice 21E - Search, Export, and Comparison Integration
 
@@ -594,6 +604,7 @@ Deferred to v2.2.0 or later:
   families.
 
 Slice 21A remains complete and frozen as research and planning. Slice 21B is
-complete and frozen after its implementation commit. Slice 21C is next but has
-not started; UI, search, export, comparison, charging, and broader diagnostics
+complete and frozen after its implementation commit. Slice 21C is complete and
+frozen after its sanitization and report-model commit. Slice 21D is next but
+has not started; search, export, comparison, charging, and broader diagnostics
 remain future work.

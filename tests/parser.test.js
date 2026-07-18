@@ -23,7 +23,12 @@ import {
 import { detectFileType } from '../src/parsers/detect.js';
 import { classifyDiagnostic, getUnsupportedDiagnosticMessage } from '../src/parsers/classifyDiagnostic.js';
 import { parseAccessoryCrash } from '../src/parsers/parseAccessoryCrash.js';
-import { extractNormalizedBattery, getNormalizedBattery } from '../src/parsers/battery.js';
+import {
+  extractNormalizedBattery,
+  getNormalizedBattery,
+  getSanitizedBattery,
+  sanitizeBatteryForReport,
+} from '../src/parsers/battery.js';
 import { parseCpuResource } from '../src/parsers/parseCpuResource.js';
 import { parseDiskWritesResource } from '../src/parsers/parseDiskWritesResource.js';
 import { parseResourceStackshot } from '../src/parsers/parseResourceStackshot.js';
@@ -6147,5 +6152,122 @@ const batteryComparison = createComparisonSections([
   { classification: { parserType: 'coreanalytics', supported: true }, sections: batterySections },
 ]);
 assert.doesNotMatch(JSON.stringify(batteryComparison), /cycleCount|rawMaximumCapacity|Battery and Charging/, 'battery values are not comparison-visible before Slice 21C');
+
+function reportMetric(value, unit, extra = {}) {
+  return { value, unit, source: 'direct', ...extra };
+}
+
+const normalizedBatteryForReport = {
+  maximumFcc: reportMetric(3100, 'mAh', { sourceFamily: BATTERY_FINAL, rawRecord: { private: true } }),
+  qmaxCells: [
+    reportMetric(3200, 'mAh', { cell: 3, sourceFamily: BATTERY_FINAL }),
+    reportMetric(3000, 'mAh', { cell: 0, sourceFamily: BATTERY_FINAL }),
+  ],
+  cycleCount: reportMetric(24, 'cycles', { sourceFamily: BATTERY_FINAL }),
+  nominalChargeCapacity: reportMetric(2990, 'mAh', { sourceFamily: BATTERY_FINAL }),
+  rawMaximumCapacity: reportMetric(3050, 'mAh', { sourceFamily: BATTERY_FINAL }),
+  maximumCapacityPercent: reportMetric(99, 'percent', { sourceFamily: BATTERY_FINAL }),
+  maximumQmax: reportMetric(3200, 'mAh', { sourceFamily: BATTERY_FINAL }),
+  conflicts: [{ field: 'cycleCount', resolution: 'suppressed' }],
+  sourceFamily: BATTERY_FINAL,
+  deviceId: 'synthetic-device',
+  uuid: 'synthetic-uuid',
+  RealCapacity: 3000,
+  charging: { adapterPowerCategories: [39] },
+  health: 'healthy',
+};
+
+const sanitizedBattery = sanitizeBatteryForReport(normalizedBatteryForReport);
+assert.deepEqual(Object.keys(sanitizedBattery), [
+  'cycleCount',
+  'maximumCapacityPercent',
+  'maximumFcc',
+  'nominalChargeCapacity',
+  'rawMaximumCapacity',
+  'maximumQmax',
+  'qmaxCells',
+], 'sanitized battery uses the approved stable field order');
+assert.deepEqual(sanitizedBattery.cycleCount, { value: 24, unit: 'cycles', origin: 'direct' }, 'sanitized cycle count keeps approved metadata only');
+assert.deepEqual(sanitizedBattery.qmaxCells.map((cell) => cell.cell), [0, 3], 'sanitized Qmax cells sort by ascending cell index');
+assert.equal(sanitizedBattery.qmaxCells[0].value, 3000, 'sanitized Qmax cell values are preserved');
+assert.equal(sanitizedBattery.sourceFamily, undefined, 'source-family metadata is removed');
+assert.equal(sanitizedBattery.conflicts, undefined, 'conflict metadata is removed');
+assert.equal(sanitizedBattery.rawRecord, undefined, 'raw-record references are removed');
+assert.equal(sanitizedBattery.deviceId, undefined, 'device identifiers are removed');
+assert.equal(sanitizedBattery.uuid, undefined, 'UUID-like keys are removed');
+assert.equal(sanitizedBattery.RealCapacity, undefined, 'RealCapacity is not introduced');
+assert.equal(sanitizedBattery.charging, undefined, 'charging data remains outside Slice 21C');
+assert.equal(sanitizedBattery.health, undefined, 'diagnostic health wording is not introduced');
+assert.equal(Object.getPrototypeOf(sanitizedBattery), Object.prototype, 'sanitized output has a normal safe prototype');
+
+const originalCycleMetric = normalizedBatteryForReport.cycleCount;
+const originalCycleValue = originalCycleMetric.value;
+assert.equal(sanitizeBatteryForReport(null), null, 'absent normalized battery produces no sanitized model');
+assert.equal(sanitizeBatteryForReport({}), null, 'empty normalized battery produces no sanitized model');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(-1, 'cycles') }), null, 'all-invalid battery produces no sanitized model');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(1, 'cycles'), maximumFcc: reportMetric('3100', 'mAh') }).maximumFcc, undefined, 'invalid metric is omitted while valid metrics remain');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(0, 'cycles') }).cycleCount.value, 0, 'zero cycle count is valid');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(-1, 'cycles') })?.cycleCount, undefined, 'negative cycle count is rejected');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(1.5, 'cycles') })?.cycleCount, undefined, 'fractional cycle count is rejected');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric('1', 'cycles') })?.cycleCount, undefined, 'numeric string cycle count is rejected');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(NaN, 'cycles') })?.cycleCount, undefined, 'NaN cycle count is rejected');
+assert.equal(sanitizeBatteryForReport({ cycleCount: reportMetric(Infinity, 'cycles') })?.cycleCount, undefined, 'infinite cycle count is rejected');
+assert.equal(sanitizeBatteryForReport({ maximumFcc: reportMetric(0, 'mAh') })?.maximumFcc, undefined, 'zero capacity is rejected');
+assert.equal(sanitizeBatteryForReport({ maximumFcc: reportMetric(-1, 'mAh') })?.maximumFcc, undefined, 'negative capacity is rejected');
+assert.equal(sanitizeBatteryForReport({ maximumCapacityPercent: reportMetric(0, 'percent') }).maximumCapacityPercent.value, 0, 'zero percentage is valid');
+assert.equal(sanitizeBatteryForReport({ maximumCapacityPercent: reportMetric(100, 'percent') }).maximumCapacityPercent.value, 100, '100 percentage is valid');
+assert.equal(sanitizeBatteryForReport({ maximumCapacityPercent: reportMetric(-1, 'percent') })?.maximumCapacityPercent, undefined, 'negative percentage is rejected');
+assert.equal(sanitizeBatteryForReport({ maximumCapacityPercent: reportMetric(101, 'percent') })?.maximumCapacityPercent, undefined, 'percentage above range is rejected');
+assert.equal(sanitizeBatteryForReport({ maximumFcc: reportMetric(3100, 'cycles') })?.maximumFcc, undefined, 'unsupported units are rejected');
+assert.equal(sanitizeBatteryForReport({ maximumFcc: { value: 3100, unit: 'mAh', source: 'derived' } })?.maximumFcc, undefined, 'unsupported origins are rejected');
+assert.equal(sanitizeBatteryForReport({ qmaxCells: [reportMetric(3000, 'mAh', { cell: -1 })] })?.qmaxCells, undefined, 'invalid Qmax cell index is rejected');
+assert.equal(sanitizeBatteryForReport({ qmaxCells: [reportMetric(3000, 'mAh', { cell: 1.5 })] })?.qmaxCells, undefined, 'fractional Qmax cell index is rejected');
+assert.deepEqual(
+  sanitizeBatteryForReport({ qmaxCells: [reportMetric(3000, 'mAh', { cell: 0 }), reportMetric(3000, 'mAh', { cell: 0 })] }).qmaxCells,
+  [{ cell: 0, value: 3000, unit: 'mAh', origin: 'direct' }],
+  'identical duplicate Qmax cells are deduplicated'
+);
+assert.equal(
+  sanitizeBatteryForReport({ qmaxCells: [reportMetric(3000, 'mAh', { cell: 0 }), reportMetric(3100, 'mAh', { cell: 0 })] })?.qmaxCells,
+  undefined,
+  'conflicting duplicate Qmax cells are suppressed'
+);
+
+const hostileBattery = { cycleCount: reportMetric(24, 'cycles'), constructor: 'bad', prototype: 'bad', RealCapacity: 3000 };
+Object.defineProperty(hostileBattery, '__proto__', { value: { polluted: true }, enumerable: true });
+const sanitizedHostileBattery = sanitizeBatteryForReport(hostileBattery);
+assert.deepEqual(Object.keys(sanitizedHostileBattery), ['cycleCount'], 'unknown and hostile keys are ignored');
+assert.equal(sanitizedHostileBattery.polluted, undefined, 'hostile prototype data cannot enter the sanitized model');
+assert.equal(Object.prototype.polluted, undefined, 'hostile keys do not alter the global object prototype');
+assert.equal(normalizedBatteryForReport.cycleCount.value, originalCycleValue, 'sanitization does not mutate normalized input');
+sanitizedBattery.cycleCount.value = 999;
+assert.equal(normalizedBatteryForReport.cycleCount.value, originalCycleValue, 'sanitized metrics do not share input references');
+normalizedBatteryForReport.cycleCount.value = 25;
+assert.equal(sanitizedBattery.maximumFcc.value, 3100, 'sanitized capacity remains independent after input mutation');
+assert.equal(originalCycleMetric.value, 25, 'input mutation remains local to the normalized model');
+
+const sanitizedBatterySections = parseInput(batteryInput([batteryRecord(BATTERY_FINAL, batterySnapshot)]));
+const attachedBattery = getSanitizedBattery(sanitizedBatterySections);
+assert.ok(attachedBattery, 'sanitized battery is accessible through the report model');
+assert.equal(Object.getOwnPropertyDescriptor(sanitizedBatterySections, 'battery')?.enumerable, false, 'battery attachment is non-enumerable');
+assert.equal(Object.getOwnPropertyDescriptor(sanitizedBatterySections, 'battery')?.configurable, false, 'battery attachment is non-configurable');
+assert.equal(Object.getOwnPropertyDescriptor(sanitizedBatterySections, 'battery')?.writable, false, 'battery attachment is read-only');
+assert.equal(Object.keys(sanitizedBatterySections).includes('battery'), false, 'battery attachment is absent from enumerable report keys');
+assert.equal({ ...sanitizedBatterySections }.battery, undefined, 'object spread excludes the battery attachment');
+assert.doesNotMatch(JSON.stringify(sanitizedBatterySections), /battery|cycleCount|maximumFcc|nominalChargeCapacity|rawMaximumCapacity|maximumCapacityPercent|maximumQmax|qmaxCells|12|3000/, 'native JSON serialization excludes the sanitized battery model');
+assert.doesNotMatch(serializeSectionsForJsonExport(sanitizedBatterySections), /battery|cycleCount|maximumFcc|nominalChargeCapacity|rawMaximumCapacity|maximumCapacityPercent|maximumQmax|qmaxCells|Cycle Count|Maximum FCC|12|3000/, 'project JSON export excludes the sanitized battery model');
+assert.doesNotMatch(serializeSectionsForExport(sanitizedBatterySections), /Battery and Charging|Cycle Count|Maximum FCC|12|3000/, 'text export excludes the sanitized battery model');
+assert.doesNotMatch(sanitizedBatterySections.map(serializeSectionForCopy).join('\n'), /Battery and Charging|Cycle Count|Maximum FCC|12|3000/, 'Copy Visible excludes the sanitized battery model');
+assert.equal(filterSectionsByQuery(sanitizedBatterySections, 'Cycle Count').totalMatches, 0, 'search excludes the sanitized battery model');
+const sanitizedBatteryComparison = createComparisonSections([
+  { classification: { parserType: 'coreanalytics', supported: true }, sections: sanitizedBatterySections },
+  { classification: { parserType: 'coreanalytics', supported: true }, sections: sanitizedBatterySections },
+]);
+assert.doesNotMatch(JSON.stringify(sanitizedBatteryComparison), /Battery|Cycle Count|maximumFcc|3000/, 'comparison excludes the sanitized battery model');
+assert.equal(
+  getSanitizedBattery(parseInput(batteryInput([batteryRecord(BATTERY_FINAL, { last_value_CycleCount: -1 })]))),
+  null,
+  'report attachment is absent when no safe battery metrics remain'
+);
 
 console.log('Phase 2 parser tests passed');
