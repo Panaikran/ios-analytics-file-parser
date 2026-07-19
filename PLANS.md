@@ -213,6 +213,28 @@ and this environmental limitation is recorded. The annotated v2.1.0 tag was
 created and the GitHub Release was published. The repository is moving toward
 planning v2.2.0; no implementation has started.
 
+## Approved Planning Direction: v2.2.0
+
+Phase 22 planning is active for `v2.2.0 - Charging Evidence and Power
+Context`. The six proposed slices are fixed, and the current slice is
+`22A — Charging Field and Corpus Audit`.
+
+Slice 22A is research and documentation only. Production work must not start
+until the evidence matrix, event-family audit, privacy rules, units,
+precedence, duplicate behavior, conflict behavior, and architecture are
+reviewed and approved.
+
+The current evidence review recommends Approach C - research-only deferral.
+No charging field is retained, and Slice 22B is blocked pending stronger,
+privacy-approved evidence. If a later audit establishes retained fields,
+subsequent slices must use the approved field matrix and privacy rules without
+changing the frozen v2.1.0 battery, parser, SectionModel, search, copy, export,
+comparison, Raw Local View, accessibility, responsive, or PWA contracts.
+
+Tags, releases, package metadata changes, and publication require separate
+explicit approval. v2.2.0 must not be described as implemented during
+planning.
+
 ## Approved Milestone Plan: v1.8.0
 
 Release title: `v1.8.0 — Precision Search & Deep Inspection`

@@ -930,3 +930,36 @@ later. Browser automation was unavailable because no browser executable or
 Playwright dependency was installed; the existing synthetic harness passed and
 the limitation is recorded. Release publication is complete; future v2.2.0 work
 remains planning-only.
+
+## Planned Roadmap: v2.2.0
+
+Status: Phase 22 planning started; implementation has not started.
+
+Theme: Charging Evidence and Power Context.
+
+Current slice: 22A — Charging Field and Corpus Audit.
+
+The milestone keeps a conservative direct-evidence boundary. Charging fields
+may proceed only after their event family, meaning, origin, type, units,
+privacy, precedence, duplicate behavior, and conflict behavior are established
+from strong evidence. Diagnosis, recommendation, estimation, thermal
+interpretation, comparison expansion, export changes, and broad diagnostics
+remain deferred.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| 22A | Planning and research active | Charging field/corpus audit, retain/reject/insufficient-evidence matrix, event-family review, and architecture decision |
+| 22B | Blocked | Charging normalization only after 22A approves retained fields and deterministic policies |
+| 22C | Proposed | Sanitized charging model only after approved normalization |
+| 22D | Proposed | Direct charging observations in the existing Battery and Charging section only after approved sanitized data |
+| 22E | Proposed | Independent synthetic corpus hardening for approved fields |
+| 22F | Proposed | Final parser, privacy, workflow, accessibility, performance, PWA, and documentation QA |
+
+The current recommendation is Approach C - research-only deferral. No
+charging field is retained by the current 22A evidence review. The existing
+v2.1.0 battery behavior and all parser, search, copy, export, comparison, Raw
+Local View, accessibility, responsive, and PWA contracts remain frozen.
+
+No release operation is authorized: do not create a tag, publish a release,
+change package metadata, or describe v2.2.0 as implemented until separately
+approved.
