@@ -2,7 +2,7 @@
 
 Version: `v2.1.0`
 
-Status: `Phase 21 complete and frozen; v2.1.0 ready for release but unreleased`
+Status: `Phase 21 complete and frozen; v2.1.0 released`
 
 Current slice: `21F - Browser QA, Documentation, and Release Readiness (complete and frozen)`
 
@@ -12,9 +12,10 @@ This document preserves the Slice 21A research record and the Phase 21
 implementation plan. Slices 21B and 21C add parser-local battery normalization
 and a privacy-safe internal report model. Slice 21D adds only the optional
 sanitized battery presentation. Slice 21E hardens the corpus and validation;
-Slice 21F completes final QA and release-readiness documentation. Charging,
-comparison expansion, and the separate release operation remain outside the
-completed implementation slices.
+Slice 21F completes final QA and release-readiness documentation. Charging and
+comparison expansion remain outside the completed implementation slices. The
+annotated v2.1.0 tag was created and the GitHub Release was published after
+Phase 21 completion.
 
 ## 1. Decision Summary
 
@@ -469,8 +470,8 @@ search index, serializer, comparison model, or Raw Local View path:
 
 ## 16. Complete Phase 21 Plan
 
-Slices 21A through 21F are complete and frozen. Phase 21 is complete; v2.1.0
-is ready for a separate release operation but remains unreleased.
+Slices 21A through 21F are complete and frozen. Phase 21 is complete and
+v2.1.0 is released.
 
 ### Slice 21A - Battery Field Research and Corpus Audit
 
@@ -640,8 +641,8 @@ Delivered:
 - Verified the private positive sample locally against the approved direct
   anchors without retaining or documenting raw records or identifiers.
 - Reconciled README, CHANGELOG, ROADMAP, PLANS, this plan, the field audit,
-  design status, and `PHASE_21_SUMMARY.md` for a complete but unreleased
-  v2.1.0 readiness state.
+  design status, and `PHASE_21_SUMMARY.md` for the complete v2.1.0 release
+  state.
 
 Validation:
 
@@ -657,8 +658,8 @@ Validation:
   device, and native screen-reader coverage are not claimed.
 
 Release gate: corpus, privacy, automated tests, synthetic browser workflows,
-documentation, and diff hygiene pass. No v2.1.0 tag or release is created by
-this slice; the separate release operation remains next.
+documentation, and diff hygiene pass. The annotated v2.1.0 tag was created and
+the GitHub Release was published after this slice; Phase 21 is frozen.
 
 ## 17. Frozen and Deferred Scope
 
@@ -675,7 +676,7 @@ Deferred to v2.2.0 or later:
   battery histograms, undocumented charge algorithms, and unsupported event
   families.
 
-Slices 21A through 21F are complete and frozen. v2.1.0 is ready for release
-but remains unreleased and untagged. Charging extraction, comparison
-expansion, and broader diagnostics remain future work; no later milestone has
+Slices 21A through 21F are complete and frozen. v2.1.0 is released. Charging
+extraction, comparison expansion, and broader diagnostics remain future work;
+the repository is moving toward planning v2.2.0 and no implementation has
 started.

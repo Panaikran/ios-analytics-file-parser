@@ -2,7 +2,7 @@
 
 Status: `Complete and frozen`
 
-Release status: `v2.1.0 ready for release but unreleased`
+Release status: `v2.1.0 released; annotated tag created and GitHub Release published`
 
 Phase 21 adds a conservative, privacy-safe Battery and Charging report
 boundary for supported CoreAnalytics evidence. The completed implementation
@@ -177,9 +177,10 @@ The following remain outside v2.1.0 and are deferred to v2.2.0 or later:
 - battery comparison expansion, new export schema fields, and Raw Local View
   interpretation.
 
-## Separate release-readiness checklist
+## Post-release record
 
-Before the separate v2.1.0 release operation, recheck:
+The separate v2.1.0 release operation completed successfully. The repository
+record now confirms:
 
 - clean repository on `main` with `HEAD == origin/main`;
 - full tests, syntax checks, established performance budgets, and harness/PWA
@@ -188,12 +189,10 @@ Before the separate v2.1.0 release operation, recheck:
 - no sensitive identifiers, raw records, prohibited labels, or derived health
   claims;
 - documentation consistency and unchanged v2.0.0 tag;
-- no existing v2.1.0 tag;
-- final readiness commit identified;
-- annotated `v2.1.0` tag, tag push, and release publication performed only by
-  the separate approved release operation;
+- annotated `v2.1.0` tag created and pushed at the release-readiness commit;
+- GitHub Release published for `v2.1.0`;
 - service-worker cache identity rechecked if release-specific cache metadata
   is required by repository convention.
 
-Phase 21 is complete and frozen. v2.1.0 is ready for release but remains
-unreleased and untagged. No later milestone has started.
+Phase 21 is complete and frozen. v2.1.0 is released. The repository is moving
+toward planning v2.2.0; no v2.2.0 implementation has started.

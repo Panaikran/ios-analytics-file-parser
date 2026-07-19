@@ -194,7 +194,7 @@ actions unless the user explicitly asks for that release action.
 ## Approved Planning Direction: v2.1.0
 
 Slices 21A through 21F are complete and frozen; Phase 21 is complete and
-v2.1.0 remains unreleased but ready for a separate release operation. Slice
+v2.1.0 is released. Slice
 `21F - Final QA, Documentation, and Release Readiness` is complete and frozen.
 The evidence record, implementation design, release-readiness summary, and
 future deferred scope are in
@@ -209,8 +209,9 @@ accessor-safety hardening without broadening the frozen battery contract.
 Charging extraction, comparison expansion, and broader diagnostics remain
 future work. Browser automation was unavailable because no browser executable
 or Playwright dependency was installed; the existing synthetic harness passed
-and this environmental limitation is recorded. No v2.1.0 tag or release was
-created by Phase 21.
+and this environmental limitation is recorded. The annotated v2.1.0 tag was
+created and the GitHub Release was published. The repository is moving toward
+planning v2.2.0; no implementation has started.
 
 ## Approved Milestone Plan: v1.8.0
 

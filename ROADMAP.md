@@ -1,6 +1,6 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v2.0.0 — Apple-Inspired Inspector Workspace` released and Phase 20 fully closed on 2026-07-16. Phase 21 is complete and frozen through Slice 21F; `v2.1.0` is ready for release but remains unreleased.
+Status: `v2.1.0 — Battery and Charging Insights` released; Phase 21 is complete and frozen. The repository is moving toward planning v2.2.0; no v2.2.0 implementation has started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -885,8 +885,9 @@ v2.0.0 is released and fully closed. The approved prototype remains frozen at
 complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
 tagging, and GitHub Release publication. Slices 21A through 21F and Phase 21 are
-complete and frozen. The next action is a separate `v2.1.0` release operation;
-no later implementation milestone has started.
+complete and frozen. The annotated `v2.1.0` tag and GitHub Release are published;
+the next action is planning-only work for v2.2.0, with no later implementation
+milestone started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -898,10 +899,11 @@ no later implementation milestone has started.
 - Preserve existing parser behavior and PWA privacy boundaries.
 - Create tags, releases, package metadata changes, or publishing actions only after explicit approval.
 
-## Planned Roadmap: v2.1.0
+## Completed Roadmap: v2.1.0
 
-Status: Phase 21 complete and frozen. `v2.1.0` is ready for release but remains
-unreleased; the release operation is separate and has not started.
+Status: Phase 21 complete and frozen. `v2.1.0` is released through the annotated
+tag and published GitHub Release. The repository is moving toward planning v2.2.0;
+no v2.2.0 implementation has started.
 
 Theme: Battery and Charging Insights.
 
@@ -926,5 +928,5 @@ slices. Thermal interpretation, charging faults, health grades, service
 recommendations, and broader device diagnostics remain deferred to v2.2.0 or
 later. Browser automation was unavailable because no browser executable or
 Playwright dependency was installed; the existing synthetic harness passed and
-the limitation is recorded. The separate annotated-tag and release-publication
-operation remains the next action and is not part of Slice 21F.
+the limitation is recorded. Release publication is complete; future v2.2.0 work
+remains planning-only.

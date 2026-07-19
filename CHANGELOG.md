@@ -1,9 +1,9 @@
 # Changelog
 
-## v2.1.0 — Battery and Charging Insights (ready for release; unreleased)
+## v2.1.0 — Battery and Charging Insights (released)
 
-Status: Phase 21 is complete and frozen. This entry records release readiness
-only; no `v2.1.0` tag or release has been created.
+Status: Phase 21 is complete and frozen. The annotated `v2.1.0` tag was created
+and the GitHub Release was published.
 
 ### Added
 
