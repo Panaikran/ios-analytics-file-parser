@@ -215,25 +215,43 @@ planning v2.2.0; no implementation has started.
 
 ## Approved Planning Direction: v2.2.0
 
-Phase 22 planning is active for `v2.2.0 - Charging Evidence and Power
-Context`. The six proposed slices are fixed, and the current slice is
-`22A — Charging Field and Corpus Audit`.
+Phase 22 research is complete and frozen for `v2.2.0 - Charging Evidence and Power
+Context`. Slices 22A and 22A.1 are complete. Slices 22B through 22F did not
+start and remain deferred.
 
-Slice 22A is research and documentation only. Production work must not start
+The 22A local audit and 22A.1 external evidence review were research and
+documentation only. Production work must not start
 until the evidence matrix, event-family audit, privacy rules, units,
 precedence, duplicate behavior, conflict behavior, and architecture are
 reviewed and approved.
 
-The current evidence review recommends Approach C - research-only deferral.
+Approach C - research-only deferral - is final for Phase 22.
 No charging field is retained, and Slice 22B is blocked pending stronger,
 privacy-approved evidence. If a later audit establishes retained fields,
 subsequent slices must use the approved field matrix and privacy rules without
 changing the frozen v2.1.0 battery, parser, SectionModel, search, copy, export,
 comparison, Raw Local View, accessibility, responsive, or PWA contracts.
 
+The charging theme is closed and frozen, not released or abandoned. The
+v2.2.0 version number remains available for a different Phase 23
+implementation milestone after explicit user approval.
+
 Tags, releases, package metadata changes, and publication require separate
 explicit approval. v2.2.0 must not be described as implemented during
 planning.
+
+## Pending User Review: v2.2.0 Phase 23
+
+The next action is user review of
+[docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
+Its provisional recommendation is CoreAnalytics Investigation Depth, with
+Evidence-Bounded Panic Guidance as the fallback. The recommendation is not
+approved.
+
+Do not create PHASE_23_PLAN.md or begin Phase 23 implementation until the user
+explicitly approves a candidate. Preserve the frozen parser, search, copy,
+export, comparison, Raw Local View, accessibility, responsive, PWA, tag, and
+release gates.
 
 ## Approved Milestone Plan: v1.8.0
 

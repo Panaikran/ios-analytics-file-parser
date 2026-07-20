@@ -4,11 +4,11 @@ Version: `v2.2.0`
 
 Phase: `Phase 22`
 
-Status: `Planning approved; implementation not started`
+Status: `Complete and frozen as research-only; implementation deferred; v2.2.0 unreleased`
 
-Current slice: `22A — Charging Field and Corpus Audit`
+Current slice: `22A and 22A.1 complete; no implementation slice active`
 
-Decision: `Approach C - research-only deferral; Slice 22B is blocked`
+Decision: `Approach C - final Phase 22 decision; 22B through 22F did not start`
 
 ## 1. Objective
 
@@ -516,3 +516,32 @@ is only a conditional future architecture if a later evidence audit produces a
 retained field. Slice 22B remains blocked, production implementation has not
 started, and the frozen v2.1.0 behavior and all compatibility boundaries remain
 unchanged.
+
+## 19. Phase 22 closure and reassignment boundary
+
+Phase 22 is now closed and frozen as a completed research-only phase. The
+original planning matrices and research history above are preserved; this
+section records the final status after 22A.1.
+
+- 22A completed the local repository and corpus audit.
+- 22A.1 completed the external evidence review.
+- No candidate field met the retain standard.
+- Approach C remains the final Phase 22 architecture decision.
+- Slices 22B through 22F did not start.
+- No user-facing charging functionality was delivered.
+- No v2.2.0 tag, GitHub Release, or software release was produced.
+
+Charging implementation may be reconsidered only if materially stronger
+evidence establishes exact semantics, units or a safe unitless boundary,
+lifecycle, privacy, duplicate handling, precedence, and conflict behavior.
+Approach B remains a possible future architecture only if that evidence
+produces a retained field with an independent lifecycle. Approach A is not
+approved.
+
+The v2.2.0 version number remains available for a different implementation
+milestone. This closure is summarized in
+[PHASE_22_SUMMARY.md](PHASE_22_SUMMARY.md). A Phase 23 theme is under
+provisional candidate review in
+[docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
+User approval is required before creating PHASE_23_PLAN.md or beginning any
+Phase 23 implementation.

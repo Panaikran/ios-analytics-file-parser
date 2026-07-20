@@ -933,11 +933,11 @@ remains planning-only.
 
 ## Planned Roadmap: v2.2.0
 
-Status: Phase 22 planning started; implementation has not started.
+Status: Phase 22 research complete and frozen; implementation has not started.
 
 Theme: Charging Evidence and Power Context.
 
-Current slice: 22A — Charging Field and Corpus Audit.
+Current state: 22A and 22A.1 complete; Phase 22 closed and frozen as research.
 
 The milestone keeps a conservative direct-evidence boundary. Charging fields
 may proceed only after their event family, meaning, origin, type, units,
@@ -948,14 +948,15 @@ remain deferred.
 
 | Slice | Status | Scope |
 | --- | --- | --- |
-| 22A | Planning and research active | Charging field/corpus audit, retain/reject/insufficient-evidence matrix, event-family review, and architecture decision |
-| 22B | Blocked | Charging normalization only after 22A approves retained fields and deterministic policies |
-| 22C | Proposed | Sanitized charging model only after approved normalization |
-| 22D | Proposed | Direct charging observations in the existing Battery and Charging section only after approved sanitized data |
-| 22E | Proposed | Independent synthetic corpus hardening for approved fields |
-| 22F | Proposed | Final parser, privacy, workflow, accessibility, performance, PWA, and documentation QA |
+| 22A | Complete and frozen | Local charging field and corpus audit |
+| 22A.1 | Complete and frozen | External charging evidence review |
+| 22B | Deferred and not started | Charging normalization remains blocked pending materially stronger evidence |
+| 22C | Deferred and not started | Sanitized charging model only if a later audit retains a field |
+| 22D | Deferred and not started | Direct charging presentation only after approved sanitized data |
+| 22E | Deferred and not started | Independent synthetic corpus hardening only for approved fields |
+| 22F | Deferred and not started | Final parser, privacy, workflow, accessibility, performance, PWA, and documentation QA |
 
-The current recommendation is Approach C - research-only deferral. No
+The final Phase 22 decision is Approach C - research-only deferral. No
 charging field is retained by the current 22A evidence review. The existing
 v2.1.0 battery behavior and all parser, search, copy, export, comparison, Raw
 Local View, accessibility, responsive, and PWA contracts remain frozen.
@@ -963,3 +964,31 @@ Local View, accessibility, responsive, and PWA contracts remain frozen.
 No release operation is authorized: do not create a tag, publish a release,
 change package metadata, or describe v2.2.0 as implemented until separately
 approved.
+
+## Phase 22 closure
+
+Phase 22 is completed research, not a software release. The local audit in
+22A and the external evidence review in 22A.1 found no charging field that
+meets the retain threshold. Approach C - research-only deferral - is final for
+this phase. 22B through 22F did not start, and no user-facing charging
+functionality was delivered.
+
+The charging theme is frozen until stronger evidence establishes semantics,
+units or a safe unitless boundary, lifecycle, privacy, duplicate handling,
+precedence, and conflict behavior. v2.2.0 remains unreleased and available for
+a different implementation milestone. See
+[PHASE_22_SUMMARY.md](PHASE_22_SUMMARY.md) and
+[docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md](docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md).
+
+## Provisional next milestone review: Phase 23
+
+Candidate selection for the next v2.2.0 implementation milestone is under
+review. The provisional recommendation is **CoreAnalytics Investigation
+Depth**, with **Evidence-Bounded Panic Guidance** as the fallback. The
+recommendation is not approved, implementation has not started, and
+[PHASE_23_PLAN.md](PHASE_23_PLAN.md) must not be created until the user
+explicitly approves a candidate.
+
+The candidate audit is recorded in
+[docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
+No v2.2.0 tag or release operation is authorized.
