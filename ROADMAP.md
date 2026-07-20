@@ -886,8 +886,8 @@ complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
 tagging, and GitHub Release publication. Slices 21A through 21F and Phase 21 are
 complete and frozen. The annotated `v2.1.0` tag and GitHub Release are published;
-the next action is planning-only work for v2.2.0, with no later implementation
-milestone started.
+Phase 23B is complete and frozen; the next action is separate approval for 23C,
+with no later implementation slice started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -982,12 +982,13 @@ a different implementation milestone. See
 
 ## Approved planning direction: Phase 23
 
-Status: Phase 23 planning active; implementation has not started.
+Status: Phase 23A and 23B complete and frozen; 23C has not started.
 
 The user approved the v2.2.0 theme **CoreAnalytics Investigation Depth** and
-the Phase 23 title **Bounded CoreAnalytics Investigation**. The current slice
-is **23A - Evidence, Architecture, and Corpus Audit**. The approved direction
-is planning-only; Slice 23B requires separate implementation approval.
+the Phase 23 title **Bounded CoreAnalytics Investigation**. The completed 23B
+slice is the narrow CoreAnalytics Investigation Boundary. The next slice is
+**23C - Sanitized Investigation Model**, which requires separate user approval
+before implementation.
 
 Phase 22 remains closed and frozen as research-only Charging Evidence and
 Power Context work. No charging field was retained, no charging functionality
@@ -995,9 +996,9 @@ was delivered, and Approach C remains final for that phase.
 
 | Slice | Status | Scope |
 | --- | --- | --- |
-| 23A | Planning approved and active | Evidence, architecture, UX-contract, privacy, cap, and fictional-corpus audit |
-| 23B | Not started; separate approval required | Bounded investigation boundary over existing sanitized/capped CoreAnalytics data |
-| 23C | Proposed; not started | Sanitized ephemeral investigation model |
+| 23A | Complete and frozen | Evidence, architecture, UX-contract, privacy, cap, and fictional-corpus audit |
+| 23B | Complete and frozen | Approved scalar allowlist and ephemeral investigation state over existing sanitized/capped CoreAnalytics data |
+| 23C | Next; separate approval required | Sanitized ephemeral investigation model |
 | 23D | Proposed; not started | Investigation context and workflow presentation within the Inspector Workspace |
 | 23E | Proposed; not started | Fictional corpus and regression hardening |
 | 23F | Proposed; not started | Final QA and release readiness |
@@ -1007,6 +1008,11 @@ rendered, capped CoreAnalytics facet values and matching visible rows. It does
 not authorize raw or arbitrary exploration, hidden-row retrieval, new parser
 families, undocumented semantics, diagnosis, comparison expansion, export
 changes, Raw Local View changes, persistence, uploads, or telemetry.
+
+23B preserves the parser and `SectionModel[]` contracts and keeps global search
+authoritative. It adds no visible context/status UI; 23C is the next slice and
+requires separate approval. Phase 23 implementation remains incomplete, and
+no v2.2.0 feature is described as released.
 
 The planning record is [PHASE_23_PLAN.md](PHASE_23_PLAN.md), with the design
 contract in

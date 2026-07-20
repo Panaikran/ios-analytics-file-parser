@@ -83,6 +83,119 @@ export function getCoreAnalyticsFacetOptions(view) {
   });
 }
 
+export function createCoreAnalyticsInvestigationState() {
+  return createInvestigationState('idle', null, '');
+}
+
+export function activateCoreAnalyticsFacet(facetKey, option) {
+  if (!FACET_KEYS.includes(facetKey)) return null;
+
+  const query = getSafeFacetOptionQuery(option);
+  return query ? createInvestigationState('active', facetKey, query) : null;
+}
+
+export function syncCoreAnalyticsInvestigationQuery(state, query) {
+  const safeState = readInvestigationState(state);
+  if (!safeState || (safeState.mode !== 'active' && safeState.mode !== 'empty')) {
+    return createCoreAnalyticsInvestigationState();
+  }
+
+  if (typeof query !== 'string' || query !== safeState.selectedFacetQuery) {
+    return createCoreAnalyticsInvestigationState();
+  }
+
+  return createInvestigationState(safeState.mode, safeState.selectedFacetKey, safeState.selectedFacetQuery);
+}
+
+export function reconcileCoreAnalyticsInvestigationState(state, query, visibleMatchCount) {
+  const synchronized = syncCoreAnalyticsInvestigationQuery(state, query);
+  if (synchronized.mode === 'idle' || !Number.isInteger(visibleMatchCount) || visibleMatchCount < 0) {
+    return synchronized;
+  }
+
+  return createInvestigationState(
+    visibleMatchCount === 0 ? 'empty' : 'active',
+    synchronized.selectedFacetKey,
+    synchronized.selectedFacetQuery
+  );
+}
+
+function createInvestigationState(mode, selectedFacetKey, selectedFacetQuery) {
+  return Object.freeze({ mode, selectedFacetKey, selectedFacetQuery });
+}
+
+function getSafeFacetOptionQuery(option) {
+  const values = readSafeDataProperties(option, ['value', 'query', 'count']);
+  if (!values) return '';
+
+  const { value, query, count } = values;
+  if (
+    typeof value !== 'string' ||
+    typeof query !== 'string' ||
+    value !== query ||
+    !query.trim() ||
+    query !== query.trim() ||
+    ['__proto__', 'constructor', 'prototype'].includes(query) ||
+    typeof count !== 'number' ||
+    !Number.isFinite(count) ||
+    count < 1
+  ) {
+    return '';
+  }
+
+  return query;
+}
+
+function readInvestigationState(state) {
+  const values = readSafeDataProperties(state, ['mode', 'selectedFacetKey', 'selectedFacetQuery']);
+  if (!values) return null;
+
+  const { mode, selectedFacetKey, selectedFacetQuery } = values;
+  if (
+    !['idle', 'active', 'empty'].includes(mode) ||
+    (selectedFacetKey !== null && !FACET_KEYS.includes(selectedFacetKey)) ||
+    typeof selectedFacetQuery !== 'string'
+  ) {
+    return null;
+  }
+
+  if (mode === 'idle') {
+    return selectedFacetKey === null && selectedFacetQuery === '' ? values : null;
+  }
+
+  return selectedFacetKey !== null && Boolean(selectedFacetQuery.trim()) && selectedFacetQuery === selectedFacetQuery.trim()
+    ? values
+    : null;
+}
+
+function readSafeDataProperties(value, expectedKeys) {
+  if (!isRecord(value)) return null;
+
+  try {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return null;
+
+    const ownKeys = Reflect.ownKeys(value);
+    if (
+      ownKeys.length !== expectedKeys.length ||
+      ownKeys.some((key) => typeof key !== 'string' || !expectedKeys.includes(key))
+    ) {
+      return null;
+    }
+
+    const values = {};
+    for (const key of expectedKeys) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) return null;
+      values[key] = descriptor.value;
+    }
+
+    return values;
+  } catch {
+    return null;
+  }
+}
+
 function createEmptyView(sections, resolvedSections, options) {
   return {
     isCoreAnalytics: false,

@@ -14,6 +14,7 @@ export function renderSections(element, sections, options = {}) {
     searchActive: options.searchActive === true,
     facetOptions: options.coreAnalyticsFacetOptions,
     onSelectFacet: options.onSelectCoreAnalyticsFacet,
+    selectedFacetKey: options.selectedCoreAnalyticsFacetKey,
     selectedFacetQuery: options.selectedCoreAnalyticsFacetQuery,
     headingLevel: documentPresentation ? 3 : 2,
   });

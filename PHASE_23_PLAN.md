@@ -5,10 +5,11 @@
 - Version: `v2.2.0`
 - Theme: **CoreAnalytics Investigation Depth**
 - Phase: **Phase 23 — Bounded CoreAnalytics Investigation**
-- Status: Planning approved
-- Implementation status: Not started
-- Current slice: **23A - Evidence, Architecture, and Corpus Audit**
-- 23B status: Ready for separate implementation approval; not started
+- Status: 23B complete and frozen; 23C not started
+- Implementation status: 23B boundary implemented; no 23C implementation
+- Current slice: **23C - Sanitized Investigation Model**
+- 23B status: Complete and frozen under separate implementation approval
+- 23C status: Ready for separate implementation approval; not started
 
 The user approved the CoreAnalytics direction for planning. The previously
 audited Evidence-Bounded Panic Guidance direction is the fallback only and was
@@ -25,11 +26,12 @@ records, or add a general diagnostic explorer.
 
 The implementation gate is explicit:
 
-- 23A is planning, architecture, privacy, UX-contract, and corpus-audit work
+- 23A was planning, architecture, privacy, UX-contract, and corpus-audit work
   only.
-- Slice 23B requires separate implementation approval after this plan and the
-  design document are reviewed.
-- No production implementation has started in Phase 23.
+- Slice 23B received separate implementation approval and is complete and
+  frozen at the narrow investigation boundary recorded below.
+- Slice 23C requires separate implementation approval; no 23C production
+  implementation has started.
 - No Phase 23 release, tag, package change, or GitHub Release is authorized.
 
 ## 3. Objective
@@ -477,16 +479,18 @@ The conservative six-slice structure is:
 
 ### 23B - CoreAnalytics Investigation Boundary
 
+- Status: **Complete and frozen**.
 - Objective: implement only the approved pure investigation projection and
   state boundary over existing sanitized capped data.
-- Likely files: existing CoreAnalytics view/render/main paths and focused test
-  assertions; avoid new modules unless a pure boundary is proven necessary.
+- Implemented in: existing CoreAnalytics view, render, main, and focused test
+  paths; no new runtime module was required.
 - Tests: focused state transitions, allowlist, own-property/accessor safety,
-  cap preservation, mode reset, and no-parallel-filter tests first.
-- Dependencies: completed 23A review and separate 23B implementation approval.
+  cap preservation, mode reset, and no-parallel-filter tests pass.
+- Dependencies: completed 23A review and explicit 23B implementation approval.
 - Exit criteria: no raw record enters the projection; only I1-I4 can initiate
   context; existing search remains authoritative; comparison/export/Raw paths
-  are unchanged.
+  are unchanged; parser and `SectionModel[]` contracts remain unchanged; no
+  visible context/status presentation was added.
 - Stop conditions: inferred semantics, hidden-row access, second filtering
   pipeline, row identity, persistence, export/comparison changes, or any
   unresolved privacy/accessibility contract.
@@ -616,25 +620,30 @@ Phase 23 explicitly does not include:
   families, comparison, export, or diagnosis are milestone blockers, not small
   follow-up enhancements.
 
-## 21. 23B readiness decision
+## 21. 23C readiness decision
 
-**Ready for separate 23B implementation approval**
+**Ready for separate 23C implementation approval**
 
-23A has selected Approach B and defined the approved I1-I4 allowlist, existing
+23A selected Approach B and defined the approved I1-I4 allowlist, existing
 display-only/rejected/insufficient values, state transitions, data flow,
 privacy boundary, caps, search/exact-match behavior, copy/export/comparison/Raw
 restrictions, accessibility, responsive behavior, performance boundary, corpus
-cases, likely files, and stop conditions. This readiness statement is not
-approval to begin 23B. A separate implementation approval is still required.
+cases, likely files, and stop conditions. 23B implemented and froze the
+approved state/allowlist boundary over those existing visible values. No
+visible context/status UI or final sanitized investigation model was added.
+This readiness statement is not approval to begin 23C. A separate 23C
+implementation approval is still required.
 
 If implementation reveals that the selected workflow needs raw, arbitrary,
 uncapped, undocumented, identifier-bearing, persistent, comparison, export,
-or new-parser data, 23B must stop and return to planning.
+or new-parser data, 23C must stop and return to planning.
 
 ## 22. Release boundary and decision record
 
-- Phase 23 planning is approved; production implementation is not started.
-- Current slice is 23A; 23B has not started.
+- Phase 23A planning is complete and 23B is complete and frozen; 23C has not
+  started.
+- The current next slice is 23C - Sanitized Investigation Model, pending
+  separate implementation approval.
 - v2.2.0 remains unreleased and available for this approved implementation
   milestone only after later slices pass their gates.
 - No tag, GitHub Release, package metadata change, dependency change, or
@@ -643,6 +652,10 @@ or new-parser data, 23B must stop and return to planning.
   charging implementation is deferred.
 - The selected Phase 23 architecture is Approach B - facet-to-row
   investigation over existing sanitized and capped CoreAnalytics output.
+- 23B implemented only the approved immutable scalar state/allowlist boundary;
+  global search remains authoritative, and no visible context/status UI exists
+  yet.
+- 23C is the next slice and requires separate approval before implementation.
 - The fallback Panic Guidance direction is not selected for this milestone.
 - The exact implementation boundary is documented in
   [V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).

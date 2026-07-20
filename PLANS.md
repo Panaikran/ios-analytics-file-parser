@@ -244,8 +244,10 @@ planning.
 
 The user approved **CoreAnalytics Investigation Depth** as the v2.2.0 theme
 and **Bounded CoreAnalytics Investigation** as the Phase 23 direction. Phase
-23A - Evidence, Architecture, and Corpus Audit - is the active planning slice.
-The implementation remains unstarted.
+23A - Evidence, Architecture, and Corpus Audit - is complete, and 23B -
+CoreAnalytics Investigation Boundary - is complete and frozen under separate
+implementation approval. The next slice is 23C - Sanitized Investigation
+Model; its implementation remains unstarted and requires separate approval.
 
 Phase 23A is limited to evidence, architecture, privacy, UX-contract, cap,
 state-transition, and fictional-corpus planning. The selected architecture is
@@ -254,11 +256,14 @@ sanitized and capped CoreAnalytics output, reusing the existing search input
 event path. No raw records, arbitrary values, hidden rows, new parser family,
 new export/comparison contract, or Raw Local View bridge is approved.
 
-Slice 23B is **Ready for separate 23B implementation approval**, but it has not
-started. Later slices remain proposed and gated:
+Slice 23B implemented only the approved scalar allowlist and ephemeral state
+boundary over existing sanitized/capped CoreAnalytics facets. The parser and
+`SectionModel[]` contracts are unchanged, global search remains authoritative,
+and no visible context/status UI exists yet. Later slices remain proposed and
+gated:
 
-- 23B - CoreAnalytics Investigation Boundary.
-- 23C - Sanitized Investigation Model.
+- 23B - CoreAnalytics Investigation Boundary (complete and frozen).
+- 23C - Sanitized Investigation Model (next; separate approval required).
 - 23D - Investigation Presentation and Workflow Integration.
 - 23E - Corpus and Regression Hardening.
 - 23F - Final QA and Release Readiness.
@@ -268,11 +273,11 @@ The planning details are in [PHASE_23_PLAN.md](PHASE_23_PLAN.md) and
 The candidate audit remains the supporting evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
 
-Production work must not begin until the separate 23B implementation approval
-is explicit and the approved allowlist, privacy rules, search behavior, copy,
-export, comparison, Raw Local View, accessibility, responsive, performance,
-and PWA boundaries remain satisfied. Tags, releases, package metadata, and
-publication require separate explicit approval.
+Production work for 23C must not begin until separate 23C implementation
+approval is explicit and the approved allowlist, privacy rules, search behavior,
+copy, export, comparison, Raw Local View, accessibility, responsive,
+performance, and PWA boundaries remain satisfied. Tags, releases, package
+metadata, and publication require separate explicit approval.
 
 ## Approved Milestone Plan: v1.8.0
 

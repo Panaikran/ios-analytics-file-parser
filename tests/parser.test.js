@@ -61,7 +61,15 @@ import {
   isLargeKextTable,
 } from '../src/ui/denseTables.js';
 import { TABLE_VIEW_MODES, getTableView } from '../src/ui/tableView.js';
-import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView, parseTableSummary } from '../src/ui/coreAnalyticsView.js';
+import {
+  activateCoreAnalyticsFacet,
+  createCoreAnalyticsInvestigationState,
+  getCoreAnalyticsFacetOptions,
+  getCoreAnalyticsView,
+  parseTableSummary,
+  reconcileCoreAnalyticsInvestigationState,
+  syncCoreAnalyticsInvestigationQuery,
+} from '../src/ui/coreAnalyticsView.js';
 import { createBatterySection } from '../src/ui/renderBatterySection.js';
 import { createSectionNavItems } from '../src/ui/renderSectionNav.js';
 import { sanitizeText } from '../src/privacy/sanitize.js';
@@ -4188,17 +4196,27 @@ assert.match(mainScriptText, /getCoreAnalyticsView/, 'main app computes the Core
 assert.match(mainScriptText, /getCoreAnalyticsView\(activeSections\)/, 'CoreAnalytics overview uses active unfiltered report or comparison sections');
 assert.match(mainScriptText, /getCoreAnalyticsFacetOptions\(coreAnalyticsView\)/, 'main app derives facet controls from the Slice 14C contract');
 assert.match(mainScriptText, /searchInput\.dispatchEvent\(new Event\('input', \{ bubbles: true \}\)\)/, 'facet activation reuses the existing search input event path');
-assert.match(mainScriptText, /selectedCoreAnalyticsFacetQuery: searchQuery/, 'facet appearance is derived from the existing search query');
+assert.match(mainScriptText, /selectedCoreAnalyticsFacetKey: coreAnalyticsInvestigationState\.selectedFacetKey/, 'facet appearance is scoped to the selected approved facet key');
+assert.match(mainScriptText, /selectedCoreAnalyticsFacetQuery: coreAnalyticsInvestigationState\.mode === 'idle'/, 'facet appearance is derived from the ephemeral investigation state');
 assert.match(mainScriptText, /const coreAnalyticsFacetOptions = !comparisonMode && appState\.sanitize/, 'facet controls are limited to sanitized single-report mode');
 assert.match(mainScriptText, /const restoreCoreAnalyticsFacetFocus = document\.activeElement\?\.matches\('\.coreanalytics-overview__chip'\) === true/, 'facet focus is captured before the shared results rerender');
 assert.match(mainScriptText, /document\.querySelector\('\.coreanalytics-overview__chip\[aria-pressed=\"true\"\]'\)\?\.focus\(\)/, 'facet focus is restored after the shared results rerender');
-const facetHandlerSource = mainScriptText.match(/function selectCoreAnalyticsFacet\(option\) \{[^]*?\n\}/)?.[0] ?? '';
-assert.match(facetHandlerSource, /searchInput\.value = option\.query/, 'facet activation writes the exact contract query to the search input');
+const facetHandlerSource = mainScriptText.match(/function selectCoreAnalyticsFacet\(option, facetKey\) \{[^]*?\n\}/)?.[0] ?? '';
+assert.match(facetHandlerSource, /activateCoreAnalyticsFacet\(facetKey, option\)/, 'facet activation validates the approved key and visible option boundary');
+assert.match(facetHandlerSource, /searchInput\.value = nextState\.selectedFacetQuery/, 'facet activation writes the exact contract query to the search input');
 assert.match(facetHandlerSource, /searchInput\.dispatchEvent\(new Event\('input'/, 'facet activation delegates filtering to the search input event');
 assert.doesNotMatch(facetHandlerSource, /filterSectionsByQuery|serializeSections|table|row|sourceText/, 'facet activation does not implement a parallel filtering or export path');
 assert.match(mainScriptText, /function clearSearchState\(\) \{[^]*searchQuery = ''[^]*searchInput\.value = ''/, 'clear search resets both the query and input value');
+assert.match(mainScriptText, /function clearSearchState\(\) \{[^]*coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState\(\)/, 'clear search resets ephemeral investigation state');
+assert.match(mainScriptText, /function handleSearchInput\(\) \{[^]*syncCoreAnalyticsInvestigationQuery\(coreAnalyticsInvestigationState, searchQuery\)/, 'direct query edits synchronize investigation state through the existing debounced input path');
+assert.match(mainScriptText, /function renderApp\(\) \{[^]*reconcileCoreAnalyticsInvestigationState\([^]*searchResult\.totalMatches/s, 'empty investigation state derives only from the existing visible search result');
+assert.match(mainScriptText, /function exitComparisonMode\(\) \{[^]*coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState\(\)/, 'comparison mode exit cannot retain investigation state');
+assert.match(mainScriptText, /function reparseCurrentSourceWithPrivacyMode\(sanitize\) \{[^]*coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState\(\)/, 'privacy-mode reparsing resets investigation state');
 assert.match(mainScriptText, /function clearSearch\(\) \{[^]*clearSearchState\(\)[^]*renderApp\(\)[^]*searchInput\.focus\(\)/, 'Clear Search re-renders and preserves keyboard focus');
 assert.match(mainScriptText, /function clearReport\(\) \{[^]*exitComparisonMode\(\)[^]*clearSearchState\(\)/, 'Clear Report clears comparison mode and facet-driven search state');
+assert.match(mainScriptText, /function parsePastedText\(\) \{[^]*if \(!text\.trim\(\)\) \{[^]*clearSearchState\(\)/, 'empty pasted input cannot retain investigation state');
+assert.match(mainScriptText, /async function loadFile\(file\) \{[^]*catch \{[^]*clearSearchState\(\)[^]*renderApp\(\)/, 'file-read failures cannot retain investigation state');
+assert.match(mainScriptText, /async function loadExample\(example\) \{[^]*catch \{[^]*clearSearchState\(\)[^]*renderApp\(\)/, 'example-load failures cannot retain investigation state');
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
 assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
 assert.match(mainScriptText, /filterSectionsByQuery\(activeSections, searchQuery, \{ includeMatchRegions: appState\.sanitize \|\| comparisonMode \}\)/, 'raw local view disables new search-match metadata while preserving filtering');
@@ -4304,7 +4322,8 @@ assert.match(renderCoreAnalyticsOverviewSource, /Search and copy operate on rend
 assert.match(renderCoreAnalyticsOverviewSource, /Overview hidden while search is active\./, 'CoreAnalytics overview has explicit search-active copy');
 assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\(interactive \? 'button' : 'span'\)/, 'CoreAnalytics facet options render as native buttons when the contract is active');
 assert.match(renderCoreAnalyticsOverviewSource, /aria-pressed/, 'CoreAnalytics facet buttons expose selected appearance semantics');
-assert.match(renderCoreAnalyticsOverviewSource, /item\.query === selectedFacetQuery/, 'selected facet appearance follows the exact active query');
+assert.match(renderCoreAnalyticsOverviewSource, /key === selectedFacetKey && item\.query === selectedFacetQuery/, 'selected facet appearance follows the exact active key and query');
+assert.match(renderCoreAnalyticsOverviewSource, /onSelectFacet\(item, key\)/, 'facet activation passes only the visible option and approved group key');
 assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\('dl'\)[^]*coreanalytics-overview__table-counts/s, 'CoreAnalytics row counts use a compact semantic definition summary rather than cards');
 assert.doesNotMatch(renderCoreAnalyticsOverviewSource, /document\.createElement\('section'\)[^]*coreanalytics-overview__table-count/s, 'CoreAnalytics row counts no longer render dashboard-style statistic tiles');
 assert.doesNotMatch(
@@ -4886,6 +4905,115 @@ assert.deepEqual(
 );
 assert.deepEqual(getCoreAnalyticsFacetOptions(nonCoreAnalyticsView), [], 'non-CoreAnalytics views do not expose facet options');
 assert.deepEqual(getCoreAnalyticsFacetOptions({ isCoreAnalytics: true, facets: { values: null } }), [], 'malformed CoreAnalytics facet views fail safely');
+
+const initialCoreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
+assert.deepEqual(
+  initialCoreAnalyticsInvestigationState,
+  { mode: 'idle', selectedFacetKey: null, selectedFacetQuery: '' },
+  'CoreAnalytics investigation state starts idle with no selected facet'
+);
+assert.equal(Object.isFrozen(initialCoreAnalyticsInvestigationState), true, 'CoreAnalytics investigation state is immutable');
+
+const approvedInvestigationFacetCases = [
+  ['message', 'Visible message'],
+  ['name', 'Visible name'],
+  ['aggregationPeriod', 'Visible period'],
+  ['sampling', 'Visible sampling'],
+];
+for (const [key, query] of approvedInvestigationFacetCases) {
+  const option = { value: query, query, count: 2 };
+  const state = activateCoreAnalyticsFacet(key, option);
+  assert.deepEqual(
+    state,
+    { mode: 'active', selectedFacetKey: key, selectedFacetQuery: query },
+    `${key} accepts an existing visible facet query`
+  );
+  option.query = 'mutated after activation';
+  assert.equal(state.selectedFacetQuery, query, `${key} stores the query value without retaining the option object`);
+}
+
+for (const key of [
+  'count',
+  'rowNumber',
+  'numDaysAggregated',
+  'incident_id',
+  'configUuid',
+  'sessionId',
+  'unknown',
+  '__proto__',
+  'constructor',
+  'prototype',
+]) {
+  assert.equal(
+    activateCoreAnalyticsFacet(key, { value: 'Visible value', query: 'Visible value', count: 1 }),
+    null,
+    `${key} cannot activate an investigation facet`
+  );
+}
+
+const unsafeInheritedFacetOption = Object.create({ value: 'Inherited', query: 'Inherited', count: 1 });
+const throwingFacetOption = { value: 'Visible value', count: 1 };
+Object.defineProperty(throwingFacetOption, 'query', {
+  enumerable: true,
+  get() {
+    throw new Error('query getter must not execute');
+  },
+});
+const cyclicFacetQuery = {};
+cyclicFacetQuery.self = cyclicFacetQuery;
+const symbolFacetOption = { value: 'Visible value', query: 'Visible value', count: 1 };
+symbolFacetOption[Symbol('unsafe')] = 'not allowed';
+const unsafeInvestigationOptions = [
+  null,
+  [],
+  () => 'Visible value',
+  unsafeInheritedFacetOption,
+  throwingFacetOption,
+  { value: {}, query: 'Visible value', count: 1 },
+  { value: 'Visible value', query: {}, count: 1 },
+  { value: 'Visible value', query: [], count: 1 },
+  { value: 'Visible value', query: cyclicFacetQuery, count: 1 },
+  { value: 'Visible value', query: '   ', count: 1 },
+  symbolFacetOption,
+];
+for (const option of unsafeInvestigationOptions) {
+  assert.doesNotThrow(
+    () => activateCoreAnalyticsFacet('message', option),
+    'unsafe facet option validation does not execute accessors or traverse objects'
+  );
+  assert.equal(activateCoreAnalyticsFacet('message', option), null, 'unsafe facet options are rejected');
+}
+
+const activeInvestigationState = activateCoreAnalyticsFacet(
+  'message',
+  { value: 'Visible message', query: 'Visible message', count: 1 }
+);
+assert.deepEqual(
+  syncCoreAnalyticsInvestigationQuery(activeInvestigationState, 'Visible message'),
+  { mode: 'active', selectedFacetKey: 'message', selectedFacetQuery: 'Visible message' },
+  'matching direct query changes preserve active facet context'
+);
+assert.deepEqual(
+  syncCoreAnalyticsInvestigationQuery(activeInvestigationState, 'ordinary search'),
+  initialCoreAnalyticsInvestigationState,
+  'different direct query changes clear facet context without changing the query itself'
+);
+const emptyInvestigationState = reconcileCoreAnalyticsInvestigationState(activeInvestigationState, 'Visible message', 0);
+assert.deepEqual(
+  emptyInvestigationState,
+  { mode: 'empty', selectedFacetKey: 'message', selectedFacetQuery: 'Visible message' },
+  'an approved facet plus zero visible matches enters the private empty state'
+);
+assert.deepEqual(
+  reconcileCoreAnalyticsInvestigationState(emptyInvestigationState, 'Visible message', 2),
+  { mode: 'active', selectedFacetKey: 'message', selectedFacetQuery: 'Visible message' },
+  'visible matches restore active state without consulting hidden rows'
+);
+assert.deepEqual(
+  syncCoreAnalyticsInvestigationQuery(emptyInvestigationState, 'ordinary search'),
+  initialCoreAnalyticsInvestigationState,
+  'clearing or replacing an empty facet query exits the empty state'
+);
 
 const largeCoreAnalyticsView = getCoreAnalyticsView(largeCoreAnalyticsSections);
 const largeCoreAnalyticsFacetOptions = getCoreAnalyticsFacetOptions(largeCoreAnalyticsView);

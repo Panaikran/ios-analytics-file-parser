@@ -20,6 +20,7 @@ export function renderCoreAnalyticsOverview(
     searchActive = false,
     facetOptions = null,
     onSelectFacet = null,
+    selectedFacetKey = '',
     selectedFacetQuery = '',
     headingLevel = 2,
   } = {}
@@ -45,6 +46,7 @@ export function renderCoreAnalyticsOverview(
     article.append(renderFacetGroups(view, {
       facetOptions,
       onSelectFacet,
+      selectedFacetKey,
       selectedFacetQuery,
       headingLevel: headingLevel + 1,
     }));
@@ -65,6 +67,7 @@ export function renderCoreAnalyticsOverview(
   article.append(renderFacetGroups(view, {
     facetOptions,
     onSelectFacet,
+    selectedFacetKey,
     selectedFacetQuery,
     headingLevel: headingLevel + 1,
   }));
@@ -156,7 +159,7 @@ function renderTableCount(label, table) {
 
 function renderFacetGroups(
   view,
-  { facetOptions = null, onSelectFacet = null, selectedFacetQuery = '', headingLevel = 3 } = {}
+  { facetOptions = null, onSelectFacet = null, selectedFacetKey = '', selectedFacetQuery = '', headingLevel = 3 } = {}
 ) {
   const wrapper = document.createElement('section');
   wrapper.className = 'coreanalytics-overview__facets';
@@ -171,7 +174,7 @@ function renderFacetGroups(
     ? facetOptions.map((group) => ({ key: group.key, label: group.label, values: group.options }))
     : Object.entries(FACET_LABELS).map(([key, label]) => ({ key, label, values: view.facets?.values?.[key] ?? [] }));
 
-  for (const { label, values } of groups) {
+  for (const { key, label, values } of groups) {
     if (!values.length) continue;
 
     const group = document.createElement('div');
@@ -193,8 +196,8 @@ function renderFacetGroups(
       if (interactive) {
         chip.type = 'button';
         chip.setAttribute('aria-label', `${label}: ${item.value}, ${item.count} occurrences`);
-        chip.setAttribute('aria-pressed', String(item.query === selectedFacetQuery));
-        chip.addEventListener('click', () => onSelectFacet(item));
+        chip.setAttribute('aria-pressed', String(key === selectedFacetKey && item.query === selectedFacetQuery));
+        chip.addEventListener('click', () => onSelectFacet(item, key));
       }
 
       chips.append(chip);

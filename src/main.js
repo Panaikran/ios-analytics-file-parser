@@ -24,7 +24,14 @@ import { parseInput } from './parsers/index.js';
 import { filterSectionsByQuery } from './search/filterSections.js';
 import { createExactMatchTargets } from './search/exactMatch.js';
 import { getSearchMetadata } from './search/searchMetadata.js';
-import { getCoreAnalyticsFacetOptions, getCoreAnalyticsView } from './ui/coreAnalyticsView.js';
+import {
+  activateCoreAnalyticsFacet,
+  createCoreAnalyticsInvestigationState,
+  getCoreAnalyticsFacetOptions,
+  getCoreAnalyticsView,
+  reconcileCoreAnalyticsInvestigationState,
+  syncCoreAnalyticsInvestigationQuery,
+} from './ui/coreAnalyticsView.js';
 import { renderSections, renderStatus } from './ui/renderApp.js';
 import { createBatterySection } from './ui/renderBatterySection.js';
 import { createWorkspaceNavigation } from './ui/workspaceNavigation.js';
@@ -95,6 +102,7 @@ let comparisonSections = [];
 let comparisonMode = false;
 let comparisonMessage = 'No reports added.';
 let searchQuery = '';
+let coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
 let searchTimer = null;
 let searchNavigationTargets = [];
 let activeNavigationIndex = -1;
@@ -130,6 +138,13 @@ function renderApp() {
   const restoreCoreAnalyticsFacetFocus = document.activeElement?.matches('.coreanalytics-overview__chip') === true;
   const activeSections = getPresentationSections();
   const searchResult = filterSectionsByQuery(activeSections, searchQuery, { includeMatchRegions: appState.sanitize || comparisonMode });
+  coreAnalyticsInvestigationState = activeSections.length
+    ? reconcileCoreAnalyticsInvestigationState(
+        coreAnalyticsInvestigationState,
+        searchQuery,
+        searchResult.active ? searchResult.totalMatches : null
+      )
+    : createCoreAnalyticsInvestigationState();
   const coreAnalyticsView = getCoreAnalyticsView(activeSections);
   const coreAnalyticsFacetOptions = !comparisonMode && appState.sanitize
     ? getCoreAnalyticsFacetOptions(coreAnalyticsView)
@@ -175,7 +190,10 @@ function renderApp() {
     coreAnalyticsView,
     coreAnalyticsFacetOptions,
     onSelectCoreAnalyticsFacet: selectCoreAnalyticsFacet,
-    selectedCoreAnalyticsFacetQuery: searchQuery,
+    selectedCoreAnalyticsFacetKey: coreAnalyticsInvestigationState.selectedFacetKey ?? '',
+    selectedCoreAnalyticsFacetQuery: coreAnalyticsInvestigationState.mode === 'idle'
+      ? ''
+      : coreAnalyticsInvestigationState.selectedFacetQuery,
     searchActive: searchMetadata.searchActive,
     matchRegions: searchResult.matchRegions,
     activeExactMatchId: exactMatchTargets[activeExactMatchIndex]?.id ?? '',
@@ -508,6 +526,7 @@ function leaveComparison() {
 function exitComparisonMode() {
   comparisonMode = false;
   comparisonSections = [];
+  coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
 }
 
 function showParsedReport(text, sourceLabel) {
@@ -572,6 +591,7 @@ function clearReport() {
 }
 
 function reparseCurrentSourceWithPrivacyMode(sanitize) {
+  coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
   if (!appState.sourceText) return;
 
   try {
@@ -624,6 +644,7 @@ function resetExactMatchState() {
 
 function clearSearchState() {
   searchQuery = '';
+  coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
   if (searchTimer) {
     clearTimeout(searchTimer);
     searchTimer = null;
@@ -932,6 +953,7 @@ async function loadExample(example) {
       tone: 'error',
       clearSections: true,
     });
+    clearSearchState();
     renderApp();
   }
 }
@@ -966,6 +988,7 @@ async function loadFile(file) {
       tone: 'error',
       clearSections: true,
     });
+    clearSearchState();
     renderApp();
   }
 }
@@ -979,6 +1002,7 @@ function parsePastedText() {
       clearSections: true,
     });
     fileInput.value = '';
+    clearSearchState();
     renderApp();
     return;
   }
@@ -991,15 +1015,18 @@ function handleSearchInput() {
   if (searchTimer) clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     searchQuery = searchInput.value;
+    coreAnalyticsInvestigationState = syncCoreAnalyticsInvestigationQuery(coreAnalyticsInvestigationState, searchQuery);
     resetSearchNavigationState();
     renderApp();
   }, 180);
 }
 
-function selectCoreAnalyticsFacet(option) {
-  if (typeof option?.query !== 'string' || !option.query.trim()) return;
+function selectCoreAnalyticsFacet(option, facetKey) {
+  const nextState = activateCoreAnalyticsFacet(facetKey, option);
+  if (!nextState) return;
 
-  searchInput.value = option.query;
+  coreAnalyticsInvestigationState = nextState;
+  searchInput.value = nextState.selectedFacetQuery;
   searchInput.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
