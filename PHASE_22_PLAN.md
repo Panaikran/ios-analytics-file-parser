@@ -490,3 +490,29 @@ the privacy-approved corpus supports deterministic behavior.
   PWA contract changes are authorized.
 - No tag, release, GitHub Release, package metadata change, or publication is
   authorized.
+
+## 18. Phase 22A.1 external evidence result
+
+Phase 22A.1 was completed as a research-only follow-up in
+[`docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md`](docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md).
+The review inspected Apple public battery and power documentation, Apple open
+source, an established open-source advanced battery surface, and independent
+CoreAnalytics artifact research. It found no public evidence that maps the
+exact Phase 22 candidates to a supported CoreAnalytics event family with the
+required meaning, units, lifecycle, privacy boundary, duplicate behavior,
+conflict behavior, and precedence.
+
+The original repository and historical local-evidence findings are unchanged:
+no field is retained; `AdapterDetails.bucketed_Watts`,
+`AdapterDetails.isWireless`, `PowerModesDailyEngagement.PowerMode`,
+`PowerModesDailyEngagement.daily_total_Duration`, and the unverified charging,
+external-power, voltage, current, power, and session concepts remain
+`insufficient evidence`. Adapter identity, thermal telemetry, guessed duration
+aliases, low-power-mode fields, fault concepts, and unsupported charging event
+families remain `reject`.
+
+The combined decision remains Approach C - research-only deferral. Approach B
+is only a conditional future architecture if a later evidence audit produces a
+retained field. Slice 22B remains blocked, production implementation has not
+started, and the frozen v2.1.0 behavior and all compatibility boundaries remain
+unchanged.
