@@ -980,15 +980,38 @@ a different implementation milestone. See
 [PHASE_22_SUMMARY.md](PHASE_22_SUMMARY.md) and
 [docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md](docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md).
 
-## Provisional next milestone review: Phase 23
+## Approved planning direction: Phase 23
 
-Candidate selection for the next v2.2.0 implementation milestone is under
-review. The provisional recommendation is **CoreAnalytics Investigation
-Depth**, with **Evidence-Bounded Panic Guidance** as the fallback. The
-recommendation is not approved, implementation has not started, and
-[PHASE_23_PLAN.md](PHASE_23_PLAN.md) must not be created until the user
-explicitly approves a candidate.
+Status: Phase 23 planning active; implementation has not started.
 
-The candidate audit is recorded in
+The user approved the v2.2.0 theme **CoreAnalytics Investigation Depth** and
+the Phase 23 title **Bounded CoreAnalytics Investigation**. The current slice
+is **23A - Evidence, Architecture, and Corpus Audit**. The approved direction
+is planning-only; Slice 23B requires separate implementation approval.
+
+Phase 22 remains closed and frozen as research-only Charging Evidence and
+Power Context work. No charging field was retained, no charging functionality
+was delivered, and Approach C remains final for that phase.
+
+| Slice | Status | Scope |
+| --- | --- | --- |
+| 23A | Planning approved and active | Evidence, architecture, UX-contract, privacy, cap, and fictional-corpus audit |
+| 23B | Not started; separate approval required | Bounded investigation boundary over existing sanitized/capped CoreAnalytics data |
+| 23C | Proposed; not started | Sanitized ephemeral investigation model |
+| 23D | Proposed; not started | Investigation context and workflow presentation within the Inspector Workspace |
+| 23E | Proposed; not started | Fictional corpus and regression hardening |
+| 23F | Proposed; not started | Final QA and release readiness |
+
+The conservative boundary permits only investigation of existing sanitized,
+rendered, capped CoreAnalytics facet values and matching visible rows. It does
+not authorize raw or arbitrary exploration, hidden-row retrieval, new parser
+families, undocumented semantics, diagnosis, comparison expansion, export
+changes, Raw Local View changes, persistence, uploads, or telemetry.
+
+The planning record is [PHASE_23_PLAN.md](PHASE_23_PLAN.md), with the design
+contract in
+[docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).
+The prior candidate audit remains the evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
-No v2.2.0 tag or release operation is authorized.
+No v2.2.0 tag or release operation is authorized, and no release is described
+as published.
