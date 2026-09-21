@@ -28,6 +28,7 @@ import {
   activateCoreAnalyticsFacet,
   createCoreAnalyticsInvestigationState,
   getCoreAnalyticsFacetOptions,
+  getCoreAnalyticsInvestigation,
   getCoreAnalyticsView,
   reconcileCoreAnalyticsInvestigationState,
   syncCoreAnalyticsInvestigationQuery,
@@ -153,6 +154,9 @@ function renderApp() {
   const visibleSections = searchResult.sections;
   const hasParsedSections = activeSections.length > 0;
   const presentation = comparisonMode ? 'comparison' : appState.sanitize ? 'report' : 'raw';
+  const coreAnalyticsInvestigation = presentation === 'report'
+    ? getCoreAnalyticsInvestigation(coreAnalyticsView, searchResult, coreAnalyticsInvestigationState)
+    : null;
   const emptySearch = searchResult.active && searchResult.totalMatches === 0;
   const eligibleExportSections = getEligibleExportSections(activeSections, visibleSections);
   reconcileSearchNavigationState(searchResult.navigationTargets, searchResult.active && (appState.sanitize || comparisonMode));
@@ -172,7 +176,7 @@ function renderApp() {
   statusElement.setAttribute('aria-live', blockingImportError ? 'assertive' : 'polite');
   renderPrivacyControls(appState.sections.length > 0);
   renderComparisonControls(appState.sections.length > 0);
-  renderSearchControls(searchMetadata, hasParsedSections);
+  renderSearchControls(searchMetadata, hasParsedSections, coreAnalyticsInvestigation);
   renderExportControls(
     hasParsedSections,
     serializeSectionsForExport(eligibleExportSections),
@@ -189,6 +193,8 @@ function renderApp() {
     allSections: activeSections,
     coreAnalyticsView,
     coreAnalyticsFacetOptions,
+    coreAnalyticsInvestigation,
+    onClearCoreAnalyticsSearch: presentation === 'report' ? clearSearch : null,
     onSelectCoreAnalyticsFacet: selectCoreAnalyticsFacet,
     selectedCoreAnalyticsFacetKey: coreAnalyticsInvestigationState.selectedFacetKey ?? '',
     selectedCoreAnalyticsFacetQuery: coreAnalyticsInvestigationState.mode === 'idle'
@@ -654,7 +660,7 @@ function clearSearchState() {
   resetExactMatchState();
 }
 
-function renderSearchControls(searchMetadata, hasParsedSections) {
+function renderSearchControls(searchMetadata, hasParsedSections, coreAnalyticsInvestigation = null) {
   const label = comparisonMode
     ? 'Search visible comparison content'
     : appState.sanitize
@@ -677,7 +683,7 @@ function renderSearchControls(searchMetadata, hasParsedSections) {
     return;
   }
 
-  searchCount.textContent = searchStatusText(searchMetadata);
+  searchCount.textContent = searchStatusText(searchMetadata, coreAnalyticsInvestigation);
   const showSearchNavigation = searchNavigationTargets.length > 0 && (appState.sanitize || comparisonMode);
   updateSearchNavigationControls(showSearchNavigation);
   updateExactMatchControls(appState.sanitize || comparisonMode);
@@ -899,7 +905,12 @@ function navigateExactMatch(direction) {
   document.getElementById(direction > 0 ? 'exact-match-previous' : 'exact-match-next')?.focus();
 }
 
-function searchStatusText(searchMetadata) {
+function searchStatusText(searchMetadata, coreAnalyticsInvestigation = null) {
+  if (coreAnalyticsInvestigation?.mode === 'empty') return coreAnalyticsInvestigation.statusText;
+  if (coreAnalyticsInvestigation?.mode === 'active') {
+    return `${searchCountText(searchMetadata.matchCount)}. ${coreAnalyticsInvestigation.statusText}`;
+  }
+
   if (searchMetadata.matchCount === 0) return 'No visible matches.';
 
   if (searchMetadata.cappedCoreAnalytics) {

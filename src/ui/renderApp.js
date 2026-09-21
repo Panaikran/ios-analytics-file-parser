@@ -14,6 +14,8 @@ export function renderSections(element, sections, options = {}) {
     searchActive: options.searchActive === true,
     facetOptions: options.coreAnalyticsFacetOptions,
     onSelectFacet: options.onSelectCoreAnalyticsFacet,
+    investigation: reportPresentation ? options.coreAnalyticsInvestigation : null,
+    onClearSearch: reportPresentation ? options.onClearCoreAnalyticsSearch : null,
     selectedFacetKey: options.selectedCoreAnalyticsFacetKey,
     selectedFacetQuery: options.selectedCoreAnalyticsFacetQuery,
     headingLevel: documentPresentation ? 3 : 2,

@@ -20,6 +20,8 @@ export function renderCoreAnalyticsOverview(
     searchActive = false,
     facetOptions = null,
     onSelectFacet = null,
+    investigation = null,
+    onClearSearch = null,
     selectedFacetKey = '',
     selectedFacetQuery = '',
     headingLevel = 2,
@@ -41,6 +43,10 @@ export function renderCoreAnalyticsOverview(
     searchNote.className = 'coreanalytics-overview__note';
     searchNote.textContent = 'Overview hidden while search is active.';
     article.append(searchNote);
+
+    if (investigation?.mode === 'active' || investigation?.mode === 'empty') {
+      article.append(renderInvestigationContext(investigation, { onClearSearch, headingLevel: headingLevel + 1 }));
+    }
 
     if (!Array.isArray(facetOptions)) return article;
     article.append(renderFacetGroups(view, {
@@ -78,6 +84,43 @@ export function renderCoreAnalyticsOverview(
   }
 
   return article;
+}
+
+function renderInvestigationContext(investigation, { onClearSearch = null, headingLevel = 3 } = {}) {
+  const selectedFacet = investigation.selectedFacet;
+  if (!selectedFacet) return null;
+
+  const section = document.createElement('section');
+  section.className = 'coreanalytics-overview__investigation';
+  section.setAttribute('aria-labelledby', 'coreanalytics-investigation-title');
+
+  const heading = document.createElement(`h${headingLevel}`);
+  heading.id = 'coreanalytics-investigation-title';
+  heading.textContent = 'Investigation context';
+
+  const values = document.createElement('dl');
+  values.className = 'coreanalytics-overview__investigation-values';
+  const label = document.createElement('dt');
+  label.textContent = selectedFacet.label;
+  const query = document.createElement('dd');
+  query.textContent = selectedFacet.query;
+  values.append(label, query);
+
+  const scope = document.createElement('p');
+  scope.className = 'coreanalytics-overview__note';
+  scope.textContent = investigation.renderedScope;
+  section.append(heading, values, scope);
+
+  if (typeof onClearSearch === 'function') {
+    const reset = document.createElement('button');
+    reset.className = 'clear-search';
+    reset.type = 'button';
+    reset.textContent = investigation.resetLabel;
+    reset.addEventListener('click', onClearSearch);
+    section.append(reset);
+  }
+
+  return section;
 }
 
 function createMetrics(view) {

@@ -243,11 +243,12 @@ explicit approval. v2.2.0 remains unreleased until those gates are completed.
 
 The user approved **CoreAnalytics Investigation Depth** as the v2.2.0 theme
 and **Bounded CoreAnalytics Investigation** as the Phase 23 direction. Phase
-23A - Evidence, Architecture, and Corpus Audit - is complete; 23B -
-CoreAnalytics Investigation Boundary - and 23C - Sanitized Investigation Model
-- are complete and frozen under separate implementation approval. The next
-slice is 23D - Investigation Presentation and Workflow Integration; it remains
-unstarted and requires separate approval.
+23A - Evidence, Architecture, and Corpus Audit - is complete. Slices 23B -
+CoreAnalytics Investigation Boundary, 23C - Sanitized Investigation Model,
+and 23D - Investigation Presentation and Workflow Integration - are complete
+and frozen under separate implementation approvals. The next slice is 23E -
+Corpus and Regression Hardening; it remains unstarted and requires separate
+approval.
 
 Phase 23A is limited to evidence, architecture, privacy, UX-contract, cap,
 state-transition, and fictional-corpus planning. The selected architecture is
@@ -259,16 +260,18 @@ new export/comparison contract, or Raw Local View bridge is approved.
 Slice 23B implemented only the approved scalar allowlist and ephemeral state
 boundary over existing sanitized/capped CoreAnalytics facets. The parser and
 `SectionModel[]` contracts are unchanged, global search remains authoritative,
-and no visible context/status UI exists. Slice 23C implemented a pure sanitized
+and no second filtering path was added. Slice 23C implemented a pure sanitized
 model in the existing CoreAnalytics view module without changing those
-contracts.
+contracts. Slice 23D presents that context only in sanitized single-report
+mode, reuses the existing global search status and Clear Search path, and does
+not alter parser, model, export, comparison, or Raw Local View behavior.
 Later slices remain proposed and gated:
 
 - 23B - CoreAnalytics Investigation Boundary (complete and frozen).
 - 23C - Sanitized Investigation Model (complete and frozen).
-- 23D - Investigation Presentation and Workflow Integration (next; separate
-  approval required).
-- 23E - Corpus and Regression Hardening.
+- 23D - Investigation Presentation and Workflow Integration (complete and
+  frozen).
+- 23E - Corpus and Regression Hardening (next; separate approval required).
 - 23F - Final QA and Release Readiness.
 
 The planning details are in [PHASE_23_PLAN.md](PHASE_23_PLAN.md) and
@@ -276,7 +279,7 @@ The planning details are in [PHASE_23_PLAN.md](PHASE_23_PLAN.md) and
 The candidate audit remains the supporting evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
 
-Production work for 23D must not begin until separate 23D implementation
+Production work for 23E must not begin until separate 23E implementation
 approval is explicit and the approved allowlist, privacy rules, search behavior,
 copy, export, comparison, Raw Local View, accessibility, responsive,
 performance, and PWA boundaries remain satisfied. Tags, releases, package

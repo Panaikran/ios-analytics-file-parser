@@ -281,7 +281,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-23c/, 'service worker cache version invalidates the shell for the Slice 23C model update without creating a release version');
+assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-23d/, 'service worker cache version invalidates the shell for the Slice 23D presentation update without creating a release version');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
@@ -4221,7 +4221,7 @@ assert.match(mainScriptText, /async function loadExample\(example\) \{[^]*catch 
 assert.match(mainScriptText, /getSearchMetadata/, 'main app computes search scope metadata');
 assert.match(mainScriptText, /getSearchMetadata\(searchResult, activeSections, \{ coreAnalyticsView \}\)/, 'search metadata uses current search results, active sections, and CoreAnalytics view');
 assert.match(mainScriptText, /filterSectionsByQuery\(activeSections, searchQuery, \{ includeMatchRegions: appState\.sanitize \|\| comparisonMode \}\)/, 'raw local view disables new search-match metadata while preserving filtering');
-assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections\)/, 'search controls receive metadata instead of raw search-result wording');
+assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections, coreAnalyticsInvestigation\)/, 'search controls receive metadata and the sanitized investigation projection');
 assert.match(mainScriptText, /searchResult\.navigationTargets/, 'search navigation consumes the Slice 16A navigation target contract');
 assert.match(mainScriptText, /function navigateSearchResult\(direction\)/, 'search navigation uses one section-level movement handler');
 assert.match(mainScriptText, /document\.getElementById\(target\.id\)/, 'search navigation resolves existing stable section anchors by ID');
@@ -4259,7 +4259,7 @@ assert.equal(
   1,
   'Next has one event listener'
 );
-assert.match(mainScriptText, /searchCount\.textContent = searchStatusText\(searchMetadata\)/, 'visible and live search status use the same result-count wording');
+assert.match(mainScriptText, /searchCount\.textContent = searchStatusText\(searchMetadata, coreAnalyticsInvestigation\)/, 'visible and live search status use the result count and investigation wording');
 assert.match(mainScriptText, /if \(searchMetadata\.matchCount === 0\) return 'No visible matches\.'/, 'zero-result searches cannot announce a positive result count');
 assert.match(mainScriptText, /reportActionsPanel\.dataset\.compatibility = String\(!appState\.sanitize\)/, 'comparison adopts the Slice 20E responsive action layout while Raw Local View keeps visible restricted-action presentation');
 assert.match(mainScriptText, /event\.key !== 'Escape'[^]*closeReportActions\(\{ returnFocus: true \}\)/, 'mobile report actions close with Escape and return focus');
@@ -4271,6 +4271,8 @@ assert.match(mainScriptText, /Some source records are not rendered\./, 'large re
 assert.match(renderAppSource, /renderCoreAnalyticsOverview/, 'results rendering can prepend the CoreAnalytics overview without mutating sections');
 assert.match(renderAppSource, /searchActive:\s*options\.searchActive === true/, 'CoreAnalytics overview receives search-active state from render options');
 assert.match(renderAppSource, /facetOptions:\s*options\.coreAnalyticsFacetOptions/, 'CoreAnalytics overview receives contract facet options from the app state path');
+assert.match(renderAppSource, /investigation:\s*reportPresentation \? options\.coreAnalyticsInvestigation : null/, 'investigation context is passed only to the sanitized single-report presentation');
+assert.match(renderAppSource, /onClearSearch:\s*reportPresentation \? options\.onClearCoreAnalyticsSearch : null/, 'investigation reset is unavailable outside the sanitized single-report presentation');
 assert.match(renderAppSource, /selectedFacetQuery:\s*options\.selectedCoreAnalyticsFacetQuery/, 'CoreAnalytics overview derives selected appearance from the current search query');
 assert.match(renderAppSource, /\['report', 'comparison', 'raw'\]\.includes\(presentation\)/, 'single, comparison, and Raw Local View presentations explicitly share the opaque report document');
 assert.match(renderAppSource, /headingLevel:\s*documentPresentation \? 3 : 2/, 'all document presentations keep the CoreAnalytics overview below the mode heading');
@@ -4325,8 +4327,15 @@ assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\(intera
 assert.match(renderCoreAnalyticsOverviewSource, /aria-pressed/, 'CoreAnalytics facet buttons expose selected appearance semantics');
 assert.match(renderCoreAnalyticsOverviewSource, /key === selectedFacetKey && item\.query === selectedFacetQuery/, 'selected facet appearance follows the exact active key and query');
 assert.match(renderCoreAnalyticsOverviewSource, /onSelectFacet\(item, key\)/, 'facet activation passes only the visible option and approved group key');
+assert.match(renderCoreAnalyticsOverviewSource, /investigation = null/, 'CoreAnalytics overview accepts the existing sanitized investigation projection');
+assert.match(renderCoreAnalyticsOverviewSource, /investigation\?\.mode === 'active' \|\| investigation\?\.mode === 'empty'/, 'investigation context is rendered only for active or empty facet searches');
+assert.match(renderCoreAnalyticsOverviewSource, /selectedFacet\.label[^]*selectedFacet\.query/s, 'investigation context presents only the approved facet label and visible query');
+assert.match(renderCoreAnalyticsOverviewSource, /investigation\.renderedScope/, 'investigation context states the existing rendered-row scope');
+assert.match(renderCoreAnalyticsOverviewSource, /investigation\.resetLabel[^]*onClearSearch/s, 'investigation reset delegates to the existing Clear Search callback');
+assert.match(renderCoreAnalyticsOverviewSource, /aria-labelledby/, 'investigation context has a semantic heading relationship');
+assert.doesNotMatch(renderCoreAnalyticsOverviewSource, /aria-live|innerHTML|outerHTML/, 'investigation context reuses the stable search status and inserts only literal text');
 assert.match(renderCoreAnalyticsOverviewSource, /document\.createElement\('dl'\)[^]*coreanalytics-overview__table-counts/s, 'CoreAnalytics row counts use a compact semantic definition summary rather than cards');
-assert.doesNotMatch(renderCoreAnalyticsOverviewSource, /document\.createElement\('section'\)[^]*coreanalytics-overview__table-count/s, 'CoreAnalytics row counts no longer render dashboard-style statistic tiles');
+assert.doesNotMatch(renderCoreAnalyticsOverviewSource, /section\.className = 'coreanalytics-overview__table-count'/, 'CoreAnalytics row counts no longer render dashboard-style statistic tiles');
 assert.doesNotMatch(
   renderCoreAnalyticsOverviewSource,
   /parseInput|filterSectionsByQuery|localStorage|sessionStorage|indexedDB|navigator\.clipboard|sourceText/,
@@ -4337,14 +4346,22 @@ assert.doesNotMatch(
   /document|window|navigator|filterSectionsByQuery|serializeSection|parseInput|sourceText/,
   'CoreAnalytics facet view model stays pure without DOM, search, serialization, parser, or source-text access'
 );
+assert.match(mainScriptText, /presentation === 'report'\s*\?\s*getCoreAnalyticsInvestigation\(coreAnalyticsView, searchResult, coreAnalyticsInvestigationState\)\s*:\s*null/, '23D derives the frozen investigation projection only for a sanitized single report');
+assert.match(mainScriptText, /renderSearchControls\(searchMetadata, hasParsedSections, coreAnalyticsInvestigation\)/, 'existing search controls receive investigation status without a second search pipeline');
+assert.match(mainScriptText, /searchCount\.textContent = searchStatusText\(searchMetadata, coreAnalyticsInvestigation\)/, 'existing atomic search status announces active and empty investigation context');
+assert.match(mainScriptText, /coreAnalyticsInvestigation,\s*onClearCoreAnalyticsSearch: presentation === 'report' \? clearSearch : null/s, 'report presentation wires investigation reset to the existing Clear Search handler only');
 assert.doesNotMatch(
-  `${mainScriptText}\n${comparisonModelSource}\n${serializeSectionSource}`,
+  `${comparisonModelSource}\n${serializeSectionSource}`,
   /getCoreAnalyticsInvestigation/,
-  '23C investigation projection is not integrated into app state, comparison, or serialization'
+  'investigation projection remains outside comparison and copy/export serialization'
 );
 assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
 assert.match(styleText, /\.coreanalytics-overview__chip\s*\{[^}]*min-height:\s*44px;/s, 'CoreAnalytics facet controls keep practical touch targets');
 assert.match(styleText, /\.coreanalytics-overview__chip:focus-visible/, 'CoreAnalytics facet controls expose visible focus styling');
+assert.match(styleText, /\.clear-search\s*\{[^}]*min-height:\s*var\(--size-touch-target-min\)/s, 'investigation reset reuses the existing 44px Clear Search target');
+assert.match(reportContentStyleText, /\.coreanalytics-overview__investigation[^]*min-width:\s*0/s, 'investigation context can shrink within the report document');
+assert.match(reportContentStyleText, /\.coreanalytics-overview__investigation[^]*overflow-wrap:\s*anywhere/s, 'long investigation queries wrap without forcing horizontal overflow');
+assert.match(reportContentStyleText, /@media \(forced-colors: active\)[^]*\.report-document \.coreanalytics-overview__investigation/s, 'investigation context retains a visible boundary in forced colors');
 assert.match(reportContentStyleText, /^\/\* Hallmark .* Inspector Workspace .* report content/s, 'report content stylesheet records the approved Hallmark design authority');
 assert.match(reportContentStyleText, /\.sections\.report-document\s*\{[^}]*background:\s*var\(--color-content\)/s, 'single reports use one opaque content canvas');
 assert.match(reportContentStyleText, /\.report-document > \.section-card\s*\{[^}]*border:\s*0[^}]*border-radius:\s*0/s, 'single-report sections are continuous document sections rather than cards');

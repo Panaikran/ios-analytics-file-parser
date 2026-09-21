@@ -1,8 +1,8 @@
 # iOS Analytics File Parser Roadmap
 
 Status: `v2.1.0 — Battery and Charging Insights` released; Phase 21 is complete
-and frozen. v2.2.0 remains unreleased; Phase 23A-23C are complete and frozen,
-and 23D has not started.
+and frozen. v2.2.0 remains unreleased; Phase 23A-23D are complete and frozen,
+and 23E has not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -888,8 +888,8 @@ complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
 tagging, and GitHub Release publication. Slices 21A through 21F and Phase 21 are
 complete and frozen. The annotated `v2.1.0` tag and GitHub Release are published;
-Phase 23B and 23C are complete and frozen; 23D requires separate implementation
-approval and has not started.
+Phase 23B through 23D are complete and frozen; 23E is the next proposed slice
+and requires separate implementation approval.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -987,14 +987,14 @@ Phase 23 CoreAnalytics direction. See
 
 ## Approved planning direction: Phase 23
 
-Status: Phase 23A, 23B, and 23C complete and frozen; 23D has not started.
+Status: Phase 23A through 23D complete and frozen; 23E has not started.
 
 The user approved the v2.2.0 theme **CoreAnalytics Investigation Depth** and
 the Phase 23 title **Bounded CoreAnalytics Investigation**. The completed 23B
 slice is the narrow CoreAnalytics Investigation Boundary, followed by the
-sanitized investigation model. The next slice is **23D - Investigation
-Presentation and Workflow Integration**, which requires separate user approval
-before implementation.
+sanitized investigation model and report-only investigation presentation. The
+next slice is **23E - Corpus and Regression Hardening**, which requires
+separate user approval before implementation.
 
 Phase 22 remains closed and frozen as research-only Charging Evidence and
 Power Context work. No charging field was retained, no charging functionality
@@ -1005,8 +1005,8 @@ was delivered, and Approach C remains final for that phase.
 | 23A | Complete and frozen | Evidence, architecture, UX-contract, privacy, cap, and fictional-corpus audit |
 | 23B | Complete and frozen | Approved scalar allowlist and ephemeral investigation state over existing sanitized/capped CoreAnalytics data |
 | 23C | Complete and frozen | Sanitized ephemeral investigation model over filtered visible rows |
-| 23D | Next; separate approval required | Investigation context and workflow presentation within the Inspector Workspace |
-| 23E | Proposed; not started | Fictional corpus and regression hardening |
+| 23D | Complete and frozen | Report-only investigation context/status and reset within the Inspector Workspace; existing global search reused |
+| 23E | Next; separate approval required | Fictional corpus and regression hardening |
 | 23F | Proposed; not started | Final QA and release readiness |
 
 The conservative boundary permits only investigation of existing sanitized,
@@ -1015,10 +1015,12 @@ not authorize raw or arbitrary exploration, hidden-row retrieval, new parser
 families, undocumented semantics, diagnosis, comparison expansion, export
 changes, Raw Local View changes, persistence, uploads, or telemetry.
 
-23B and 23C preserve the parser and `SectionModel[]` contracts and keep global
-search authoritative. They add no visible context/status UI; 23D is the next
-slice and requires separate approval. Phase 23 implementation remains
-incomplete, and no v2.2.0 feature is described as released.
+23B through 23D preserve the parser and `SectionModel[]` contracts and keep
+global search authoritative. The 23D context is limited to sanitized
+single-report presentation; comparison, Raw Local View, and serialization
+remain unchanged. Phase 23 implementation remains incomplete, and no v2.2.0
+feature is described as released. 23E is next, unstarted, and gated on separate
+approval.
 
 The planning record is [PHASE_23_PLAN.md](PHASE_23_PLAN.md), with the design
 contract in

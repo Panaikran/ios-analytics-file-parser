@@ -384,6 +384,40 @@
   gap: var(--space-md);
 }
 
+.report-document .coreanalytics-overview__investigation {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-sm);
+  border-inline-start: var(--border-thin) solid var(--color-border-strong);
+  padding-inline-start: var(--space-md);
+}
+
+.report-document .coreanalytics-overview__investigation-values {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2xs);
+  margin: 0;
+}
+
+.report-document .coreanalytics-overview__investigation-values dt {
+  color: var(--color-text-secondary);
+  font-size: var(--type-label);
+  font-weight: var(--weight-medium);
+}
+
+.report-document .coreanalytics-overview__investigation-values dd {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-technical);
+  font-size: var(--type-technical);
+  overflow-wrap: anywhere;
+}
+
+.report-document .coreanalytics-overview__investigation .clear-search {
+  justify-self: start;
+  border-color: var(--color-border-strong);
+}
+
 .report-document .coreanalytics-overview__metrics,
 .report-document .coreanalytics-overview__table-counts {
   display: grid;
@@ -493,6 +527,8 @@
   .report-document .table-scroll,
   .report-document .raw-note,
   .report-document .chart-data,
+  .report-document .coreanalytics-overview__investigation,
+  .report-document .coreanalytics-overview__investigation .clear-search,
   .comparison-identities,
   .comparison-identity,
   .report-document__mode-action {
