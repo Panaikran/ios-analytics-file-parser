@@ -17,6 +17,19 @@ const FACET_LABELS = Object.freeze({
   sampling: 'Sampling Values',
 });
 const FACET_SOURCE = 'rendered/capped rows only';
+const INVESTIGATION_RENDERED_SCOPE = 'Search covers rendered capped CoreAnalytics rows only.';
+const CORE_ANALYTICS_ROW_LIMIT = 100;
+// The optional sanitized Battery section shares the existing global search result.
+const CORE_ANALYTICS_SEARCH_SECTION_LIMIT = Object.keys(CORE_ANALYTICS_SECTION_IDS).length + 1;
+const CORE_ANALYTICS_FACET_VALUE_LIMIT = CORE_ANALYTICS_ROW_LIMIT * 2;
+const EMPTY_INVESTIGATION_MODEL = Object.freeze({
+  mode: 'idle',
+  selectedFacet: null,
+  renderedScope: '',
+  matchingTableCounts: Object.freeze([]),
+  statusText: '',
+  resetLabel: '',
+});
 
 export function getCoreAnalyticsView(sections, options = {}) {
   const safeSections = Array.isArray(sections) ? sections : [];
@@ -54,25 +67,28 @@ export function getCoreAnalyticsView(sections, options = {}) {
 }
 
 export function getCoreAnalyticsFacetOptions(view) {
-  if (!isRecord(view) || view.isCoreAnalytics !== true || !isRecord(view.facets) || !isRecord(view.facets.values)) {
+  const facets = readOwnDataProperty(view, 'facets');
+  const values = readOwnDataProperty(facets, 'values');
+  if (readOwnDataProperty(view, 'isCoreAnalytics') !== true || !isPlainRecord(values)) {
     return [];
   }
 
   return FACET_KEYS.map((key) => {
-    const values = hasOwn(view.facets.values, key) && Array.isArray(view.facets.values[key])
-      ? view.facets.values[key]
-      : [];
+    const facetValues = readOwnDataProperty(values, key);
+    const valueCount = getSafeArrayLength(facetValues, CORE_ANALYTICS_FACET_VALUE_LIMIT) ?? 0;
     const seen = new Set();
     const options = [];
 
-    for (const item of values) {
-      if (!isRecord(item) || !hasOwn(item, 'value') || !hasOwn(item, 'count')) continue;
+    for (let index = 0; index < valueCount; index += 1) {
+      const item = getSafeArrayItem(facetValues, index);
+      const value = readOwnDataProperty(item, 'value');
+      const count = readOwnDataProperty(item, 'count');
 
-      const value = normalizeFacetValue(item.value);
-      if (!value || seen.has(value) || !Number.isFinite(item.count) || item.count < 1) continue;
+      const normalizedValue = normalizeFacetValue(value);
+      if (!normalizedValue || seen.has(normalizedValue) || !Number.isFinite(count) || count < 1) continue;
 
-      seen.add(value);
-      options.push({ value, query: value, count: item.count });
+      seen.add(normalizedValue);
+      options.push({ value: normalizedValue, query: normalizedValue, count });
     }
 
     return {
@@ -81,6 +97,54 @@ export function getCoreAnalyticsFacetOptions(view) {
       options,
     };
   });
+}
+
+export function getCoreAnalyticsInvestigation(view, searchResult, state) {
+  try {
+    const safeState = readInvestigationState(state);
+    if (!safeState || safeState.mode === 'idle' || readOwnDataProperty(view, 'isCoreAnalytics') !== true) {
+      return EMPTY_INVESTIGATION_MODEL;
+    }
+
+    const selectedFacet = getCoreAnalyticsFacetOptions(view)
+      .find(({ key }) => key === safeState.selectedFacetKey)?.options
+      .find(({ query }) => query === safeState.selectedFacetQuery);
+    if (!selectedFacet) return EMPTY_INVESTIGATION_MODEL;
+
+    const searchSnapshot = readInvestigationSearch(searchResult, safeState.selectedFacetQuery);
+    const tableSnapshot = readInvestigationTables(view);
+    if (!searchSnapshot || !tableSnapshot) return EMPTY_INVESTIGATION_MODEL;
+
+    const mode = searchSnapshot.totalMatches === 0 ? 'empty' : 'active';
+    const selectedFacetModel = Object.freeze({
+      key: safeState.selectedFacetKey,
+      label: FACET_LABELS[safeState.selectedFacetKey],
+      query: safeState.selectedFacetQuery,
+    });
+    const tableCounts = tableSnapshot.map(({ tableId, total, capped }) => ({
+      tableId,
+      shown: searchSnapshot.shownByTable.get(tableId) ?? 0,
+      total,
+      capped,
+    }));
+    if (tableCounts.some(({ shown, total }) => shown > total)) return EMPTY_INVESTIGATION_MODEL;
+
+    const matchingTableCounts = Object.freeze(tableCounts.map((tableCount) => Object.freeze(tableCount)));
+    const label = selectedFacetModel.label.toLowerCase();
+
+    return Object.freeze({
+      mode,
+      selectedFacet: selectedFacetModel,
+      renderedScope: INVESTIGATION_RENDERED_SCOPE,
+      matchingTableCounts,
+      statusText: mode === 'empty'
+        ? `No visible matches for ${label}: ${selectedFacetModel.query}.`
+        : `Showing visible matches for ${label}: ${selectedFacetModel.query}.`,
+      resetLabel: 'Clear Search',
+    });
+  } catch {
+    return EMPTY_INVESTIGATION_MODEL;
+  }
 }
 
 export function createCoreAnalyticsInvestigationState() {
@@ -194,6 +258,101 @@ function readSafeDataProperties(value, expectedKeys) {
   } catch {
     return null;
   }
+}
+
+function readOwnDataProperty(value, key) {
+  try {
+    if (!isPlainRecord(value)) return undefined;
+
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && hasOwn(descriptor, 'value') ? descriptor.value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isPlainRecord(value) {
+  try {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  } catch {
+    return false;
+  }
+}
+
+function getSafeArrayLength(value, maxLength) {
+  try {
+    if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) return null;
+
+    const descriptor = Object.getOwnPropertyDescriptor(value, 'length');
+    const length = descriptor?.value;
+    return Number.isSafeInteger(length) && length >= 0 && length <= maxLength ? length : null;
+  } catch {
+    return null;
+  }
+}
+
+function getSafeArrayItem(value, index) {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    return descriptor && hasOwn(descriptor, 'value') ? descriptor.value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readInvestigationSearch(searchResult, selectedFacetQuery) {
+  if (
+    readOwnDataProperty(searchResult, 'active') !== true ||
+    readOwnDataProperty(searchResult, 'query') !== selectedFacetQuery.toLowerCase()
+  ) {
+    return null;
+  }
+
+  const totalMatches = readOwnDataProperty(searchResult, 'totalMatches');
+  const sections = readOwnDataProperty(searchResult, 'sections');
+  const sectionCount = getSafeArrayLength(sections, CORE_ANALYTICS_SEARCH_SECTION_LIMIT);
+  if (!Number.isSafeInteger(totalMatches) || totalMatches < 0 || sectionCount === null) return null;
+  if ((totalMatches === 0) !== (sectionCount === 0)) return null;
+
+  const shownByTable = new Map();
+  for (let index = 0; index < sectionCount; index += 1) {
+    const section = getSafeArrayItem(sections, index);
+    const sectionId = readOwnDataProperty(section, 'id');
+    if (typeof sectionId !== 'string') return null;
+
+    if (sectionId !== CORE_ANALYTICS_SECTION_IDS.eventTypes && sectionId !== CORE_ANALYTICS_SECTION_IDS.sampleRecords) {
+      continue;
+    }
+    if (shownByTable.has(sectionId)) return null;
+
+    const rowCount = getSafeArrayLength(readOwnDataProperty(section, 'table'), CORE_ANALYTICS_ROW_LIMIT);
+    if (rowCount === null) return null;
+    shownByTable.set(sectionId, rowCount);
+  }
+
+  return { totalMatches, shownByTable };
+}
+
+function readInvestigationTables(view) {
+  const tables = readOwnDataProperty(view, 'tables');
+  const tableModels = [
+    [CORE_ANALYTICS_SECTION_IDS.eventTypes, 'eventTypes'],
+    [CORE_ANALYTICS_SECTION_IDS.sampleRecords, 'sampleRecords'],
+  ];
+  const snapshot = [];
+
+  for (const [tableId, key] of tableModels) {
+    const table = readOwnDataProperty(tables, key);
+    const total = getSafeArrayLength(readOwnDataProperty(table, 'rows'), CORE_ANALYTICS_ROW_LIMIT);
+    const capped = readOwnDataProperty(table, 'capped');
+    if (total === null || typeof capped !== 'boolean') return null;
+    snapshot.push({ tableId, total, capped });
+  }
+
+  return snapshot;
 }
 
 function createEmptyView(sections, resolvedSections, options) {

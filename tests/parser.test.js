@@ -65,6 +65,7 @@ import {
   activateCoreAnalyticsFacet,
   createCoreAnalyticsInvestigationState,
   getCoreAnalyticsFacetOptions,
+  getCoreAnalyticsInvestigation,
   getCoreAnalyticsView,
   parseTableSummary,
   reconcileCoreAnalyticsInvestigationState,
@@ -280,7 +281,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-21d/, 'service worker cache version reflects the Slice 21D production shell without creating a release version');
+assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-23c/, 'service worker cache version invalidates the shell for the Slice 23C model update without creating a release version');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
@@ -4336,6 +4337,11 @@ assert.doesNotMatch(
   /document|window|navigator|filterSectionsByQuery|serializeSection|parseInput|sourceText/,
   'CoreAnalytics facet view model stays pure without DOM, search, serialization, parser, or source-text access'
 );
+assert.doesNotMatch(
+  `${mainScriptText}\n${comparisonModelSource}\n${serializeSectionSource}`,
+  /getCoreAnalyticsInvestigation/,
+  '23C investigation projection is not integrated into app state, comparison, or serialization'
+);
 assert.doesNotMatch(searchSource, /renderCoreAnalyticsOverview|coreAnalyticsView/, 'search module does not import or count the CoreAnalytics overview UI');
 assert.match(styleText, /\.coreanalytics-overview__chip\s*\{[^}]*min-height:\s*44px;/s, 'CoreAnalytics facet controls keep practical touch targets');
 assert.match(styleText, /\.coreanalytics-overview__chip:focus-visible/, 'CoreAnalytics facet controls expose visible focus styling');
@@ -5072,6 +5078,340 @@ assert.deepEqual(
   largeCoreAnalyticsView.tables.eventTypes.counts,
   { known: true, shown: 100, total: 200 },
   'CoreAnalytics view parses capped grouped event counts'
+);
+
+const idleCoreAnalyticsInvestigation = getCoreAnalyticsInvestigation(
+  coreAnalyticsView,
+  facetDrivenSearch,
+  initialCoreAnalyticsInvestigationState
+);
+assert.deepEqual(
+  idleCoreAnalyticsInvestigation,
+  {
+    mode: 'idle',
+    selectedFacet: null,
+    renderedScope: '',
+    matchingTableCounts: [],
+    statusText: '',
+    resetLabel: '',
+  },
+  'CoreAnalytics investigation model omits context while idle'
+);
+
+const projectedCoreAnalyticsCases = coreAnalyticsFacetOptions.map((group) => ({
+  group,
+  option: group.options[0],
+}));
+const activeCoreAnalyticsModels = [];
+for (const { group, option } of projectedCoreAnalyticsCases) {
+  const state = activateCoreAnalyticsFacet(group.key, option);
+  const searchResult = filterSectionsByQuery(coreAnalyticsSections, option.query);
+  const model = getCoreAnalyticsInvestigation(coreAnalyticsView, searchResult, state);
+  const visibleRowCount = (id) => searchResult.sections.find((section) => section.id === id)?.table.length ?? 0;
+  const viewRowCount = (table) => table.rows.length;
+
+  assert.equal(model.mode, 'active', `${group.key} produces an active sanitized investigation model`);
+  assert.deepEqual(
+    model.selectedFacet,
+    { key: group.key, label: group.label, query: option.query },
+    `${group.key} model copies only its approved key, fixed label, and visible query`
+  );
+  assert.deepEqual(
+    model.matchingTableCounts,
+    [
+      {
+        tableId: 'coreanalytics-event-types',
+        shown: visibleRowCount('coreanalytics-event-types'),
+        total: viewRowCount(coreAnalyticsView.tables.eventTypes),
+        capped: coreAnalyticsView.tables.eventTypes.capped,
+      },
+      {
+        tableId: 'coreanalytics-sample-records',
+        shown: visibleRowCount('coreanalytics-sample-records'),
+        total: viewRowCount(coreAnalyticsView.tables.sampleRecords),
+        capped: coreAnalyticsView.tables.sampleRecords.capped,
+      },
+    ],
+    `${group.key} counts only the existing filtered rows against the capped rendered rows`
+  );
+  assert.equal(model.renderedScope, 'Search covers rendered capped CoreAnalytics rows only.');
+  assert.equal(model.statusText, `Showing visible matches for ${group.label.toLowerCase()}: ${option.query}.`);
+  assert.equal(model.resetLabel, 'Clear Search');
+  assert.equal(Object.isFrozen(model), true, 'investigation model is immutable');
+  assert.equal(Object.isFrozen(model.selectedFacet), true, 'selected facet is an immutable scalar copy');
+  assert.equal(Object.isFrozen(model.matchingTableCounts), true, 'matching table counts are immutable');
+  assert.equal(model.selectedFacet === option, false, 'model does not retain the facet option object');
+  assert.equal(
+    model.matchingTableCounts.some((count) => count === coreAnalyticsView.tables.eventTypes),
+    false,
+    'model does not retain a table-model reference'
+  );
+  activeCoreAnalyticsModels.push({ state, searchResult, model });
+}
+
+const activeCoreAnalyticsModel = activeCoreAnalyticsModels[0];
+const visibleCoreAnalyticsSectionById = new Map(
+  activeCoreAnalyticsModel.searchResult.sections.map((section) => [section.id, section])
+);
+const searchWithBatteryPresentation = {
+  ...activeCoreAnalyticsModel.searchResult,
+  sections: [
+    { id: 'coreanalytics-summary' },
+    { id: 'coreanalytics-configuration' },
+    { id: 'coreanalytics-record-overview' },
+    visibleCoreAnalyticsSectionById.get('coreanalytics-event-types') ?? { id: 'coreanalytics-event-types', table: [] },
+    visibleCoreAnalyticsSectionById.get('coreanalytics-sample-records') ?? { id: 'coreanalytics-sample-records', table: [] },
+    { id: 'coreanalytics-parser-notes' },
+    { id: 'battery-and-charging' },
+  ],
+};
+assert.equal(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    searchWithBatteryPresentation,
+    activeCoreAnalyticsModel.state
+  ).mode,
+  'active',
+  'model accepts the six CoreAnalytics sections and existing optional Battery section in global search'
+);
+const emptyCoreAnalyticsSearch = {
+  ...activeCoreAnalyticsModel.searchResult,
+  totalMatches: 0,
+  sections: [],
+  navigationTargets: [],
+  matchRegions: [],
+};
+const emptyCoreAnalyticsModel = getCoreAnalyticsInvestigation(
+  coreAnalyticsView,
+  emptyCoreAnalyticsSearch,
+  activeCoreAnalyticsModel.state
+);
+assert.equal(emptyCoreAnalyticsModel.mode, 'empty', 'zero matches in the existing visible result produce the empty model');
+assert.equal(
+  emptyCoreAnalyticsModel.statusText,
+  `No visible matches for ${activeCoreAnalyticsModel.model.selectedFacet.label.toLowerCase()}: ${activeCoreAnalyticsModel.model.selectedFacet.query}.`,
+  'empty status is derived from the selected visible facet without adding UI'
+);
+assert.deepEqual(
+  emptyCoreAnalyticsModel.matchingTableCounts.map(({ shown }) => shown),
+  [0, 0],
+  'empty model reports no visible table rows without consulting capped-out data'
+);
+assert.equal(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    activeCoreAnalyticsModel.searchResult,
+    { ...activeCoreAnalyticsModel.state, mode: 'empty' }
+  ).mode,
+  'active',
+  'model mode is derived from the current visible search result, not stale empty state'
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    { ...activeCoreAnalyticsModel.searchResult, query: 'ordinary search' },
+    activeCoreAnalyticsModel.state
+  ),
+  idleCoreAnalyticsInvestigation,
+  'a query that differs from the selected facet omits investigation context'
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(coreAnalyticsView, activeCoreAnalyticsModel.searchResult, initialCoreAnalyticsInvestigationState),
+  idleCoreAnalyticsInvestigation,
+  'an idle state cannot acquire context from an existing search result'
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    { ...emptyCoreAnalyticsSearch, sections: coreAnalyticsSections },
+    activeCoreAnalyticsModel.state
+  ),
+  idleCoreAnalyticsInvestigation,
+  'inconsistent zero-match results fail closed'
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    {
+      ...activeCoreAnalyticsModel.searchResult,
+      totalMatches: 1,
+      sections: [{ id: 'coreanalytics-event-types', table: new Array(coreAnalyticsView.tables.eventTypes.rows.length + 1) }],
+    },
+    activeCoreAnalyticsModel.state
+  ),
+  idleCoreAnalyticsInvestigation,
+  'filtered row counts cannot exceed the current capped table rows'
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    activeCoreAnalyticsModel.searchResult,
+    { ...activeCoreAnalyticsModel.state, selectedFacetKey: 'incident_id' }
+  ),
+  idleCoreAnalyticsInvestigation,
+  'forged states with unapproved keys are omitted'
+);
+
+const cappedOutCoreAnalyticsState = activateCoreAnalyticsFacet(
+  'message',
+  { value: cappedCoreAnalyticsSentinel, query: cappedCoreAnalyticsSentinel, count: 1 }
+);
+assert.deepEqual(
+  getCoreAnalyticsInvestigation(
+    largeCoreAnalyticsView,
+    cappedCoreAnalyticsSearch,
+    cappedOutCoreAnalyticsState
+  ),
+  idleCoreAnalyticsInvestigation,
+  'a capped-out value that is absent from current facets cannot create model context'
+);
+
+const visibleLargeFacet = largeCoreAnalyticsFacetOptions.find(({ key }) => key === 'message').options[0];
+const largeFacetState = activateCoreAnalyticsFacet('message', visibleLargeFacet);
+const largeFacetSearch = filterSectionsByQuery(largeCoreAnalyticsSections, visibleLargeFacet.query);
+const largeInvestigationModel = getCoreAnalyticsInvestigation(largeCoreAnalyticsView, largeFacetSearch, largeFacetState);
+assert.equal(largeInvestigationModel.mode, 'active', 'large capped CoreAnalytics results remain investigable');
+assert.deepEqual(
+  largeInvestigationModel.matchingTableCounts.map(({ total, capped }) => ({ total, capped })),
+  [{ total: 100, capped: true }, { total: 100, capped: true }],
+  'model denominators stay within the 100-row rendered caps and expose cap status separately'
+);
+assert.ok(
+  largeInvestigationModel.matchingTableCounts.every(({ shown, total }) => shown >= 0 && shown <= total && total <= 100),
+  'model never reports more matches than the rendered row cap'
+);
+assert.doesNotMatch(
+  JSON.stringify(largeInvestigationModel),
+  /"total":200/,
+  'model does not present uncapped source totals as searchable rows'
+);
+
+let investigationGetterCalls = 0;
+const accessorView = {};
+Object.defineProperty(accessorView, 'isCoreAnalytics', {
+  get() {
+    investigationGetterCalls += 1;
+    throw new Error('view getter must not execute');
+  },
+});
+const accessorSearchResult = { ...activeCoreAnalyticsModel.searchResult };
+Object.defineProperty(accessorSearchResult, 'query', {
+  get() {
+    investigationGetterCalls += 1;
+    throw new Error('search result getter must not execute');
+  },
+});
+const accessorState = {};
+Object.defineProperty(accessorState, 'mode', {
+  get() {
+    investigationGetterCalls += 1;
+    throw new Error('state getter must not execute');
+  },
+});
+assert.doesNotThrow(() => getCoreAnalyticsInvestigation(
+  accessorView,
+  activeCoreAnalyticsModel.searchResult,
+  activeCoreAnalyticsModel.state
+));
+assert.equal(investigationGetterCalls, 0, 'view accessors are rejected without execution');
+assert.doesNotThrow(() => getCoreAnalyticsInvestigation(
+  coreAnalyticsView,
+  accessorSearchResult,
+  activeCoreAnalyticsModel.state
+));
+assert.equal(investigationGetterCalls, 0, 'search-result accessors are rejected without execution');
+assert.doesNotThrow(() => getCoreAnalyticsInvestigation(
+  coreAnalyticsView,
+  activeCoreAnalyticsModel.searchResult,
+  accessorState
+));
+assert.equal(investigationGetterCalls, 0, 'state accessors are rejected without execution');
+
+const accessorFacetOption = { count: 1 };
+Object.defineProperty(accessorFacetOption, 'value', {
+  get() {
+    investigationGetterCalls += 1;
+    throw new Error('facet value getter must not execute');
+  },
+});
+const accessorFacetView = {
+  isCoreAnalytics: true,
+  facets: { values: { message: [accessorFacetOption] } },
+};
+assert.deepEqual(
+  getCoreAnalyticsFacetOptions(accessorFacetView).find(({ key }) => key === 'message').options,
+  [],
+  'accessor-backed facet values are omitted from the sanitized facet boundary'
+);
+assert.equal(investigationGetterCalls, 0, 'facet option extraction does not execute accessor-backed values');
+
+let investigationRowGetterCalls = 0;
+const guardedRows = [];
+Object.defineProperty(guardedRows, '0', {
+  configurable: true,
+  get() {
+    investigationRowGetterCalls += 1;
+    throw new Error('visible row content must not be inspected');
+  },
+});
+const guardedRowView = {
+  ...coreAnalyticsView,
+  tables: {
+    ...coreAnalyticsView.tables,
+    eventTypes: { ...coreAnalyticsView.tables.eventTypes, rows: guardedRows },
+  },
+};
+const guardedRowSearch = {
+  ...activeCoreAnalyticsModel.searchResult,
+  sections: activeCoreAnalyticsModel.searchResult.sections.map((section) => section.id === 'coreanalytics-event-types'
+    ? { ...section, table: guardedRows }
+    : section),
+};
+assert.doesNotThrow(() => getCoreAnalyticsInvestigation(guardedRowView, guardedRowSearch, activeCoreAnalyticsModel.state));
+assert.equal(investigationRowGetterCalls, 0, 'model derivation reads row-array lengths but never traverses row objects');
+
+const investigationSnapshot = JSON.stringify({
+  sections: coreAnalyticsSections,
+  view: coreAnalyticsView,
+  search: activeCoreAnalyticsModel.searchResult,
+  state: activeCoreAnalyticsModel.state,
+});
+const copyBeforeInvestigation = serializeSectionForCopy(sectionById(coreAnalyticsSections, 'coreanalytics-event-types'));
+const textExportBeforeInvestigation = serializeSectionsForExport(coreAnalyticsSections);
+const jsonExportBeforeInvestigation = serializeSectionsForJsonExport(coreAnalyticsSections);
+for (let cycle = 0; cycle < 20; cycle += 1) {
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    activeCoreAnalyticsModel.searchResult,
+    activeCoreAnalyticsModel.state
+  );
+  getCoreAnalyticsInvestigation(
+    coreAnalyticsView,
+    { ...activeCoreAnalyticsModel.searchResult, query: 'ordinary search' },
+    activeCoreAnalyticsModel.state
+  );
+}
+assert.equal(
+  JSON.stringify({
+    sections: coreAnalyticsSections,
+    view: coreAnalyticsView,
+    search: activeCoreAnalyticsModel.searchResult,
+    state: activeCoreAnalyticsModel.state,
+  }),
+  investigationSnapshot,
+  'repeated model derivation does not mutate sections, view, search result, or state'
+);
+assert.equal(
+  serializeSectionForCopy(sectionById(coreAnalyticsSections, 'coreanalytics-event-types')),
+  copyBeforeInvestigation,
+  'investigation context is not attached to section copy data'
+);
+assert.equal(serializeSectionsForExport(coreAnalyticsSections), textExportBeforeInvestigation, 'text export remains unchanged');
+assert.equal(serializeSectionsForJsonExport(coreAnalyticsSections), jsonExportBeforeInvestigation, 'JSON export remains unchanged');
+assert.doesNotMatch(
+  JSON.stringify(activeCoreAnalyticsModel.model),
+  /22222222-3333-4444-5555-666666666666|DEVICE-COREANALYTICS-0002|BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFFFFFFF|SESSION-COREANALYTICS-0002/,
+  'investigation model output excludes identifier sentinels from unrelated report sections'
 );
 
 assert.equal(nonCoreAnalyticsView.isCoreAnalytics, false, 'CoreAnalytics view returns false for non-CoreAnalytics reports');

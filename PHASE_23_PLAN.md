@@ -5,15 +5,18 @@
 - Version: `v2.2.0`
 - Theme: **CoreAnalytics Investigation Depth**
 - Phase: **Phase 23 — Bounded CoreAnalytics Investigation**
-- Status: 23B complete and frozen; 23C not started
-- Implementation status: 23B boundary implemented; no 23C implementation
-- Current slice: **23C - Sanitized Investigation Model**
+- Status: 23B and 23C complete and frozen; 23D not started
+- Implementation status: investigation boundary and sanitized model implemented;
+  no 23D presentation
+- Current slice: **23D - Investigation Presentation and Workflow Integration**
 - 23B status: Complete and frozen under separate implementation approval
-- 23C status: Ready for separate implementation approval; not started
+- 23C status: Complete and frozen under separate implementation approval
+- 23D status: Not started; separate implementation approval required
 
-The user approved the CoreAnalytics direction for planning. The previously
-audited Evidence-Bounded Panic Guidance direction is the fallback only and was
-not selected. Approval of this plan does not authorize production code, new
+The user approved the CoreAnalytics direction; 23B and 23C received separate
+implementation approvals and are complete. The previously audited
+Evidence-Bounded Panic Guidance direction is the fallback only and was not
+selected. This plan alone does not authorize additional production code, new
 fixtures, new UI behavior, package changes, tags, or releases.
 
 ## 2. User approval record
@@ -30,7 +33,9 @@ The implementation gate is explicit:
   only.
 - Slice 23B received separate implementation approval and is complete and
   frozen at the narrow investigation boundary recorded below.
-- Slice 23C requires separate implementation approval; no 23C production
+- Slice 23C received separate implementation approval and is complete and
+  frozen at the sanitized model boundary recorded below.
+- Slice 23D requires separate implementation approval; no 23D presentation
   implementation has started.
 - No Phase 23 release, tag, package change, or GitHub Release is authorized.
 
@@ -497,15 +502,21 @@ The conservative six-slice structure is:
 
 ### 23C - Sanitized Investigation Model
 
+- Status: Complete and frozen.
 - Objective: make the approved bounded context model explicit and sanitized
   without changing `SectionModel[]` or report export schemas.
-- Likely files: existing CoreAnalytics view-model path and focused tests; a new
-  pure browser-native helper only if necessary and separately precached.
-- Tests: scalar-only output, reference isolation, omission, hostile objects,
-  identifier sentinels, and JSON/stringification exclusion of context state.
+- Implemented in: existing `src/ui/coreAnalyticsView.js` and focused tests in
+  `tests/parser.test.js`; no new runtime module or precache-allowlist change.
+  The cache version was bumped for the modified precached module; strategy is
+  unchanged.
+- Tests: scalar-only output, reference isolation, omission, hostile accessors,
+  identifier sentinels, cap preservation, copy/export isolation, and the PWA
+  cache-version contract pass.
 - Dependencies: 23B boundary and approved state transitions.
-- Exit criteria: model contains only ephemeral selected facet and derived visible
-  scope; no source objects, raw fields, IDs, persistence, or mode leakage.
+- Exit criteria: met. The model contains only an approved selected facet,
+  rendered scope, and counts from filtered visible rows against the current
+  capped-row denominator, never uncapped source totals; it retains no source
+  objects and changes no parser, `SectionModel[]`, or export contract.
 - Stop conditions: attachment of raw data, new parser metadata, `SectionModel`
   redesign, schema change, or comparison bridge.
 
@@ -518,7 +529,8 @@ The conservative six-slice structure is:
 - Tests: keyboard and focus behavior, `aria-pressed`, live status, no-match,
   clear/reset, exact-match, search navigation, copy/export, responsive widths,
   reduced motion, and Raw/comparison restrictions.
-- Dependencies: 23C sanitized model and existing Inspector Workspace contract.
+- Dependencies: completed 23C sanitized model, separate 23D implementation
+  approval, and existing Inspector Workspace contract.
 - Exit criteria: facet-to-row context is understandable, bounded, responsive,
   searchable through existing semantics, and absent from serialized outputs.
 - Stop conditions: UI redesign, modal/explorer surface, custom grid, hidden
@@ -620,42 +632,42 @@ Phase 23 explicitly does not include:
   families, comparison, export, or diagnosis are milestone blockers, not small
   follow-up enhancements.
 
-## 21. 23C readiness decision
+## 21. 23D readiness decision
 
-**Ready for separate 23C implementation approval**
+**Ready for separate 23D implementation approval**
 
 23A selected Approach B and defined the approved I1-I4 allowlist, existing
 display-only/rejected/insufficient values, state transitions, data flow,
 privacy boundary, caps, search/exact-match behavior, copy/export/comparison/Raw
 restrictions, accessibility, responsive behavior, performance boundary, corpus
 cases, likely files, and stop conditions. 23B implemented and froze the
-approved state/allowlist boundary over those existing visible values. No
-visible context/status UI or final sanitized investigation model was added.
-This readiness statement is not approval to begin 23C. A separate 23C
-implementation approval is still required.
+approved state/allowlist boundary; 23C implemented and froze its scalar-only
+sanitized projection. No visible context/status UI was added. This readiness
+statement is not approval to begin 23D; separate 23D implementation approval
+is still required.
 
 If implementation reveals that the selected workflow needs raw, arbitrary,
 uncapped, undocumented, identifier-bearing, persistent, comparison, export,
-or new-parser data, 23C must stop and return to planning.
+or new-parser data, 23D must stop and return to planning.
 
 ## 22. Release boundary and decision record
 
-- Phase 23A planning is complete and 23B is complete and frozen; 23C has not
-  started.
-- The current next slice is 23C - Sanitized Investigation Model, pending
-  separate implementation approval.
-- v2.2.0 remains unreleased and available for this approved implementation
-  milestone only after later slices pass their gates.
+- Phase 23A planning, 23B boundary implementation, and 23C sanitized model are
+  complete and frozen; 23D has not started.
+- The current next slice is 23D - Investigation Presentation and Workflow
+  Integration, pending separate implementation approval.
+- v2.2.0 remains unreleased; Phase 23 remains incomplete until its later slices
+  pass their gates.
 - No tag, GitHub Release, package metadata change, dependency change, or
   publication is authorized by this plan.
 - Phase 22 remains closed and frozen as charging research with Approach C;
   charging implementation is deferred.
 - The selected Phase 23 architecture is Approach B - facet-to-row
   investigation over existing sanitized and capped CoreAnalytics output.
-- 23B implemented only the approved immutable scalar state/allowlist boundary;
-  global search remains authoritative, and no visible context/status UI exists
-  yet.
-- 23C is the next slice and requires separate approval before implementation.
+- 23B implemented the immutable scalar state/allowlist boundary and 23C added
+  the separate sanitized model; global search remains authoritative, and no
+  visible context/status UI exists yet.
+- 23D is the next slice and requires separate approval before implementation.
 - The fallback Panic Guidance direction is not selected for this milestone.
 - The exact implementation boundary is documented in
   [V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).

@@ -5,9 +5,9 @@
 - Phase: 23A - Evidence, Architecture, and Corpus Audit
 - Theme: CoreAnalytics Investigation Depth
 - Phase title: Bounded CoreAnalytics Investigation
-- Status: Planning approved
-- Implementation status: Not started
-- 23B status: Ready for separate implementation approval
+- Status: Planning approved; 23B and 23C complete and frozen
+- Implementation status: Sanitized investigation model implemented; no visible context/status presentation
+- 23D status: Not started; separate implementation approval required
 
 This document defines a bounded UX and architecture contract for investigating
 already parsed, sanitized, and capped CoreAnalytics content. It is a planning

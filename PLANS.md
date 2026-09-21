@@ -210,20 +210,20 @@ Charging extraction, comparison expansion, and broader diagnostics remain
 future work. Browser automation was unavailable because no browser executable
 or Playwright dependency was installed; the existing synthetic harness passed
 and this environmental limitation is recorded. The annotated v2.1.0 tag was
-created and the GitHub Release was published. The repository is moving toward
-planning v2.2.0; no implementation has started.
+created and the GitHub Release was published. v2.2.0 planning and Phase 23
+implementation are tracked separately; the v2.2.0 release remains unpublished.
 
-## Approved Planning Direction: v2.2.0
+## Closed Research Direction: Phase 22
 
-Phase 22 research is complete and frozen for `v2.2.0 - Charging Evidence and Power
-Context`. Slices 22A and 22A.1 are complete. Slices 22B through 22F did not
+Phase 22 was initially scoped under v2.2.0 as **Charging Evidence and Power
+Context**. Its research is complete and frozen; it produced no software
+release. Slices 22A and 22A.1 are complete. Slices 22B through 22F did not
 start and remain deferred.
 
 The 22A local audit and 22A.1 external evidence review were research and
-documentation only. Production work must not start
-until the evidence matrix, event-family audit, privacy rules, units,
-precedence, duplicate behavior, conflict behavior, and architecture are
-reviewed and approved.
+documentation only. Charging implementation must not start unless a later audit
+establishes and approves the evidence matrix, event-family audit, privacy rules,
+units, precedence, duplicate behavior, conflict behavior, and architecture.
 
 Approach C - research-only deferral - is final for Phase 22.
 No charging field is retained, and Slice 22B is blocked pending stronger,
@@ -233,21 +233,21 @@ changing the frozen v2.1.0 battery, parser, SectionModel, search, copy, export,
 comparison, Raw Local View, accessibility, responsive, or PWA contracts.
 
 The charging theme is closed and frozen, not released or abandoned. The
-v2.2.0 version number remains available for a different Phase 23
-implementation milestone after explicit user approval.
+unreleased v2.2.0 is assigned to the separately approved Phase 23 CoreAnalytics
+implementation milestone; this does not reopen charging work.
 
 Tags, releases, package metadata changes, and publication require separate
-explicit approval. v2.2.0 must not be described as implemented during
-planning.
+explicit approval. v2.2.0 remains unreleased until those gates are completed.
 
 ## Approved Planning Direction: v2.2.0 Phase 23
 
 The user approved **CoreAnalytics Investigation Depth** as the v2.2.0 theme
 and **Bounded CoreAnalytics Investigation** as the Phase 23 direction. Phase
-23A - Evidence, Architecture, and Corpus Audit - is complete, and 23B -
-CoreAnalytics Investigation Boundary - is complete and frozen under separate
-implementation approval. The next slice is 23C - Sanitized Investigation
-Model; its implementation remains unstarted and requires separate approval.
+23A - Evidence, Architecture, and Corpus Audit - is complete; 23B -
+CoreAnalytics Investigation Boundary - and 23C - Sanitized Investigation Model
+- are complete and frozen under separate implementation approval. The next
+slice is 23D - Investigation Presentation and Workflow Integration; it remains
+unstarted and requires separate approval.
 
 Phase 23A is limited to evidence, architecture, privacy, UX-contract, cap,
 state-transition, and fictional-corpus planning. The selected architecture is
@@ -259,12 +259,15 @@ new export/comparison contract, or Raw Local View bridge is approved.
 Slice 23B implemented only the approved scalar allowlist and ephemeral state
 boundary over existing sanitized/capped CoreAnalytics facets. The parser and
 `SectionModel[]` contracts are unchanged, global search remains authoritative,
-and no visible context/status UI exists yet. Later slices remain proposed and
-gated:
+and no visible context/status UI exists. Slice 23C implemented a pure sanitized
+model in the existing CoreAnalytics view module without changing those
+contracts.
+Later slices remain proposed and gated:
 
 - 23B - CoreAnalytics Investigation Boundary (complete and frozen).
-- 23C - Sanitized Investigation Model (next; separate approval required).
-- 23D - Investigation Presentation and Workflow Integration.
+- 23C - Sanitized Investigation Model (complete and frozen).
+- 23D - Investigation Presentation and Workflow Integration (next; separate
+  approval required).
 - 23E - Corpus and Regression Hardening.
 - 23F - Final QA and Release Readiness.
 
@@ -273,7 +276,7 @@ The planning details are in [PHASE_23_PLAN.md](PHASE_23_PLAN.md) and
 The candidate audit remains the supporting evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
 
-Production work for 23C must not begin until separate 23C implementation
+Production work for 23D must not begin until separate 23D implementation
 approval is explicit and the approved allowlist, privacy rules, search behavior,
 copy, export, comparison, Raw Local View, accessibility, responsive,
 performance, and PWA boundaries remain satisfied. Tags, releases, package

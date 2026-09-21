@@ -1,6 +1,8 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v2.1.0 — Battery and Charging Insights` released; Phase 21 is complete and frozen. The repository is moving toward planning v2.2.0; no v2.2.0 implementation has started.
+Status: `v2.1.0 — Battery and Charging Insights` released; Phase 21 is complete
+and frozen. v2.2.0 remains unreleased; Phase 23A-23C are complete and frozen,
+and 23D has not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -886,8 +888,8 @@ complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
 tagging, and GitHub Release publication. Slices 21A through 21F and Phase 21 are
 complete and frozen. The annotated `v2.1.0` tag and GitHub Release are published;
-Phase 23B is complete and frozen; the next action is separate approval for 23C,
-with no later implementation slice started.
+Phase 23B and 23C are complete and frozen; 23D requires separate implementation
+approval and has not started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -902,8 +904,8 @@ with no later implementation slice started.
 ## Completed Roadmap: v2.1.0
 
 Status: Phase 21 complete and frozen. `v2.1.0` is released through the annotated
-tag and published GitHub Release. The repository is moving toward planning v2.2.0;
-no v2.2.0 implementation has started.
+tag and published GitHub Release. The separate v2.2.0 Phase 23 implementation
+milestone is active; the release remains unpublished.
 
 Theme: Battery and Charging Insights.
 
@@ -928,12 +930,15 @@ slices. Thermal interpretation, charging faults, health grades, service
 recommendations, and broader device diagnostics remain deferred to v2.2.0 or
 later. Browser automation was unavailable because no browser executable or
 Playwright dependency was installed; the existing synthetic harness passed and
-the limitation is recorded. Release publication is complete; future v2.2.0 work
-remains planning-only.
+the limitation is recorded. Release publication is complete; later v2.2.0
+planning and implementation are recorded separately, and that release remains
+unpublished.
 
-## Planned Roadmap: v2.2.0
+## Completed Research Phase: Phase 22
 
-Status: Phase 22 research complete and frozen; implementation has not started.
+Status: Phase 22 charging research complete and frozen; no software release
+resulted. Charging implementation remains deferred. Phase 23 is the active
+v2.2.0 implementation milestone, which remains unreleased.
 
 Theme: Charging Evidence and Power Context.
 
@@ -961,9 +966,9 @@ charging field is retained by the current 22A evidence review. The existing
 v2.1.0 battery behavior and all parser, search, copy, export, comparison, Raw
 Local View, accessibility, responsive, and PWA contracts remain frozen.
 
-No release operation is authorized: do not create a tag, publish a release,
-change package metadata, or describe v2.2.0 as implemented until separately
-approved.
+Phase 22 produced no tag or release. The v2.2.0 Phase 23 implementation
+direction is separately approved, but tag creation and release publication
+remain unauthorized without separate approval.
 
 ## Phase 22 closure
 
@@ -975,19 +980,20 @@ functionality was delivered.
 
 The charging theme is frozen until stronger evidence establishes semantics,
 units or a safe unitless boundary, lifecycle, privacy, duplicate handling,
-precedence, and conflict behavior. v2.2.0 remains unreleased and available for
-a different implementation milestone. See
+precedence, and conflict behavior. v2.2.0 remains unreleased under the separate
+Phase 23 CoreAnalytics direction. See
 [PHASE_22_SUMMARY.md](PHASE_22_SUMMARY.md) and
 [docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md](docs/research/V2_2_CHARGING_EXTERNAL_EVIDENCE_REVIEW.md).
 
 ## Approved planning direction: Phase 23
 
-Status: Phase 23A and 23B complete and frozen; 23C has not started.
+Status: Phase 23A, 23B, and 23C complete and frozen; 23D has not started.
 
 The user approved the v2.2.0 theme **CoreAnalytics Investigation Depth** and
 the Phase 23 title **Bounded CoreAnalytics Investigation**. The completed 23B
-slice is the narrow CoreAnalytics Investigation Boundary. The next slice is
-**23C - Sanitized Investigation Model**, which requires separate user approval
+slice is the narrow CoreAnalytics Investigation Boundary, followed by the
+sanitized investigation model. The next slice is **23D - Investigation
+Presentation and Workflow Integration**, which requires separate user approval
 before implementation.
 
 Phase 22 remains closed and frozen as research-only Charging Evidence and
@@ -998,8 +1004,8 @@ was delivered, and Approach C remains final for that phase.
 | --- | --- | --- |
 | 23A | Complete and frozen | Evidence, architecture, UX-contract, privacy, cap, and fictional-corpus audit |
 | 23B | Complete and frozen | Approved scalar allowlist and ephemeral investigation state over existing sanitized/capped CoreAnalytics data |
-| 23C | Next; separate approval required | Sanitized ephemeral investigation model |
-| 23D | Proposed; not started | Investigation context and workflow presentation within the Inspector Workspace |
+| 23C | Complete and frozen | Sanitized ephemeral investigation model over filtered visible rows |
+| 23D | Next; separate approval required | Investigation context and workflow presentation within the Inspector Workspace |
 | 23E | Proposed; not started | Fictional corpus and regression hardening |
 | 23F | Proposed; not started | Final QA and release readiness |
 
@@ -1009,10 +1015,10 @@ not authorize raw or arbitrary exploration, hidden-row retrieval, new parser
 families, undocumented semantics, diagnosis, comparison expansion, export
 changes, Raw Local View changes, persistence, uploads, or telemetry.
 
-23B preserves the parser and `SectionModel[]` contracts and keeps global search
-authoritative. It adds no visible context/status UI; 23C is the next slice and
-requires separate approval. Phase 23 implementation remains incomplete, and
-no v2.2.0 feature is described as released.
+23B and 23C preserve the parser and `SectionModel[]` contracts and keep global
+search authoritative. They add no visible context/status UI; 23D is the next
+slice and requires separate approval. Phase 23 implementation remains
+incomplete, and no v2.2.0 feature is described as released.
 
 The planning record is [PHASE_23_PLAN.md](PHASE_23_PLAN.md), with the design
 contract in
