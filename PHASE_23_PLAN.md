@@ -5,20 +5,23 @@
 - Version: `v2.2.0`
 - Theme: **CoreAnalytics Investigation Depth**
 - Phase: **Phase 23 — Bounded CoreAnalytics Investigation**
-- Status: 23B, 23C, and 23D complete and frozen; 23E not started
-- Implementation status: investigation boundary, sanitized model, and report-only
-  context presentation implemented
-- Current slice: **23E - Corpus and Regression Hardening**
+- Status: 23B through 23E complete and frozen; 23F not started
+- Implementation status: investigation boundary, sanitized model, report-only
+  context presentation, and corpus/regression hardening complete
+- Current slice: **23F - Final QA and Release Readiness** (not started; separate
+  implementation approval required)
 - 23B status: Complete and frozen under separate implementation approval
 - 23C status: Complete and frozen under separate implementation approval
 - 23D status: Complete and frozen under separate implementation approval
-- 23E status: Not started; separate implementation approval required
+- 23E status: Complete and frozen under separate implementation approval
+- 23F status: Not started; separate implementation approval required
 
 The user approved the CoreAnalytics direction; 23B, 23C, and 23D received
-separate implementation approvals and are complete. The previously audited
-Evidence-Bounded Panic Guidance direction is the fallback only and was not
-selected. This plan alone does not authorize 23E production code or fixtures,
-package changes, tags, or releases.
+separate implementation approvals and are complete. Slice 23E also received
+separate implementation approval and is complete and frozen. The previously
+audited Evidence-Bounded Panic Guidance direction is the fallback only and was
+not selected. This plan alone does not authorize 23F work, package changes,
+tags, or releases.
 
 ## 2. User approval record
 
@@ -38,8 +41,10 @@ The implementation gate is explicit:
   frozen at the sanitized model boundary recorded below.
 - Slice 23D received separate implementation approval and is complete and
   frozen at the presentation and workflow boundary recorded below.
-- Slice 23E is the next slice; it has not started and requires separate
-  implementation approval.
+- Slice 23E received separate implementation approval and is complete and
+  frozen under the corpus, privacy, and regression boundaries below.
+- Slice 23F is next; it has not started and requires separate implementation
+  approval.
 - No Phase 23 release, tag, package change, or GitHub Release is authorized.
 
 ## 3. Objective
@@ -547,18 +552,49 @@ The conservative six-slice structure is:
 - Stop conditions: UI redesign, modal/explorer surface, custom grid, hidden
   row rendering, semantic diagnosis, or page-level overflow.
 
-### 23E - Corpus and Regression Hardening
+### 23E - Corpus and Regression Hardening (complete and frozen)
 
-- Objective: add independently fictional cases for all approved positive and
-  negative workflow boundaries.
-- Likely files: focused CoreAnalytics fixture/test files and existing browser
-  harness only where coverage must be extended.
-- Tests: repeated values, caps, malformed/empty input, no matches, search
-  replacement, mode transitions, hostile objects, privacy sentinels, and large
-  workload/repeated-cycle budgets.
+- Objective: add independently fictional cases for approved positive and
+  negative investigation boundaries and harden the existing browser workflow.
+- Files changed: `src/main.js`, `styles/main.css`, `service-worker.js`,
+  `tests/parser.test.js`, and `tests/browserPerformanceHarness.html`. Synthetic
+  cases are hand-authored inline; no standalone fixture file or parser,
+  `SectionModel[]`, package, dependency, export, comparison, or Raw Local View
+  contract changed.
+- Coverage: minimal valid CoreAnalytics input; partial, blank, null, and
+  malformed fields; unsafe scalar variants; malformed-line privacy sentinel;
+  exact 100-row and 101-row cap boundaries; hidden-row exclusion from facets,
+  search, navigation, investigation, copy, and text/JSON export; malformed
+  search-result fail-closed behavior; repeated workflows; Clear Search; privacy
+  transitions; comparison isolation; responsive widths; and 200% text sizing.
+- Reproduced defects fixed: clearing an active facet-derived query on privacy
+  mode transitions so it cannot cross into Raw Local View, and arranging mobile
+  search-navigation controls so large text cannot push controls beyond the
+  viewport. Existing manual search remains intact across privacy transitions.
+- PWA: the existing explicit precache allowlist remains unchanged; the cache
+  version was advanced because precached production assets changed.
+- Empty-state reachability: Defensive empty-state model remains covered by
+  direct model tests, but a valid stable browser workflow cannot naturally
+  enter it because an approved selected facet is itself sourced from at least
+  one searchable rendered row.
+- Validation: focused tests failed before the corresponding fixes and passed
+  afterward; `npm.cmd test`, syntax checks, large-report performance budgets,
+  browser workflow checks, and an offline shell plus bundled-example smoke test
+  passed. Chrome 153 on Windows was tested at 320, 390, 768, and 1280 CSS-pixel
+  iframe widths; 200% root-font-size simulation passed at 320 and 390 pixels.
+- Performance results: browser investigation-render p95 was 10.2 ms and the
+  repeated workflow p95 was 49.3 ms. Node stress p95 for generated 5,000-record
+  CoreAnalytics was 7.73 ms parse / 0.18 ms search; 5,000-process Stackshot was
+  8.35 ms parse / 0.08 ms search. All configured budgets passed; these are
+  environment-specific measurements, not guarantees.
+- Limitations: no physical mobile/Safari or native screen-reader lane was run;
+  forced-colors and reduced-motion were statically covered but not runtime-
+  emulated. The font-size check is a root-font-size simulation, not browser
+  zoom.
 - Dependencies: stable 23B-23D behavior and authored expected outcomes.
-- Exit criteria: corpus proves deterministic bounded behavior without private
-  anchors or line-by-line source derivation.
+- Exit criteria: met. Synthetic cases remain independent of private reports,
+  rendered caps are unchanged, and the existing global search and sanitized
+  output boundaries remain authoritative.
 - Stop conditions: missing negative cases, fixture overfitting, new identifiers,
   uncapped traversal, or a regression in frozen parser-family behavior.
 
@@ -643,7 +679,7 @@ Phase 23 explicitly does not include:
   families, comparison, export, or diagnosis are milestone blockers, not small
   follow-up enhancements.
 
-## 21. 23D completion and 23E gate
+## 21. 23D and 23E completion; 23F gate
 
 **23D complete and frozen.**
 
@@ -660,8 +696,10 @@ search-status and Clear Search paths are reused. No parser, model,
 Focused tests, the full suite, syntax checks, responsive/browser workflow,
 comparison-isolation, performance-harness, and offline-shell checks passed.
 
-23E - Corpus and Regression Hardening - is the next slice. It has not started
-and requires separate implementation approval.
+23E - Corpus and Regression Hardening - is complete and frozen under separate
+implementation approval. Its synthetic boundaries and reproduced fixes are
+recorded in the slice section above. 23F - Final QA and Release Readiness - is
+next, has not started, and requires separate implementation approval.
 
 If implementation reveals that the selected workflow needs raw, arbitrary,
 uncapped, undocumented, identifier-bearing, persistent, comparison, export,
@@ -669,9 +707,9 @@ or new-parser data, the work must stop and return to planning.
 
 ## 22. Release boundary and decision record
 
-- Phase 23A planning and 23B-23D implementation are complete and frozen;
-  23E has not started.
-- The current next slice is 23E - Corpus and Regression Hardening, pending
+- Phase 23A planning and 23B-23E implementation are complete and frozen;
+  23F has not started.
+- The current next slice is 23F - Final QA and Release Readiness, pending
   separate implementation approval.
 - v2.2.0 remains unreleased; Phase 23 remains incomplete until its later slices
   pass their gates.
@@ -685,7 +723,8 @@ or new-parser data, the work must stop and return to planning.
   sanitized model, and 23D added report-only context presentation. Global
   search remains authoritative; comparison, Raw Local View, and serializers
   remain isolated.
-- 23E is the next slice and requires separate approval before implementation.
+- 23E corpus and regression hardening is complete and frozen.
+- 23F is the next slice and requires separate approval before implementation.
 - The fallback Panic Guidance direction is not selected for this milestone.
 - The exact implementation boundary is documented in
   [V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).

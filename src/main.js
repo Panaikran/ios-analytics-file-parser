@@ -597,7 +597,10 @@ function clearReport() {
 }
 
 function reparseCurrentSourceWithPrivacyMode(sanitize) {
+  const hasActiveFacetSearch = coreAnalyticsInvestigationState.mode === 'active'
+    || coreAnalyticsInvestigationState.mode === 'empty';
   coreAnalyticsInvestigationState = createCoreAnalyticsInvestigationState();
+  if (hasActiveFacetSearch) clearSearchState();
   if (!appState.sourceText) return;
 
   try {

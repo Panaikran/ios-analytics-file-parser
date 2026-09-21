@@ -281,7 +281,7 @@ assert.doesNotMatch(serviceWorkerText, /tests\/fixtures/, 'service worker does n
 assert.match(serviceWorkerText, /\.\/src\/fileValidation\.js/, 'service worker precaches the file validation module');
 assert.match(serviceWorkerText, /bump CACHE_VERSION/, 'service worker documents the cache-version reminder for precached asset changes');
 assert.match(serviceWorkerText, /index\.html, styles\/tokens\.css, styles\/main\.css, styles\/report-content\.css, src modules, examples,/, 'service worker cache reminder lists all production stylesheets');
-assert.match(serviceWorkerText, /v2\.0\.0-release-2026-07-16-slice-23d/, 'service worker cache version invalidates the shell for the Slice 23D presentation update without creating a release version');
+assert.match(serviceWorkerText, /v2\.2\.0-dev-phase-23e-2026-09-21/, 'service worker cache version invalidates the shell for 23E hardening without creating a release version');
 assert.ok(precacheUrls.includes('./styles/tokens.css'), 'service worker precaches the production token foundation');
 assert.ok(precacheUrls.includes('./styles/report-content.css'), 'service worker precaches the production report content stylesheet');
 assert.ok(precacheUrls.includes('./src/ui/workspaceNavigation.js'), 'service worker precaches the focused workspace navigation helper');
@@ -414,6 +414,11 @@ assert.match(browserHarnessSource, /matchRegions,\s*activeExactMatchId/, 'browse
 assert.match(browserHarnessSource, /exactMatchRenderingWorkflow/, 'browser harness includes a focused exact-match rendering workflow');
 assert.match(browserHarnessSource, /visibleSearchContractWorkflow/, 'browser harness covers hidden-only and visible-cell rendering transitions');
 assert.match(browserHarnessSource, /applicationWorkflow/, 'browser harness covers live search, report, comparison, Raw Local View, and Clear Report transitions');
+assert.match(browserHarnessSource, /privacyFacetTransition/, 'browser harness checks that sanitized facet search does not cross privacy-mode transitions');
+assert.match(browserHarnessSource, /facetClearSearch/, 'browser harness checks Clear Search while an investigation facet is active');
+assert.match(browserHarnessSource, /comparisonFacetTransition/, 'browser harness checks that comparison entry clears active investigation state');
+assert.match(browserHarnessSource, /function renderCoreAnalyticsInvestigation/, 'browser harness measures the bounded CoreAnalytics investigation render path');
+assert.match(browserHarnessSource, /function responsiveBrowserWorkflow/, 'browser harness exercises responsive CoreAnalytics layouts at bounded viewport widths');
 assert.match(browserHarnessSource, /visibleH1Text:/, 'browser harness records the active mode h1 for heading-hierarchy QA');
 assert.match(browserHarnessSource, /reportHeadingLevel:/, 'browser harness records the report identity heading level for heading-hierarchy QA');
 assert.match(browserHarnessSource, /mobileNavigation\.modal = sectionDialog\.matches\(':modal'\)/, 'browser harness verifies native modal section navigation at sub-desktop widths');
@@ -450,6 +455,11 @@ assert.match(
   'disabled action and navigation labels remain readable on a semantic solid surface'
 );
 assert.match(styleText, /\.search-navigation__controls\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*auto minmax\(4\.5rem, 1fr\) auto;/s, 'search movement keeps its position readable between reachable controls');
+assert.match(styleText, /@media \(max-width:\s*480px\)[\s\S]*?\.search-navigation__controls\s*{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);[^}]*grid-template-areas:\s*"position position"\s*"previous next";/s, 'search movement stacks its status above reachable controls on narrow screens');
+assert.match(styleText, /\.search-navigation__controls\s*>\s*\.search-navigation__position\s*{[^}]*grid-area:\s*position;/s, 'search navigation status is explicitly placed in its responsive grid');
+assert.match(styleText, /\.search-navigation__controls\s*>\s*\.search-navigation__button:first-child\s*{[^}]*grid-area:\s*previous;/s, 'previous navigation control is explicitly placed in its responsive grid');
+assert.match(styleText, /\.search-navigation__controls\s*>\s*\.search-navigation__button:last-child\s*{[^}]*grid-area:\s*next;/s, 'next navigation control is explicitly placed in its responsive grid');
+assert.match(styleText, /@media \(max-width:\s*360px\)[\s\S]*?\.search-navigation__controls\s*{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);[^}]*grid-template-areas:\s*"position"\s*"previous"\s*"next";/s, 'very narrow large-text layouts give both navigation buttons a full row');
 assert.match(styleText, /button\s*{[^}]*touch-action:\s*manipulation;/s, 'buttons opt into touch-friendly manipulation behavior');
 assert.match(styleText, /\.skip-link\s*{[^}]*transform:\s*translateY\(-160%\);/s, 'skip link is visually hidden until focused');
 assert.match(styleText, /\.skip-link\s*{[^}]*min-height:\s*var\(--size-touch-target-min\);/s, 'skip link keeps the shared 44px touch and focus target');
@@ -4705,6 +4715,67 @@ assert.doesNotMatch(sanitizedCoreAnalyticsText, /BBBBBBBB-CCCC-DDDD-EEEE-FFFFFFF
 assert.doesNotMatch(sanitizedCoreAnalyticsText, /SESSION-COREANALYTICS-0002/);
 assert.match(sanitizedCoreAnalyticsText, /\[identifier redacted\]/);
 
+const minimalCoreAnalyticsText = [
+  JSON.stringify({ bug_type: '211' }),
+  JSON.stringify({ message: 'SyntheticMinimalMessage', name: 'SyntheticMinimalEvent', aggregationPeriod: 'daily', numDaysAggregated: 1, sampling: '1' }),
+  JSON.stringify({ message: 'SyntheticMinimalPeer', name: 'SyntheticMinimalPeerEvent', aggregationPeriod: 'weekly', numDaysAggregated: 2, sampling: '2' }),
+].join('\n');
+const minimalCoreAnalyticsSections = parseInput(minimalCoreAnalyticsText);
+const minimalCoreAnalyticsView = getCoreAnalyticsView(minimalCoreAnalyticsSections);
+const minimalCoreAnalyticsOption = getCoreAnalyticsFacetOptions(minimalCoreAnalyticsView)
+  .find(({ key }) => key === 'message').options.find(({ query }) => query === 'SyntheticMinimalMessage');
+const minimalCoreAnalyticsSearch = filterSectionsByQuery(minimalCoreAnalyticsSections, minimalCoreAnalyticsOption.query);
+const minimalCoreAnalyticsModel = getCoreAnalyticsInvestigation(
+  minimalCoreAnalyticsView,
+  minimalCoreAnalyticsSearch,
+  activateCoreAnalyticsFacet('message', minimalCoreAnalyticsOption)
+);
+assert.equal(minimalCoreAnalyticsView.isCoreAnalytics, true, 'the smallest independently fictional supported report routes to CoreAnalytics');
+assert.equal(minimalCoreAnalyticsModel.mode, 'active', 'a facet activates from the minimal supported CoreAnalytics report');
+assert.equal(minimalCoreAnalyticsModel.selectedFacet.query, 'SyntheticMinimalMessage', 'minimal report investigation preserves the selected visible query');
+
+const partialFieldCoreAnalyticsText = [
+  JSON.stringify({ bug_type: '211' }),
+  JSON.stringify({ message: 'SyntheticPresentMessage', name: null, aggregationPeriod: '  ', numDaysAggregated: 1, sampling: null }),
+  JSON.stringify({ message: null, name: 'SyntheticOnlyName', aggregationPeriod: null, numDaysAggregated: 1, sampling: '' }),
+  JSON.stringify({ message: 'SyntheticOtherMessage', aggregationPeriod: 'weekly', numDaysAggregated: 1, sampling: 1 }),
+].join('\n');
+const partialFieldCoreAnalyticsSections = parseInput(partialFieldCoreAnalyticsText);
+const partialFieldFacetOptions = getCoreAnalyticsFacetOptions(getCoreAnalyticsView(partialFieldCoreAnalyticsSections));
+const partialFieldQueries = Object.fromEntries(
+  partialFieldFacetOptions.map(({ key, options }) => [key, options.map(({ query }) => query).sort()])
+);
+assert.deepEqual(partialFieldQueries, {
+  message: ['SyntheticOtherMessage', 'SyntheticPresentMessage'],
+  name: ['SyntheticOnlyName'],
+  aggregationPeriod: ['weekly'],
+  sampling: ['1'],
+}, 'missing, blank, null, and empty CoreAnalytics fields do not become facet options');
+
+const malformedRawSentinel = 'MALFORMED_RAW_SENTINEL';
+const malformedLineCoreAnalyticsText = [
+  JSON.stringify({ bug_type: '211' }),
+  JSON.stringify({ message: 'SyntheticMalformedValidEvent', name: 'SyntheticMalformedValidName', aggregationPeriod: 'daily', numDaysAggregated: 1, sampling: '1' }),
+  `{"message":"${malformedRawSentinel}"`,
+].join('\n');
+const malformedLineCoreAnalyticsSections = parseInput(malformedLineCoreAnalyticsText);
+const malformedLineCoreAnalyticsView = getCoreAnalyticsView(malformedLineCoreAnalyticsSections);
+const malformedLineCoreAnalyticsOption = getCoreAnalyticsFacetOptions(malformedLineCoreAnalyticsView)
+  .find(({ key }) => key === 'message').options[0];
+const malformedLineCoreAnalyticsSearch = filterSectionsByQuery(malformedLineCoreAnalyticsSections, malformedLineCoreAnalyticsOption.query);
+const malformedLineCoreAnalyticsModel = getCoreAnalyticsInvestigation(
+  malformedLineCoreAnalyticsView,
+  malformedLineCoreAnalyticsSearch,
+  activateCoreAnalyticsFacet('message', malformedLineCoreAnalyticsOption)
+);
+assert.equal(fieldValue(sectionById(malformedLineCoreAnalyticsSections, 'coreanalytics-summary'), 'Invalid Records'), '1', 'malformed CoreAnalytics lines remain counted');
+assert.equal(malformedLineCoreAnalyticsModel.mode, 'active', 'a valid record remains investigable beside a malformed line');
+assert.doesNotMatch(
+  JSON.stringify({ malformedLineCoreAnalyticsSections, malformedLineCoreAnalyticsSearch, malformedLineCoreAnalyticsModel }),
+  new RegExp(malformedRawSentinel),
+  'malformed raw line content is absent from rendered search and investigation data'
+);
+
 const rawCoreAnalyticsSections = parseInput(coreAnalyticsMediumText, { sanitize: false });
 const rawSearchWithoutMatchMetadata = filterSectionsByQuery(rawCoreAnalyticsSections, '22222222-3333-4444-5555-666666666666', { includeMatchRegions: false });
 assert.ok(rawSearchWithoutMatchMetadata.totalMatches > 0, 'Raw Local View keeps its existing parsed-value search behavior');
@@ -4878,7 +4949,16 @@ const customFacetView = {
       message: [
         { value: 'Same visible value', count: 2 },
         { value: 'Same visible value', count: 9 },
+        { value: '  Same visible value  ', count: 3 },
+        { value: 'same visible value', count: 4 },
+        { value: 1, count: 5 },
+        { value: '1', count: 7 },
+        { value: true, count: 6 },
         { value: '  ', count: 1 },
+        { value: null, count: 1 },
+        { value: [], count: 1 },
+        { value: () => 'FUNCTION-FACET-SENTINEL', count: 1 },
+        { value: Symbol('SYMBOL-FACET-SENTINEL'), count: 1 },
         { value: { nested: 'NESTED-FACET-SENTINEL' }, count: 1 },
         { value: duplicateFacetValue, count: 1 },
         inheritedFacetOption,
@@ -4896,8 +4976,13 @@ const customFacetRowsBefore = customFacetView.facets.values.message.slice();
 const customFacetOptions = getCoreAnalyticsFacetOptions(customFacetView);
 assert.deepEqual(
   customFacetOptions.find(({ key }) => key === 'message').options,
-  [{ value: 'Same visible value', query: 'Same visible value', count: 2 }],
-  'CoreAnalytics facet options deduplicate visible values and exclude unsafe values'
+  [
+    { value: 'Same visible value', query: 'Same visible value', count: 2 },
+    { value: 'same visible value', query: 'same visible value', count: 4 },
+    { value: '1', query: '1', count: 5 },
+    { value: 'true', query: 'true', count: 6 },
+  ],
+  'CoreAnalytics facet options preserve case and first normalized scalar while excluding unsafe values'
 );
 assert.deepEqual(
   customFacetOptions.find(({ key }) => key === 'name').options,
@@ -5115,6 +5200,77 @@ assert.deepEqual(
   'CoreAnalytics investigation model omits context while idle'
 );
 
+function createCoreAnalyticsCapBoundaryText(eventCount) {
+  const eventRecords = Array.from({ length: eventCount }, (_, index) => ({
+    message: index === 100 ? 'ZZZ_NEVER_VISIBLE_BEYOND_CAP' : `SyntheticBoundaryGroup-${String(index).padStart(3, '0')}`,
+    name: `SyntheticBoundaryEvent-${String(index).padStart(3, '0')}`,
+    aggregationPeriod: 'daily',
+    numDaysAggregated: 1,
+    sampling: '1',
+  }));
+  return [{ bug_type: '211' }, ...eventRecords].map((record) => JSON.stringify(record)).join('\n');
+}
+
+const exactCapSections = parseInput(createCoreAnalyticsCapBoundaryText(100));
+const exactCapView = getCoreAnalyticsView(exactCapSections);
+assert.equal(sectionById(exactCapSections, 'coreanalytics-event-types').table.length, 100, 'exact-cap event groups retain 100 visible rows');
+assert.equal(sectionById(exactCapSections, 'coreanalytics-event-types').tableSummary, '100 of 100 event groups shown', 'exact-cap event-group summary remains uncapped');
+assert.equal(sectionById(exactCapSections, 'coreanalytics-sample-records').table.length, 100, 'exact-cap sample records retain 100 visible rows');
+assert.equal(sectionById(exactCapSections, 'coreanalytics-sample-records').tableSummary, '100 of 100 event records shown', 'exact-cap sample summary remains uncapped');
+assert.equal(exactCapView.tables.eventTypes.capped, false, 'exactly 100 event groups are not marked capped');
+assert.equal(exactCapView.tables.sampleRecords.capped, false, 'exactly 100 sample records are not marked capped');
+const exactCapLastFacet = getCoreAnalyticsFacetOptions(exactCapView)
+  .find(({ key }) => key === 'message').options
+  .find(({ query }) => query === 'SyntheticBoundaryGroup-099');
+assert.ok(exactCapLastFacet, 'the last row at the exact cap remains a valid facet');
+const exactCapSearch = filterSectionsByQuery(exactCapSections, exactCapLastFacet.query);
+const exactCapModel = getCoreAnalyticsInvestigation(
+  exactCapView,
+  exactCapSearch,
+  activateCoreAnalyticsFacet('message', exactCapLastFacet)
+);
+assert.equal(exactCapModel.mode, 'active', 'a facet on the exact cap boundary remains investigable');
+assert.deepEqual(
+  exactCapModel.matchingTableCounts.map(({ shown, total, capped }) => ({ shown, total, capped })),
+  [{ shown: 1, total: 100, capped: false }, { shown: 1, total: 100, capped: false }],
+  'exact-cap investigation reports only the 100 rendered rows'
+);
+
+const overCapSections = parseInput(createCoreAnalyticsCapBoundaryText(101));
+const overCapView = getCoreAnalyticsView(overCapSections);
+const overCapFacetOptions = getCoreAnalyticsFacetOptions(overCapView);
+const overCapEventGroups = sectionById(overCapSections, 'coreanalytics-event-types');
+const overCapSampleRecords = sectionById(overCapSections, 'coreanalytics-sample-records');
+const overCapSentinel = 'ZZZ_NEVER_VISIBLE_BEYOND_CAP';
+assert.equal(overCapEventGroups.table.length, 100, 'over-cap event groups remain limited to 100 rows');
+assert.equal(overCapEventGroups.tableSummary, '100 of 101 event groups shown', 'over-cap event-group summary preserves source count');
+assert.equal(overCapSampleRecords.table.length, 100, 'over-cap sample records remain limited to 100 rows');
+assert.equal(overCapSampleRecords.tableSummary, '100 of 101 event records shown', 'over-cap sample summary preserves source count');
+assert.equal(overCapView.tables.eventTypes.capped, true, '101 event groups are marked capped');
+assert.equal(overCapView.tables.sampleRecords.capped, true, '101 sample records are marked capped');
+assert.doesNotMatch(JSON.stringify(overCapSections), new RegExp(overCapSentinel), 'the beyond-cap sentinel is absent from parsed visible sections');
+assert.equal(
+  overCapFacetOptions.some((group) => group.options.some(({ query }) => query === overCapSentinel)),
+  false,
+  'the beyond-cap sentinel cannot become a facet option'
+);
+const overCapSearch = filterSectionsByQuery(overCapSections, overCapSentinel);
+assert.equal(overCapSearch.totalMatches, 0, 'the beyond-cap sentinel is not searchable');
+assert.deepEqual(overCapSearch.navigationTargets, [], 'the beyond-cap sentinel cannot create section navigation');
+assert.deepEqual(overCapSearch.matchRegions, [], 'the beyond-cap sentinel cannot create exact-match targets');
+const overCapForgedState = activateCoreAnalyticsFacet('message', {
+  value: overCapSentinel,
+  query: overCapSentinel,
+  count: 1,
+});
+const overCapModel = getCoreAnalyticsInvestigation(overCapView, overCapSearch, overCapForgedState);
+assert.deepEqual(overCapModel, idleCoreAnalyticsInvestigation, 'a forged beyond-cap option cannot activate investigation context');
+assert.doesNotMatch(JSON.stringify(overCapModel), new RegExp(overCapSentinel), 'the beyond-cap sentinel is absent from the investigation model');
+const overCapVisibleSections = overCapSections.map((section) => getVisibleSectionForCopy(section, { allSections: overCapSections }));
+assert.doesNotMatch(serializeSectionsForCopy(overCapVisibleSections), new RegExp(overCapSentinel), 'the beyond-cap sentinel is absent from copy');
+assert.doesNotMatch(serializeSectionsForExport(overCapVisibleSections), new RegExp(overCapSentinel), 'the beyond-cap sentinel is absent from text export');
+assert.doesNotMatch(serializeSectionsForJsonExport(overCapVisibleSections), new RegExp(overCapSentinel), 'the beyond-cap sentinel is absent from JSON export');
+
 const projectedCoreAnalyticsCases = coreAnalyticsFacetOptions.map((group) => ({
   group,
   option: group.options[0],
@@ -5259,6 +5415,24 @@ assert.deepEqual(
   idleCoreAnalyticsInvestigation,
   'filtered row counts cannot exceed the current capped table rows'
 );
+const duplicateInvestigationTable = activeCoreAnalyticsModel.searchResult.sections
+  .find((section) => section.id === 'coreanalytics-event-types');
+const malformedInvestigationSearchResults = [
+  { ...activeCoreAnalyticsModel.searchResult, totalMatches: -1 },
+  { ...activeCoreAnalyticsModel.searchResult, totalMatches: 1.5 },
+  {
+    ...activeCoreAnalyticsModel.searchResult,
+    sections: [...activeCoreAnalyticsModel.searchResult.sections, duplicateInvestigationTable],
+  },
+  { ...activeCoreAnalyticsModel.searchResult, sections: null },
+];
+for (const malformedSearchResult of malformedInvestigationSearchResults) {
+  assert.deepEqual(
+    getCoreAnalyticsInvestigation(coreAnalyticsView, malformedSearchResult, activeCoreAnalyticsModel.state),
+    idleCoreAnalyticsInvestigation,
+    'negative, fractional, duplicate-table, and malformed search results fail closed'
+  );
+}
 assert.deepEqual(
   getCoreAnalyticsInvestigation(
     coreAnalyticsView,

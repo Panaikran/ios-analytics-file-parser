@@ -27,7 +27,12 @@
       import { parseInput } from '../src/parsers/index.js';
       import { createExactMatchTargets } from '../src/search/exactMatch.js';
       import { filterSectionsByQuery } from '../src/search/filterSections.js';
-      import { getCoreAnalyticsView } from '../src/ui/coreAnalyticsView.js';
+      import {
+        activateCoreAnalyticsFacet,
+        getCoreAnalyticsFacetOptions,
+        getCoreAnalyticsInvestigation,
+        getCoreAnalyticsView,
+      } from '../src/ui/coreAnalyticsView.js';
       import { renderSections } from '../src/ui/renderApp.js';
       import { renderSectionNav } from '../src/ui/renderSectionNav.js';
       import { createLargeCoreAnalyticsFixture, createLargeStackshotFixture } from './fixtures/largeReportWorkloads.js';
@@ -84,14 +89,30 @@
         presentation = 'report',
         reportIdentity = null,
         onExitMode = null,
+        coreAnalyticsView = null,
+        coreAnalyticsFacetOptions = null,
+        coreAnalyticsInvestigation = null,
+        selectedCoreAnalyticsFacetKey = '',
+        selectedCoreAnalyticsFacetQuery = '',
+        onSelectCoreAnalyticsFacet = null,
+        onClearCoreAnalyticsSearch = null,
       } = {}) {
         const sectionRoot = document.querySelector('#sections');
         const navRoot = document.querySelector('#section-nav');
-        const coreAnalyticsView = getCoreAnalyticsView(sections);
+        const resolvedCoreAnalyticsView = coreAnalyticsView ?? getCoreAnalyticsView(allSections);
+        const resolvedFacetOptions = presentation === 'report' && resolvedCoreAnalyticsView.isCoreAnalytics
+          ? coreAnalyticsFacetOptions ?? getCoreAnalyticsFacetOptions(resolvedCoreAnalyticsView)
+          : coreAnalyticsFacetOptions;
         renderSectionNav(navRoot, sections);
         renderSections(sectionRoot, sections, {
           allSections,
-          coreAnalyticsView,
+          coreAnalyticsView: resolvedCoreAnalyticsView,
+          coreAnalyticsFacetOptions: resolvedFacetOptions,
+          coreAnalyticsInvestigation,
+          selectedCoreAnalyticsFacetKey,
+          selectedCoreAnalyticsFacetQuery,
+          onSelectCoreAnalyticsFacet: onSelectCoreAnalyticsFacet ?? (resolvedFacetOptions ? () => {} : null),
+          onClearCoreAnalyticsSearch: onClearCoreAnalyticsSearch ?? (coreAnalyticsInvestigation ? () => {} : null),
           searchActive,
           matchRegions,
           activeExactMatchId,
@@ -110,6 +131,49 @@
       function clearRenderedState() {
         document.querySelector('#sections').replaceChildren();
         document.querySelector('#section-nav').replaceChildren();
+      }
+
+      function renderCoreAnalyticsInvestigation(sections) {
+        const view = getCoreAnalyticsView(sections);
+        const facetOptions = getCoreAnalyticsFacetOptions(view);
+        const group = facetOptions.find(({ options }) => options.length > 0);
+        const option = group?.options[0];
+        if (!option) return null;
+
+        const state = activateCoreAnalyticsFacet(group.key, option);
+        const searchResult = filterSectionsByQuery(sections, option.query);
+        const investigation = getCoreAnalyticsInvestigation(view, searchResult, state);
+        renderParsedSections(searchResult.sections, {
+          allSections: sections,
+          coreAnalyticsView: view,
+          coreAnalyticsFacetOptions: facetOptions,
+          coreAnalyticsInvestigation: investigation,
+          selectedCoreAnalyticsFacetKey: state.selectedFacetKey,
+          selectedCoreAnalyticsFacetQuery: state.selectedFacetQuery,
+          onSelectCoreAnalyticsFacet: () => {},
+          onClearCoreAnalyticsSearch: () => {},
+          searchActive: true,
+          matchRegions: searchResult.matchRegions,
+        });
+
+        const renderedRows = view.tables.eventTypes.rows.length + view.tables.sampleRecords.rows.length;
+        const matchingRows = searchResult.sections
+          .filter((section) => ['coreanalytics-event-types', 'coreanalytics-sample-records'].includes(section.id))
+          .reduce((total, section) => total + section.table.length, 0);
+        const contextCount = document.querySelectorAll('#sections .coreanalytics-overview__investigation').length;
+        const resetControlCount = document.querySelectorAll('#sections .coreanalytics-overview__investigation .clear-search').length;
+        if (renderedRows > 200 || matchingRows > renderedRows) errors.push('CoreAnalytics investigation exceeded rendered-row bounds');
+        if (investigation.mode !== 'active' || contextCount !== 1 || resetControlCount !== 1) {
+          errors.push('CoreAnalytics investigation render did not remain a single active context and reset control');
+        }
+
+        return {
+          renderedRows,
+          matchingRows,
+          contextCount,
+          resetControlCount,
+          tableCaps: [view.tables.eventTypes.rows.length, view.tables.sampleRecords.rows.length],
+        };
       }
 
       function accessibilityReport() {
@@ -236,6 +300,12 @@
         });
 
         const clearSearch = await measureAsync(() => renderParsedSections(sections));
+        const investigation = parserType === 'coreanalytics'
+          ? {
+              render: await measureAsync(() => renderCoreAnalyticsInvestigation(sections)),
+              output: renderCoreAnalyticsInvestigation(sections),
+            }
+          : null;
         const comparisonEntry = {
           classification: { parserType, supported: true },
           sections,
@@ -276,6 +346,7 @@
           search,
           noResultsSearch,
           clearSearch,
+          investigation,
           comparison,
           clearComparison,
           clearReport,
@@ -604,6 +675,46 @@
         document.querySelector('#parse-paste').click();
         await nextFrame();
         const workspaceFocusMoved = document.activeElement === document.querySelector('#workspace-heading');
+        document.querySelector('#sections .coreanalytics-overview__chip')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        const selectedFacetQuery = searchInput.value;
+        const selectedFacetContextVisible = document.querySelector('.coreanalytics-overview__investigation') !== null;
+        document.querySelector('#privacy-toggle').click();
+        await nextFrame();
+        const rawFacetTransition = state();
+        const rawFacetContextCount = document.querySelectorAll('.coreanalytics-overview__investigation').length;
+        const privacyFacetTransition = {
+          selectedFacetQuery,
+          selectedFacetContextVisible,
+          rawSearchValue: rawFacetTransition.searchValue,
+          rawContextCount: rawFacetContextCount,
+        };
+        if (!selectedFacetQuery || !selectedFacetContextVisible || rawFacetTransition.searchValue !== '' || rawFacetContextCount !== 0) {
+          errors.push('privacy transition bridged an active sanitized facet query or context into Raw Local View');
+        }
+        document.querySelector('#sections .report-document__mode-action')?.click();
+        await nextFrame();
+        const sanitizedFacetReturn = state();
+        privacyFacetTransition.sanitizedReturnSearchValue = sanitizedFacetReturn.searchValue;
+        privacyFacetTransition.sanitizedReturnContextCount = document.querySelectorAll('.coreanalytics-overview__investigation').length;
+        if (sanitizedFacetReturn.searchValue !== '' || privacyFacetTransition.sanitizedReturnContextCount !== 0) {
+          errors.push('privacy return restored stale facet query or context');
+        }
+        document.querySelector('#sections .coreanalytics-overview__chip')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        const facetClearSearch = {
+          selectedFacetQuery: searchInput.value,
+          selectedContextCount: document.querySelectorAll('.coreanalytics-overview__investigation').length,
+        };
+        document.querySelector('#clear-search').click();
+        await nextFrame();
+        const clearedFacetSearch = state();
+        facetClearSearch.clearedSearchValue = clearedFacetSearch.searchValue;
+        facetClearSearch.clearedContextCount = document.querySelectorAll('.coreanalytics-overview__investigation').length;
+        if (!facetClearSearch.selectedFacetQuery || facetClearSearch.selectedContextCount !== 1
+          || facetClearSearch.clearedSearchValue !== '' || facetClearSearch.clearedContextCount !== 0) {
+          errors.push('Clear Search did not reset an active facet query and investigation context');
+        }
         const reportActionsTrigger = document.querySelector('#report-actions-trigger');
         const reportActions = { availableAtViewport: !reportActionsTrigger.hidden };
         if (!reportActionsTrigger.hidden) {
@@ -686,6 +797,12 @@
         await nextFrame();
         const reportTransition = state();
 
+        document.querySelector('#sections .coreanalytics-overview__chip')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        const comparisonFacetTransition = {
+          selectedFacetQuery: searchInput.value,
+          selectedContextCount: document.querySelectorAll('.coreanalytics-overview__investigation').length,
+        };
         document.querySelector('#add-to-comparison').click();
         await nextFrame();
         const localAlias = ['local', 'workflow', 'alias'].join('-');
@@ -697,6 +814,12 @@
         document.querySelector('#compare-reports').click();
         await nextFrame();
         const comparisonModeState = state();
+        comparisonFacetTransition.comparisonSearchValue = comparisonModeState.searchValue;
+        comparisonFacetTransition.comparisonContextCount = document.querySelectorAll('.coreanalytics-overview__investigation').length;
+        if (!comparisonFacetTransition.selectedFacetQuery || comparisonFacetTransition.selectedContextCount !== 1
+          || comparisonFacetTransition.comparisonSearchValue !== '' || comparisonFacetTransition.comparisonContextCount !== 0) {
+          errors.push('comparison entry retained an active facet query or investigation context');
+        }
         const comparisonEntryFocus = document.activeElement === document.querySelector('#report-document-title');
         await setSearch(localAlias);
         const comparisonAliasSearch = state();
@@ -723,6 +846,8 @@
           workspaceFocusMoved,
           reportActions,
           mobileNavigation,
+          privacyFacetTransition,
+          facetClearSearch,
           visibleSearch,
           nextFocusRetained,
           clearedSearch,
@@ -732,6 +857,7 @@
           rawReturnFocus,
           rawContentRemoved,
           reportTransition,
+          comparisonFacetTransition,
           comparisonModeState,
           comparisonEntryFocus,
           comparisonAliasSearch,
@@ -743,6 +869,122 @@
           reportCleared,
           clearReturnedToImport,
         };
+      }
+
+      async function responsiveBrowserWorkflow() {
+        const frame = document.createElement('iframe');
+        frame.title = 'Responsive CoreAnalytics test viewport';
+        frame.width = '320';
+        frame.height = '844';
+        frame.style.cssText = 'position:fixed;left:-2000px;top:0;border:0';
+        const loaded = new Promise((resolve) => frame.addEventListener('load', resolve, { once: true }));
+        frame.src = new URL('../index.html', window.location.href);
+        document.body.append(frame);
+        await loaded;
+
+        const childWindow = frame.contentWindow;
+        const childDocument = frame.contentDocument;
+        const longFacetValue = `SyntheticLongFacet-${'x'.repeat(180)}`;
+        childDocument.querySelector('#import-options').open = true;
+        childDocument.querySelector('#paste-input').value = [
+          JSON.stringify({ bug_type: '211' }),
+          JSON.stringify({
+            message: longFacetValue,
+            name: 'SyntheticLongFacetEvent',
+            aggregationPeriod: 'daily',
+            numDaysAggregated: 1,
+            sampling: '1',
+          }),
+          JSON.stringify({
+            message: 'SyntheticResponsivePeer',
+            name: 'SyntheticResponsivePeerEvent',
+            aggregationPeriod: 'weekly',
+            numDaysAggregated: 2,
+            sampling: '2',
+          }),
+        ].join('\n');
+        childDocument.querySelector('#parse-paste').click();
+        const facet = childDocument.querySelector('#sections .coreanalytics-overview__chip');
+        if (!facet) {
+          errors.push('responsive iframe did not render the synthetic CoreAnalytics facet');
+          frame.remove();
+          return { viewports: [], largeText: null };
+        }
+        facet.click();
+        await new Promise((resolve) => childWindow.setTimeout(resolve, 220));
+
+        const viewports = [];
+        for (const width of [320, 390, 768, 1280]) {
+          frame.style.width = `${width}px`;
+          await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+          const viewport = childWindow.innerWidth;
+          const pageOverflow = Math.max(childDocument.documentElement.scrollWidth, childDocument.body.scrollWidth) > viewport;
+          const facetQuery = childDocument.querySelector('input[type="search"]')?.value ?? '';
+          const rowScrollRegions = childDocument.querySelectorAll('#sections .table-scroll[role="region"][tabindex="0"]').length;
+          const contextCount = childDocument.querySelectorAll('.coreanalytics-overview__investigation').length;
+          const sectionsTriggerVisible = !childDocument.querySelector('#sections-trigger').hidden;
+          viewports.push({ width, viewport, pageOverflow, facetQueryLength: facetQuery.length, rowScrollRegions, contextCount, sectionsTriggerVisible });
+
+          if (viewport !== width || pageOverflow || facetQuery !== longFacetValue || rowScrollRegions === 0 || contextCount !== 1) {
+            errors.push(`responsive CoreAnalytics workflow failed at ${width}px`);
+          }
+          if (width < 1024 && !sectionsTriggerVisible) errors.push(`mobile section navigation is hidden at ${width}px`);
+          if (width >= 1024 && sectionsTriggerVisible) errors.push(`desktop section navigation trigger is shown at ${width}px`);
+        }
+
+        frame.style.width = '320px';
+        await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+        const trigger = childDocument.querySelector('#sections-trigger');
+        const dialog = childDocument.querySelector('#section-dialog');
+        trigger.focus();
+        trigger.click();
+        await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+        const mobileDialog = {
+          open: dialog.open,
+          modal: dialog.matches(':modal'),
+          focusEntered: childDocument.querySelector('#mobile-section-nav').contains(childDocument.activeElement),
+        };
+        childDocument.querySelector('#section-dialog-close').click();
+        await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+        mobileDialog.focusReturned = childDocument.activeElement === trigger;
+        if (!mobileDialog.open || !mobileDialog.modal || !mobileDialog.focusEntered || !mobileDialog.focusReturned) {
+          errors.push('320px section-dialog keyboard focus workflow failed');
+        }
+
+        const rootFontSize = childDocument.documentElement.style.fontSize;
+        const largeText = [];
+        for (const width of [320, 390]) {
+          frame.style.width = `${width}px`;
+          await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+          childDocument.documentElement.style.fontSize = '200%';
+          await new Promise((resolve) => childWindow.setTimeout(resolve, 25));
+          const pageOverflow = Math.max(childDocument.documentElement.scrollWidth, childDocument.body.scrollWidth) > childWindow.innerWidth;
+          const viewportResult = {
+            viewport: childWindow.innerWidth,
+            documentScrollWidth: childDocument.documentElement.scrollWidth,
+            bodyScrollWidth: childDocument.body.scrollWidth,
+            pageOverflow,
+          };
+          if (pageOverflow) {
+            viewportResult.overflowNodes = [...childDocument.body.querySelectorAll('*')]
+              .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+              .filter(({ element, rect }) => rect.width > 0 && rect.right > childWindow.innerWidth + 1)
+              .slice(0, 12)
+              .map(({ element, rect }) => ({
+                tag: element.tagName.toLowerCase(),
+                id: element.id,
+                className: typeof element.className === 'string' ? element.className : '',
+                left: Math.round(rect.left),
+                right: Math.round(rect.right),
+              }));
+          }
+          largeText.push(viewportResult);
+          if (pageOverflow) errors.push(`${width}px large-text simulation caused page overflow`);
+          childDocument.documentElement.style.fontSize = rootFontSize;
+        }
+
+        frame.remove();
+        return { viewports, mobileDialog, largeText };
       }
 
       async function batteryPresentationWorkflow() {
@@ -872,6 +1114,7 @@
         const stackshotText = createLargeStackshotFixture();
         const workflowText = await fetch('../examples/coreanalytics.ips.ca.synced').then((response) => response.text());
         const appWorkflow = await applicationWorkflow(workflowText);
+        const responsive = await responsiveBrowserWorkflow();
         const batteryPresentation = await batteryPresentationWorkflow();
         const core = await benchmarkReport(coreText, 'SyntheticMetricGroup-000', 'coreanalytics');
         const stackshot = await benchmarkReport(stackshotText, 'SyntheticStackProcess', 'resource-stackshot');
@@ -902,6 +1145,7 @@
           stackshot,
           repeatedWorkflow: repeated,
           applicationWorkflow: appWorkflow,
+          responsive,
           batteryPresentation,
           exactMatchRendering,
           modePresentationSafety,
