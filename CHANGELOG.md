@@ -1,5 +1,53 @@
 # Changelog
 
+## v2.2.0 — CoreAnalytics Investigation Depth (release-ready; unreleased)
+
+Status: Phase 23 is complete and frozen. No `v2.2.0` tag or GitHub Release has
+been created.
+
+### Added
+
+- Bounded investigation context for the existing CoreAnalytics facets: Top
+  Messages, Top Names, Aggregation Periods, and Sampling Values.
+- Explicit rendered-row scope while reusing the existing global search and
+  Clear Search behavior.
+
+### Hardened
+
+- Privacy-mode facet-state reset and exclusion of data beyond the existing
+  100-event-group and 100-sample-record row caps.
+- Malformed and hostile-input coverage, repeated workflow regressions, and
+  large-text mobile search-navigation containment.
+
+### Privacy and scope
+
+- Investigation uses only sanitized, rendered, capped content in the existing
+  single-report CoreAnalytics view. No raw records, identifiers, hidden rows,
+  parser expansion, event-family interpretation, or report persistence were
+  added.
+- No charging functionality was added. Parser and `SectionModel[]` contracts,
+  copy, text/JSON export schemas, comparison, and Raw Local View remain
+  unchanged.
+
+### Testing
+
+- `npm.cmd test`, production JavaScript syntax checks, privacy/cap/export
+  regression checks, and the browser performance harness passed.
+- In Chrome 153 on Windows, all 11 bundled examples and the CoreAnalytics
+  investigation workflow passed smoke checks. Responsive checks at 320, 390,
+  768, and 1280 CSS-pixel widths had no page overflow; the separate 200%
+  root-font-size simulation at 320 and 390 CSS pixels also had no overflow.
+- Fresh browser harness p95: CoreAnalytics parse 387.9 ms, render 8.5 ms,
+  parse-to-render 393.8 ms, search 8.5 ms, and investigation render 8.5 ms;
+  repeated 20-cycle workflow 425.1 ms. These are environment-specific results.
+- Fresh Node stress p95: generated 5,000-record CoreAnalytics parse 7.6654 ms
+  and search 0.2101 ms; generated 5,000-process Stackshot parse 9.5346 ms
+  and search 0.1377 ms. Configured budgets passed.
+- Offline shell reload and a bundled CoreAnalytics example worked after the
+  local server stopped. Native screen-reader, Safari/physical-device, and
+  runtime forced-colors/reduced-motion coverage were not available. The
+  root-font-size simulation is not browser zoom.
+
 ## v2.1.0 — Battery and Charging Insights (released)
 
 Status: Phase 21 is complete and frozen. The annotated `v2.1.0` tag was created

@@ -5,23 +5,23 @@
 - Version: `v2.2.0`
 - Theme: **CoreAnalytics Investigation Depth**
 - Phase: **Phase 23 — Bounded CoreAnalytics Investigation**
-- Status: 23B through 23E complete and frozen; 23F not started
+- Status: Phase 23 complete and frozen; v2.2.0 release-ready but unreleased
 - Implementation status: investigation boundary, sanitized model, report-only
-  context presentation, and corpus/regression hardening complete
-- Current slice: **23F - Final QA and Release Readiness** (not started; separate
-  implementation approval required)
+  context presentation, corpus/regression hardening, and final QA complete
+- Current slice: **23F - Final QA and Release Readiness** (complete and frozen)
 - 23B status: Complete and frozen under separate implementation approval
 - 23C status: Complete and frozen under separate implementation approval
 - 23D status: Complete and frozen under separate implementation approval
 - 23E status: Complete and frozen under separate implementation approval
-- 23F status: Not started; separate implementation approval required
+- 23F status: Complete and frozen under the explicit Phase 23F approval
 
 The user approved the CoreAnalytics direction; 23B, 23C, and 23D received
 separate implementation approvals and are complete. Slice 23E also received
 separate implementation approval and is complete and frozen. The previously
 audited Evidence-Bounded Panic Guidance direction is the fallback only and was
-not selected. This plan alone does not authorize 23F work, package changes,
-tags, or releases.
+not selected. Slice 23F completed final QA under separate approval without
+production changes. This plan does not authorize package changes, tags,
+releases, or Phase 24 work.
 
 ## 2. User approval record
 
@@ -43,8 +43,8 @@ The implementation gate is explicit:
   frozen at the presentation and workflow boundary recorded below.
 - Slice 23E received separate implementation approval and is complete and
   frozen under the corpus, privacy, and regression boundaries below.
-- Slice 23F is next; it has not started and requires separate implementation
-  approval.
+- Slice 23F received separate approval and completed final QA; it is complete
+  and frozen.
 - No Phase 23 release, tag, package change, or GitHub Release is authorized.
 
 ## 3. Objective
@@ -600,20 +600,35 @@ The conservative six-slice structure is:
 
 ### 23F - Final QA and Release Readiness
 
-- Objective: validate the full preserved application contract and prepare
-  documentation for a separately authorized release review.
-- Likely files: approved implementation/tests, service worker only if a new
-  module was actually added, and final milestone documentation.
-- Tests: `npm.cmd test`, syntax checks, browser harness, search/exact-match,
-  copy, text/JSON export, comparison isolation, Raw Local View, accessibility,
-  responsive, performance, PWA precache/cache identity, privacy, and clean
-  report replacement workflows.
-- Dependencies: 23B-23E complete; no unresolved privacy, UX, browser, or
-  performance blocker.
-- Exit criteria: all frozen contracts remain intact and release-readiness is
-  documented without claiming publication.
-- Stop conditions: any contract regression, unavailable required QA lane,
-  documentation mismatch, tag/release request, or scope expansion.
+- Objective: validate the preserved application contract and prepare the
+  release-readiness record for a separately authorized release operation.
+- Files changed: documentation only; no production, test, fixture, service
+  worker, dependency, or package files changed in 23F.
+- Validation: `npm.cmd test`, syntax checks for production JavaScript and
+  `service-worker.js`, responsive/browser workflow, search/exact-match, copy
+  and serializer boundaries, comparison isolation, Raw Local View, privacy and
+  cap sentinels, performance harness, and PWA/offline shell.
+- Browser evidence: Chrome 153 on Windows; all 11 bundled examples passed
+  smoke checks. Widths 320, 390, 768, and 1280 CSS px had no page overflow. The
+  200% root-font-size simulation at 320 and 390 CSS px had no overflow; this is
+  not browser zoom.
+- Performance evidence: fresh browser p95 was 387.9 ms CoreAnalytics parse,
+  8.5 ms render, 393.8 ms parse-to-render, 8.5 ms search, and 8.5 ms
+  investigation render; the 20-cycle workflow p95 was 425.1 ms. Fresh Node
+  stress p95 was 7.6654 ms parse / 0.2101 ms search for generated 5,000-record
+  CoreAnalytics and 9.5346 ms parse / 0.1377 ms search for generated 5,000-
+  process Stackshot. All configured budgets passed; measurements are
+  environment-specific.
+- Limitations: no physical mobile/Safari or native screen-reader lane; forced
+  colors and reduced motion were not runtime-emulated; no heap snapshot or
+  direct listener-count instrumentation. Text/JSON serializers were verified
+  by automated boundary tests; browser download actions were not triggered.
+- Exit criteria: met. All available required validation passed, no known
+  release blocker remains, and documentation records v2.2.0 as unreleased.
+- Stop conditions: any reproduced contract/privacy/accessibility/performance/
+  PWA defect, missing required validation, documentation mismatch, or scope
+  expansion blocks the readiness verdict. No production defect was fixed in
+  23F.
 
 ## 19. Non-goals
 
@@ -679,7 +694,7 @@ Phase 23 explicitly does not include:
   families, comparison, export, or diagnosis are milestone blockers, not small
   follow-up enhancements.
 
-## 21. 23D and 23E completion; 23F gate
+## 21. 23D, 23E, and 23F completion record
 
 **23D complete and frozen.**
 
@@ -698,8 +713,21 @@ comparison-isolation, performance-harness, and offline-shell checks passed.
 
 23E - Corpus and Regression Hardening - is complete and frozen under separate
 implementation approval. Its synthetic boundaries and reproduced fixes are
-recorded in the slice section above. 23F - Final QA and Release Readiness - is
-next, has not started, and requires separate implementation approval.
+recorded in the slice section above.
+
+23F - Final QA and Release Readiness - is complete and frozen under separate
+approval. The full automated suite and production JavaScript syntax checks
+passed. Browser QA passed for all 11 bundled examples, the CoreAnalytics
+workflow, responsive widths including the 200% root-font-size simulation, and
+the mobile section-navigation/focus path. Performance budgets passed for the
+fresh browser and Node stress runs recorded in the 23F slice. The service-worker
+offline shell reloaded and opened a bundled CoreAnalytics example after the
+local server stopped. No production or test files were changed in 23F.
+
+The browser lane was Chrome 153 on Windows. Physical mobile/Safari and native
+screen-reader testing were unavailable; forced-colors/reduced-motion were not
+runtime-emulated. Root-font-size simulation is not browser zoom. The final
+summary records the detailed evidence and remaining limitations.
 
 If implementation reveals that the selected workflow needs raw, arbitrary,
 uncapped, undocumented, identifier-bearing, persistent, comparison, export,
@@ -707,12 +735,9 @@ or new-parser data, the work must stop and return to planning.
 
 ## 22. Release boundary and decision record
 
-- Phase 23A planning and 23B-23E implementation are complete and frozen;
-  23F has not started.
-- The current next slice is 23F - Final QA and Release Readiness, pending
-  separate implementation approval.
-- v2.2.0 remains unreleased; Phase 23 remains incomplete until its later slices
-  pass their gates.
+- Phase 23A planning and slices 23B-23F are complete and frozen.
+- `PHASE_23_SUMMARY.md` records final validation evidence and limitations.
+- v2.2.0 is release-ready but remains unreleased; Phase 24 has not started.
 - No tag, GitHub Release, package metadata change, dependency change, or
   publication is authorized by this plan.
 - Phase 22 remains closed and frozen as charging research with Approach C;
@@ -724,7 +749,8 @@ or new-parser data, the work must stop and return to planning.
   search remains authoritative; comparison, Raw Local View, and serializers
   remain isolated.
 - 23E corpus and regression hardening is complete and frozen.
-- 23F is the next slice and requires separate approval before implementation.
+- A separate explicit release operation is required before tagging or
+  publication; Phase 23 authorizes no tag, GitHub Release, or Phase 24 work.
 - The fallback Panic Guidance direction is not selected for this milestone.
 - The exact implementation boundary is documented in
   [V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).

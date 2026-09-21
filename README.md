@@ -26,9 +26,9 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 | Item | Status |
 | --- | --- |
 | Latest released version | `v2.1.0` — Battery and Charging Insights |
-| Active phase | `v2.1.0 — Battery and Charging Insights` released; Phase 21 complete and frozen |
-| Current focus | Post-release documentation reconciliation complete; v2.2.0 remains planning-only |
-| Next milestone | v2.2.0 planning; no implementation has started |
+| Active phase | Phase 23 — Bounded CoreAnalytics Investigation; complete and frozen |
+| Current focus | `v2.2.0 — CoreAnalytics Investigation Depth` is release-ready but unreleased |
+| Next milestone | Separate v2.2.0 release authorization; Phase 24 has not started |
 | Phase 1 | Complete |
 | Phase 2 | Complete |
 | Phase 3 | Complete |
@@ -64,7 +64,7 @@ It is intentionally local-first. Reports are parsed in the browser, sanitized by
 
 Note: `package.json` may still show `0.1.0`. Project release state is currently tracked by Git tags, this README, the changelog, and phase summaries.
 
-`v2.0.0 — Apple-Inspired Inspector Workspace` is the latest stable release. It reorganizes the existing local parser into a responsive, accessible inspection workspace with light and dark themes, continuous report content, deliberate navigation and controls, Multi-Report Comparison, and Raw Local View while preserving the released parser, search, export, privacy, and offline contracts.
+`v2.1.0 — Battery and Charging Insights` is the latest actually released stable version. The `v2.0.0 — Apple-Inspired Inspector Workspace` release established the responsive, accessible inspection workspace with light and dark themes, continuous report content, deliberate navigation and controls, Multi-Report Comparison, and Raw Local View while preserving the parser, search, export, privacy, and offline contracts.
 
 ## v2.1.0 — Released
 
@@ -88,6 +88,23 @@ existing browser harness cover the sanitized parser-to-section boundary.
 Browser automation was unavailable in this environment because no browser
 executable or Playwright dependency was installed; that limitation is
 recorded rather than hidden.
+
+## v2.2.0 — CoreAnalytics Investigation Depth (release-ready; unreleased)
+
+Phase 23 — Bounded CoreAnalytics Investigation — is complete and frozen. The
+milestone is release-ready, but `v2.2.0` has not been tagged or published; the
+separate release operation still requires explicit authorization.
+
+For sanitized, single-report CoreAnalytics views, the existing four facets can
+show bounded investigation context over the already rendered and capped rows:
+Top Messages, Top Names, Aggregation Periods, and Sampling Values. The existing
+global search remains the only filter, and the context identifies its
+rendered-row scope. The workflow does not inspect raw, hidden, or capped-out
+source records, add parser semantics, or change copy, export, comparison, or
+Raw Local View behavior. The v2.1.0 battery behavior remains unchanged; Phase
+22 charging implementation remains deferred.
+
+See [PHASE_23_SUMMARY.md](PHASE_23_SUMMARY.md) for final validation evidence.
 
 ## Why This Exists
 
@@ -831,7 +848,7 @@ The `v0.9.0-beta` Feature Freeze and Release Candidate Preparation work is narro
 
 The feature-freeze boundary remains in effect: verified bug fixes, documentation accuracy, QA evidence, and stable-release preparation only.
 
-`v2.0.0 — Apple-Inspired Inspector Workspace` remains released and Phase 20 is fully closed on 2026-07-16. Phase 21 is complete and frozen, and v2.1.0 has been tagged and published. The implemented design is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md), [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md), [`PHASE_20_SUMMARY.md`](PHASE_20_SUMMARY.md), and [`PHASE_21_SUMMARY.md`](PHASE_21_SUMMARY.md). Charging extraction, MetricKit, speculative performance optimization, additional parser families, and broader diagnostics remain separate future planning candidates for v2.2.0 or later.
+`v2.0.0 — Apple-Inspired Inspector Workspace` remains released and Phase 20 is fully closed on 2026-07-16. Phase 21 is complete and frozen, and v2.1.0 has been tagged and published. The implemented design is documented in [`docs/design/V2_INTERFACE_DESIGN.md`](docs/design/V2_INTERFACE_DESIGN.md), [`PHASE_20_PLAN.md`](PHASE_20_PLAN.md), [`PHASE_20_SUMMARY.md`](PHASE_20_SUMMARY.md), and [`PHASE_21_SUMMARY.md`](PHASE_21_SUMMARY.md). Charging extraction remains deferred following the completed Phase 22 research; MetricKit, additional parser families, and broader diagnostics remain future candidates beyond v2.2.0 unless separately approved.
 
 ## Screenshots / Demo
 

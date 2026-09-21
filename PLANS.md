@@ -242,13 +242,10 @@ explicit approval. v2.2.0 remains unreleased until those gates are completed.
 ## Approved Planning Direction: v2.2.0 Phase 23
 
 The user approved **CoreAnalytics Investigation Depth** as the v2.2.0 theme
-and **Bounded CoreAnalytics Investigation** as the Phase 23 direction. Phase
-23A - Evidence, Architecture, and Corpus Audit - is complete. Slices 23B -
-CoreAnalytics Investigation Boundary, 23C - Sanitized Investigation Model,
-23D - Investigation Presentation and Workflow Integration, and 23E - Corpus
-and Regression Hardening - are complete and frozen under separate
-implementation approvals. Slice 23F - Final QA and Release Readiness - is next,
-has not started, and requires separate approval.
+and **Bounded CoreAnalytics Investigation** as the Phase 23 direction. All
+slices 23A–23F are complete and frozen. Phase 23 final QA and release-readiness
+evidence is recorded in [PHASE_23_SUMMARY.md](PHASE_23_SUMMARY.md). v2.2.0 is
+release-ready but remains unreleased; Phase 24 has not started.
 
 Phase 23A is limited to evidence, architecture, privacy, UX-contract, cap,
 state-transition, and fictional-corpus planning. The selected architecture is
@@ -265,7 +262,7 @@ model in the existing CoreAnalytics view module without changing those
 contracts. Slice 23D presents that context only in sanitized single-report
 mode, reuses the existing global search status and Clear Search path, and does
 not alter parser, model, export, comparison, or Raw Local View behavior.
-Later slices remain proposed and gated:
+Completed implementation and QA slices:
 
 - 23B - CoreAnalytics Investigation Boundary (complete and frozen).
 - 23C - Sanitized Investigation Model (complete and frozen).
@@ -274,19 +271,18 @@ Later slices remain proposed and gated:
 - 23E - Corpus and Regression Hardening (complete and frozen; bounded fictional
   corpus, privacy/cap/regression coverage, reproduced privacy-transition and
   large-text layout fixes, and PWA cache-version refresh).
-- 23F - Final QA and Release Readiness (next; not started; separate approval
-  required).
+- 23F - Final QA and Release Readiness (complete and frozen; no tag or release
+  created).
 
 The planning details are in [PHASE_23_PLAN.md](PHASE_23_PLAN.md) and
 [docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md](docs/design/V2_2_COREANALYTICS_INVESTIGATION_DESIGN.md).
 The candidate audit remains the supporting evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
 
-Production work for 23F must not begin until separate 23F implementation
-approval is explicit and the approved allowlist, privacy rules, search behavior,
-copy, export, comparison, Raw Local View, accessibility, responsive,
-performance, and PWA boundaries remain satisfied. Tags, releases, package
-metadata, and publication require separate explicit approval.
+No Phase 24 implementation is active or authorized by this status
+reconciliation. Tags, releases, package metadata, and publication require
+separate explicit approval; v2.2.0 remains unreleased until that separate
+release operation is authorized and completed.
 
 ## Approved Milestone Plan: v1.8.0
 

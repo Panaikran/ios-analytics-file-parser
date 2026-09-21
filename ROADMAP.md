@@ -1,8 +1,8 @@
 # iOS Analytics File Parser Roadmap
 
-Status: `v2.1.0 — Battery and Charging Insights` released; Phase 21 is complete
-and frozen. v2.2.0 remains unreleased; Phase 23A-23E are complete and frozen,
-and 23F has not started and requires separate approval.
+Status: `v2.1.0 — Battery and Charging Insights` remains the latest released
+version. Phase 23 is complete and frozen; `v2.2.0 — CoreAnalytics Investigation
+Depth` is release-ready but unreleased. Phase 24 has not started.
 
 The project is a static, local-first browser app for inspecting iOS analytics and diagnostic files. Reports are parsed in the browser, sanitized by default, and never uploaded by the app.
 
@@ -34,6 +34,7 @@ The project is a static, local-first browser app for inspecting iOS analytics an
 | Precision Search & Deep Inspection | Released | `v1.8.0` | Released 2026-07-14: visible sanitized exact-match metadata, safe highlighting, non-wrapping exact-match navigation, comparison support, privacy/export isolation, accessibility, responsive, offline, and performance hardening |
 | Visible Search Contract Integrity | Released | `v1.9.0` | Released 2026-07-15: declared visible-column row filtering with privacy, accessibility, export, responsive, browser, and workflow parity verified |
 | Apple-Inspired Inspector Workspace | Released | `v2.0.0` | Released 2026-07-16: all Slices 20A–20H complete and frozen; Phase 20 closed |
+| Battery and Charging Insights | Released | `v2.1.0` | Direct battery observations for supported CoreAnalytics evidence; charging extraction remains deferred |
 
 ## Project Constraints
 
@@ -886,10 +887,11 @@ v2.0.0 is released and fully closed. The approved prototype remains frozen at
 `b86a44cf2cbb0a3400a307ede92e7623c7417b48`. Slices 20A–20H and Phase 20 are
 complete and frozen after production implementation, regression validation,
 browser and performance QA, PWA cache reconciliation, documentation, annotated
-tagging, and GitHub Release publication. Slices 21A through 21F and Phase 21 are
-complete and frozen. The annotated `v2.1.0` tag and GitHub Release are published;
-Phase 23A through 23E are complete and frozen; 23F is the next proposed slice,
-has not started, and requires separate implementation approval.
+tagging, and GitHub Release publication. Phase 21 is complete and frozen; the
+annotated `v2.1.0` tag and GitHub Release are published. Phase 22 is closed and
+frozen as research. Phase 23A–23F are complete and frozen, and v2.2.0 is
+release-ready but remains untagged and unpublished. No Phase 24 work has
+started.
 
 - Preserve the released `v1.1.0` comparison boundaries and implemented v1.2 export contract.
 - Keep App Usage Metrics, Wi-Fi Connectivity, Diagnostic Request, broader Accessory/Firmware diagnostics, MetricKit without an authoritative serialized fixture contract, additional export formats beyond `.txt` and `.json`, and additional comparison modes as future planning candidates.
@@ -924,21 +926,19 @@ and future implementation slices are recorded in
 | 21E | Complete and frozen | Sanitized corpus expansion, cross-variant hardening, and accessor-safety regression coverage |
 | 21F | Complete and frozen | Final parser/privacy/presentation QA, synthetic browser-harness validation, documentation reconciliation, and release readiness |
 
-Phase 21 does not authorize changes to the v2.0 parser, search, export,
-comparison, Raw Local View, privacy, or PWA contracts outside the listed future
+Phase 21 did not authorize changes to the v2.0 parser, search, export,
+comparison, Raw Local View, privacy, or PWA contracts outside its listed
 slices. Thermal interpretation, charging faults, health grades, service
-recommendations, and broader device diagnostics remain deferred to v2.2.0 or
-later. Browser automation was unavailable because no browser executable or
-Playwright dependency was installed; the existing synthetic harness passed and
-the limitation is recorded. Release publication is complete; later v2.2.0
-planning and implementation are recorded separately, and that release remains
-unpublished.
+recommendations, and broader device diagnostics were not included in v2.2.0
+and remain deferred unless separately approved. The Phase 21 browser-automation
+limitation remains historical; Phase 23 received real-browser QA as recorded
+in `PHASE_23_SUMMARY.md`.
 
 ## Completed Research Phase: Phase 22
 
 Status: Phase 22 charging research complete and frozen; no software release
-resulted. Charging implementation remains deferred. Phase 23 is the active
-v2.2.0 implementation milestone, which remains unreleased.
+resulted. Charging implementation remains deferred. Phase 23 is the completed
+v2.2.0 implementation milestone; it is release-ready but unreleased.
 
 Theme: Charging Evidence and Power Context.
 
@@ -987,16 +987,14 @@ Phase 23 CoreAnalytics direction. See
 
 ## Approved planning direction: Phase 23
 
-Status: Phase 23A through 23E complete and frozen; 23F has not started and
-requires separate implementation approval.
+Status: Phase 23A through 23F complete and frozen; v2.2.0 is release-ready but
+unreleased. A separate release operation still requires explicit approval.
 
 The user approved the v2.2.0 theme **CoreAnalytics Investigation Depth** and
-the Phase 23 title **Bounded CoreAnalytics Investigation**. The completed 23B
-slice is the narrow CoreAnalytics Investigation Boundary, followed by the
-sanitized investigation model and report-only investigation presentation.
-Slice 23E - Corpus and Regression Hardening - is complete and frozen. The next
-slice is **23F - Final QA and Release Readiness**, which has not started and
-requires separate user approval before work begins.
+the Phase 23 title **Bounded CoreAnalytics Investigation**. All six slices,
+23A–23F, are complete and frozen. Final validation and release-readiness
+evidence are recorded in [PHASE_23_SUMMARY.md](PHASE_23_SUMMARY.md). This does
+not create a v2.2.0 tag or GitHub Release, and no Phase 24 work has started.
 
 Phase 22 remains closed and frozen as research-only Charging Evidence and
 Power Context work. No charging field was retained, no charging functionality
@@ -1009,7 +1007,7 @@ was delivered, and Approach C remains final for that phase.
 | 23C | Complete and frozen | Sanitized ephemeral investigation model over filtered visible rows |
 | 23D | Complete and frozen | Report-only investigation context/status and reset within the Inspector Workspace; existing global search reused |
 | 23E | Complete and frozen | Independently fictional corpus and workflow regression hardening; privacy-mode facet reset and large-text navigation defects fixed; parser and `SectionModel[]` unchanged |
-| 23F | Next; not started; separate approval required | Final QA and release readiness; no tag or publication |
+| 23F | Complete and frozen | Final contract, browser, performance, privacy, and PWA validation; documentation reconciled; no tag or publication |
 
 The conservative boundary permits only investigation of existing sanitized,
 rendered, capped CoreAnalytics facet values and matching visible rows. It does
@@ -1021,9 +1019,8 @@ changes, Raw Local View changes, persistence, uploads, or telemetry.
 global search authoritative. The 23D context is limited to sanitized
 single-report presentation; comparison, Raw Local View, and serialization
 remain unchanged. Slice 23E is complete and frozen, with no export, comparison,
-or Raw Local View contract changes. Phase 23 implementation remains incomplete,
-and no v2.2.0 feature is described as released. 23F is next, unstarted, and
-gated on separate approval.
+or Raw Local View contract changes. Phase 23 is complete and frozen; v2.2.0 is
+release-ready but not tagged or published. Phase 24 has not started.
 
 The planning record is [PHASE_23_PLAN.md](PHASE_23_PLAN.md), with the design
 contract in
@@ -1031,4 +1028,5 @@ contract in
 The prior candidate audit remains the evidence record at
 [docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md](docs/research/V2_2_NEXT_MILESTONE_CANDIDATE_AUDIT.md).
 No v2.2.0 tag or release operation is authorized, and no release is described
-as published.
+as published. Creating the tag or GitHub Release requires separate explicit
+authorization.
